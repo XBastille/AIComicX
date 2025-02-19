@@ -6,7 +6,6 @@ const router = express.Router();
 
 router.post('/signup', async (req, res) => {
     console.log('signup k andar');
-    // res.send('teri maa ki chut');
 
     try {
         const { userName, email, password } = req.body;
@@ -22,7 +21,7 @@ router.post('/signup', async (req, res) => {
         const exist = await schema.findOne({ email: email })
         if (exist) {
             console.log('exist wala check');
-            return res.status(500).send({
+            return res.status(500).send({ // render the register pge 
                 sucess: true,
                 message: 'user already exit try to sinup',
             })
@@ -78,7 +77,7 @@ router.post('/login', async (req, res) => {
                 message: 'password incorrect',
             })
         }
-        req.session.userId = newuser._id;
+        req.session.userId = exist._id;
         res.status(200).send({ // yaha render krwayenge login k baad 
             sucess: true,
             message: 'user found'
