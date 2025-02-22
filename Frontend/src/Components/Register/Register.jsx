@@ -4,21 +4,50 @@ import { useState } from "react";
 import { windowlistner } from "../WindowListener/WindowListener"
 import "../Register/Register.css"
 
-function Login() {
+function Register() {
 
     const [position, setposition] = useState({ x: 0, y: 0 });
+    // const navigate = useNavigate();
 
+    const [name, setname] = useState('')
+    const [username, setusername] = useState('')
     const [email, setemail] = useState('')
     const [password, setpassword] = useState('')
     const [confirm, setconfirm] = useState('')
 
     const [errors, setErrors] = useState('');
 
+    // const submits = async (event) => {
+    //     event.preventDefault();
+    //     setname('')
+    //     setusername('')
+    //     setemail('')
+    //     setpassword('')
+    //     setconfirm('')
+
+    //     try {
+    //         const response = await axios.post('http://localhost:3001/user/Register', { name, username, email, password, confirm })
+    //         console.log(response.data)
+    //         if (response.data.success === 'true') {
+    //             navigate('/user/Login')
+    //         }
+    //         if (response.data.success === 'false') {
+    //             navigate('/user/Register')
+    //             setErrors(response.data.error[0].msg)
+    //         }
+    //         console.log(name, username, email, password, confirm)
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
 
     windowlistner('pointermove', (e) => {
         setposition({ x: e.clientX, y: e.clientY })
     })
 
+    // const login = () => {
+    //     navigate('/user/Login')
+    // }
 
     function timingout() {
         setTimeout(() => {
@@ -34,16 +63,20 @@ function Login() {
 
             <motion.div style={styles.innerLogin}>
                 <motion.div>
-
-                    <h1 style={styles.artist}>WELCOME BACK, STORYTELLER!</h1>
-                    <p style={styles.stories}>YOUR STORIES AWAIT—STEP BACK INTO YOUR WORLD OF CREATIVITY AND IMAGINATION, WHERE EVERY IDEA TAKES SHAPE AND EVERY CHARACTER COMES TO LIFE.</p>
+                    
+                    <h1 style={styles.artist}>ARTISTS & STORYTELLERS, ASSEMBLE!</h1>
+                    <p style={styles.stories}><span style={{ fontWeight: 'bold', color: 'rgb(222, 218, 219)', fontFamily: "sans-serif" }}>BRING YOUR STORIES TO LIFE.</span>™ New here? Sign up today and get a free character template and your first comic panel on us. Create, share, and experience storytelling like never before on our cutting-edge platform!"?</p>
                 </motion.div>
                 <motion.div style={styles.centerss}>
                     <motion.div >
-                        <p style={styles.heading}>LOGIN</p>
-                        <p style={styles.subheading}>Continue your journey and pick up right where you left off.</p>
+                        <p style={styles.heading}>SIGN UP</p>
+                        <p style={styles.subheading}>Join us today and unlock endless possibilities!</p>
                     </motion.div>
                     <motion.div>
+                        <motion.div style={styles.emailContainer}>
+                            <label htmlFor="name" style={styles.label}>Name :</label>
+                            <input style={styles.input} type="name" id="name" name="name" value={name} onChange={(event) => { setname(event.target.value) }} required></input>
+                        </motion.div>
                         <motion.div style={styles.emailContainer}>
                             <label htmlFor="email" style={styles.label}>Email :</label>
                             <input style={styles.input} type="email" id="email" name="email" value={email} placeholder="example@gmail.com" onChange={(event) => { setemail(event.target.value) }} required></input>
@@ -65,11 +98,11 @@ function Login() {
                             whileTap={{
                                 scale: 1.01,
                             }}
-                            type="submit">LOGIN</motion.button>
+                            type="submit">SIGN UP</motion.button>
                         <motion.div className="Account" style={styles.accountText} >
-                            No account yet?{" "}
+                            Already have account?{" "}
                             <motion.a title="No account" style={styles.links}>
-                                Create your account now
+                                Login!
                             </motion.a>
                         </motion.div>
                     </motion.div>
@@ -217,4 +250,4 @@ const styles = {
         textAlign: 'center'
     },
 }
-export default Login
+export default Register
