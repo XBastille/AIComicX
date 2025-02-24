@@ -140,7 +140,7 @@ const styles = {
         fontWeight: '900',
         marginBottom: '5px',
         marginTop: "10%",
-
+            
     },
     subheading: {
         fontSize: '18px',
@@ -210,8 +210,8 @@ const styles = {
         position: 'fixed',
         border: "1px solid white",
         pointerEvents: "none",
-        left: -50,
-        top: -50,
+        left: -30,
+        top: -30,
         zIndex: 9999,
         opacity: '0.9',
         backdropFilter: "blur(20px)",
