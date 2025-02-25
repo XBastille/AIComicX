@@ -22,7 +22,7 @@ router.post('/signup', async (req, res) => {
         if (exist) {
             console.log('exist wala check');
             return res.status(500).json({ // render the register page with message ki user already exist krta h 
-                sucess: true,
+                sucess: false,
                 message: 'user already exits try to sinup',
             })
         }
