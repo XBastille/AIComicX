@@ -1,0 +1,120 @@
+
+
+* {
+    font-family: 'Space Grotesk', sans-serif;
+   }
+   
+ 
+   .menu-overlay {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-color: #e37450;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+   }
+   
+   .menu-content {
+     text-align: left;
+     color: white;
+     position: relative;
+     width: 80%;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+   }
+   
+   .close-button {
+     position: absolute;
+     top: 20px;
+     right: -60px;
+     background: none;
+     border: none;
+     font-size: 18px;
+     color: rgb(0, 0, 0);
+     cursor: pointer;
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     
+   }
+   
+   .icon {
+     width: 20px;
+     height: 20px;
+   }
+   
+   .menu-container {
+     display: flex;
+     width: 100%;
+     justify-content: space-between;
+     align-items: center;
+     position: relative;
+   }
+   
+   .menu-container::before {
+     content: "";
+     position: absolute;
+     top: 0;
+     bottom: 0;
+     left: 50%;
+     width: 2px;
+     background: rgba(255, 255, 255, 0.3);
+     transform: translateX(-50%);
+   }
+   
+   .menu-list {
+     list-style: none;
+     padding: 0;
+     font-size: 65px;
+     font-weight: bold;
+   }
+   
+   .menu-list li {
+     margin: 10px 0;
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     transition: color 0.3s ease-in-out;
+     cursor: pointer;
+   }
+   
+   .menu-list li:hover {
+     color: black;
+   }
+ 
+   .menu-list li span{
+   font-size: 24px; 
+   font-weight: normal;
+   
+   }
+   
+   .social-icons {
+     display: flex;
+     gap: 25px;
+     position: relative;
+     margin-right: 200px;
+   }
+   
+   .social-icon-container {
+     width: 70px;
+     height: 70px;
+     border-radius: 50%;
+     background: rgba(255, 255, 255, 0.2);
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     transition: background 0.3s ease-in-out;
+   }
+   
+   .social-icon-container:hover {
+     background: rgba(0, 0, 0);
+   }
+   
+   .social-icon {
+     width: 50px;
+     height: 50px;
+   }
