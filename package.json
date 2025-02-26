@@ -18,6 +18,7 @@
     "mongodb": "^6.13.1",
     "mongoose": "^8.10.1",
     "nodemon": "^3.1.9",
-    "session": "^0.1.0"
+    "session": "^0.1.0",
+    "validator": "^13.12.0"
   }
 }
