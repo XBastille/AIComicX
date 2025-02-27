@@ -1,5 +1,5 @@
 <p align="center">
-    <img width="400px" src="Media/ai_comic_x.jpg" align="center" alt="AIComicX Logo" />
+    <img width="400px" src="Media/aicomic2.jpg" align="center" alt="AIComicX Logo" />
     <h2 align="center">AIComicX</h2>
     <p align="center">Transform Your Stories into Stunning Comics with AI! 🎨🤖</p>
 </p>
