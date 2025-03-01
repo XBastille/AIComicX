@@ -6,12 +6,12 @@ import instagramIcon from "../../Picture/instagram-new.png";
 import twitterIcon from "../../Picture/X_logo_2023_white.png";
 
 
-function Header () {
+function Header ({toggleMenu , menuOpen}) {
    /* const [isOpen, setIsOpen] = useState(true);*/
     return (
-            <div className="menu-overlay">
+            <div className={`menu-overlay ${menuOpen ? "open" : "close"}`}>
               <div className="menu-content">
-                <button className="close-button">
+                <button className="close-button" onClick={toggleMenu}>
                    CLOSE
                 </button>
                 <div className="menu-container">
@@ -32,9 +32,9 @@ function Header () {
                <div className="social-icons">
                {[githubIcon, twitterIcon, instagramIcon, linkedinIcon].map((icon, index) => (
                 <div key={index} className="social-icon-container">
-                  <img src={icon} alt="Social Icon" className="social-icon" />
+                  <img src={icon} alt="Social Icon" className="social-icon" /> 
                 </div>
-              ))}
+              )) }
                 </div>
                 </div> 
               </div>

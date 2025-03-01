@@ -7,7 +7,7 @@
  
    .menu-overlay {
      position: fixed;
-     top: 0;
+     top: -100vh;
      left: 0;
      width: 100%;
      height: 100%;
@@ -15,7 +15,18 @@
      display: flex;
      justify-content: center;
      align-items: center;
+     transition: top 1s ease-in-out; 
+     z-index: 1000;
    }
+
+
+.menu-overlay.open {
+  top: 0; 
+}
+
+.menu-overlay.close{
+  top: -100vh;
+}
    
    .menu-content {
      text-align: left;
