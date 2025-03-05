@@ -18,8 +18,8 @@ function Grid3(){
 const styles = {
     grid: {
         display: "grid",
-        gridTemplateColumns: "repeat(3, 200px)",  // 3 equal columns
-        gridTemplateRows: "repeat(2, 350px)",      // Auto-adjust height
+        gridTemplateColumns: "repeat(3, 200px)",  
+        gridTemplateRows: "repeat(2, 350px)",   
         gap: "6px",
     },
     container: {
@@ -40,8 +40,8 @@ const styles = {
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
-        width: "100%",   // Ensures it spans correctly
-        height: "350px", // Square shape
+        width: "100%",   
+        height: "350px", 
         gridColumn: "span 2", // Spanning 2 columns
     },
     box2: {  
@@ -49,7 +49,7 @@ const styles = {
         justifyContent: "center",
         alignItems: "center",
         width: "200px",
-        height: "350px",  // Shorter height
+        height: "350px",  
         backgroundColor: "rgb(31, 31, 31)",
         color: "white",
         fontSize: "20px",
