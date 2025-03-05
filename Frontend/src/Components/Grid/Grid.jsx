@@ -18,7 +18,7 @@ function Grid() {
 const styles = {
     grid: {
         display: "grid",
-        gridTemplateColumns: "repeat(2, 260px)",  // Adjusted for better sizing
+        gridTemplateColumns: "repeat(2, 260px)",  
         gridTemplateRows: "repeat(2, 340px)",
         gap: "6px", // Reduced gap,
     },
