@@ -18,9 +18,9 @@ function Grid1(){
 const styles = {
     grid: {
         display: "grid",
-        gridTemplateColumns: "repeat(2, 300px)",  // 2 Columns of 300px each
-        gridTemplateRows: "repeat(3, 200px)",     // 3 Rows of 150px each
-        gap: "6px", // Reduced gap
+        gridTemplateColumns: "repeat(2, 300px)",  
+        gridTemplateRows: "repeat(3, 200px)",   
+        gap: "6px", 
     },
     container: {
         display: "flex",
@@ -48,7 +48,7 @@ const styles = {
         justifyContent: "center",
         alignItems: "center",
         width: "300px",
-        height: "405px",  // Height adjusted for 2 rows
+        height: "405px",  
         backgroundColor: "rgb(31, 31, 31)",
         color: "white",
         fontSize: "20px",
