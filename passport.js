@@ -1,10 +1,12 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth2').Strategy;
+const User = require('./model/schema');
 
 passport.serializeUser((user, done) => {
-    done(null, user);
+    done(null, user.id);
 });
-passport.deserializeUser((user, done) => {
+passport.deserializeUser(async (id, done) => {
+    const user = await User.findById(id);
     done(null, user);
 });
 
@@ -14,8 +16,21 @@ passport.use(new GoogleStrategy({
     callbackURL: 'http://localhost:3000/auth/google/callback',
     passReqToCallback: true
 },
-    function (request, accessToken, refreshToken, profile, done) {
-        return done(null, profile);
+    async function (request, accessToken, refreshToken, profile, done) {
+        try {
+            let user = await User.findOne({ _id: profile.id });
+            if (!user) {
+                const newuser = User.create({
+                    userName: profile.displayName,
+                    email: profile.emails[0].value,
+                    password: null,
+
+                })
+            }
+            return done(null, user);
+        } catch (error) {
+            return done(error, null)
+        }
     }
 ));
 

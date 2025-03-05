@@ -18,6 +18,7 @@ router.post('/signup', async (req, res) => {
                 sucess: false,
                 message: 'please fill all the feilds ',
             })
+
         }
 
         if (!validator.isEmail(email)) {
