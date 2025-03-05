@@ -2,6 +2,8 @@ const express = require('express');
 const schema = require('../model/schema');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const passport = require('passport');
+require('../passport');
 
 const router = express.Router();
 
@@ -100,6 +102,31 @@ router.post('/login', async (req, res) => {
     } catch (error) {
         console.log(error);
     }
+});
+
+router.get('/auth/google', passport.authenticate('google', {
+    scope:
+        ['email', 'profile']
+}));
+
+router.get('auth/google/callback', passport.authenticate('google', {
+    successRedirect: '/success',
+    failureRedirect: '/faliure'
+}));
+
+router.get('/success', (req, res) => {
+    console.log(req.user);
+    res.json({
+        sucess: true,
+        message: 'successfull authentication',
+    })
+})
+
+router.get('/faliure', (req, res) => {
+    res.json({
+        sucess: false,
+        message: 'failed to authenticate'
+    })
 })
 
 module.exports = router;
