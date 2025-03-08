@@ -18,7 +18,7 @@ def detect_character(image_path, prompt):
         }
         
         headers = {
-            "Authorization": f"Basic {os.environ.get('LANDING_AI_API_KEY', 'eGNycmZ2NGV4dWRpZTJwbXY4b3lhOkJaR1ZyWEpzakdRVDNiT0tuVWgwWVdtNDhDbXpFNzFF')}"
+            "Authorization": f"Basic {os.environ.get('LANDING_AI_API_KEY')}"
         }
         
         response = requests.post(url, files=files, data=data, headers=headers)
