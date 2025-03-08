@@ -12,6 +12,15 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         require: true
+    },
+    google_id: {
+        type: String,
+    },
+    github_id: {
+        type: String,
+    },
+    provider: {
+        type: String,
     }
 })
 

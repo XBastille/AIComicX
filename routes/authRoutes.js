@@ -110,7 +110,7 @@ router.get('/auth/google', passport.authenticate('google', {
         ['email', 'profile']
 }));
 
-router.get('auth/google/callback', passport.authenticate('google', {
+router.get('/auth/google/callback', passport.authenticate('google', {
     successRedirect: '/success',
     failureRedirect: '/faliure'
 }));
@@ -128,6 +128,16 @@ router.get('/faliure', (req, res) => {
         sucess: false,
         message: 'failed to authenticate'
     })
-})
+});
+
+app.get('/auth/github',
+    passport.authenticate('github', { scope: ['user:email'] }));
+
+app.get('/auth/github/callback',
+    passport.authenticate('github', { failureRedirect: '/login' }),
+    function (req, res) {
+
+        res.redirect('/');
+    });
 
 module.exports = router;
