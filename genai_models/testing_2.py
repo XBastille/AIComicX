@@ -26,12 +26,11 @@ def convert_formatted_to_comic(formatted_text):
        - Use 2-4 panels for regular storytelling where multiple scenes flow together
     3. Label panels with: ### Panel 1, ### Panel 2, etc.
     4. Each panel must contain maximum 3 dialogue lines.
-    5. IMPORTANT: Each panel should contain only ONE narration block if it has dialogues, else only 2.
-    6. Format narration as regular paragraphs inside each panel.
-    7. Format dialogue with character names and their lines as: **Character Name:** Their dialogue
-    8. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
-    9. Use visual language in narration that suggests what should be drawn in the panel.
-    10. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
+    5. Format narration as regular paragraphs inside each panel.
+    6. Format dialogue with character names and their lines as: **Character Name:** Their dialogue
+    7. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
+    8. Use visual language in narration that suggests what should be drawn in the panel.
+    9. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
     
     Note: The input is already formatted with narration paragraphs and character dialogues in the format "Character: dialogue".
     Your job is to organize this into the comic book page and panel structure while maintaining the original dialogue.
@@ -44,7 +43,7 @@ def convert_formatted_to_comic(formatted_text):
         messages=[
             {
                 "role": "system",
-                "content": "You are a comic book creation assistant that formats pre-structured narration and dialogue into comic book layouts with pages and panels. Follow standard comic conventions where each panel has at most one narration block followed by character dialogues.",
+                "content": "You are a comic book creation assistant that formats pre-structured narration and dialogue into comic book layouts with pages and panels.",
             },
             {
                 "role": "user",
@@ -63,7 +62,6 @@ def process_formatted_file(file_path):
     """
     Process a file with pre-formatted narration and dialogue and convert it to comic format
     """
-    # Read the input file
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             formatted_text = file.read()
@@ -74,20 +72,16 @@ def process_formatted_file(file_path):
         print(f"Error reading file: {e}")
         return None
     
-    # Convert formatted text to comic format
     comic_text = convert_formatted_to_comic(formatted_text)
     
-    # Save the result as markdown file
     output_file = os.path.splitext(file_path)[0] + "_comic.md"
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(comic_text)
     
     print(f"Comic format saved to {output_file}")
     
-    
     return comic_text
 
-# Example usage
 if __name__ == "__main__":
     input_file = "test_2.txt"
     
