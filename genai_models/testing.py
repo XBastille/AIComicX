@@ -63,7 +63,6 @@ def process_formatted_file(file_path):
     """
     Process a file with pre-formatted narration and dialogue and convert it to comic format
     """
-    # Read the input file
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             formatted_text = file.read()
@@ -74,10 +73,8 @@ def process_formatted_file(file_path):
         print(f"Error reading file: {e}")
         return None
     
-    # Convert formatted text to comic format
     comic_text = convert_formatted_to_comic(formatted_text)
     
-    # Save the result as markdown file
     output_file = os.path.splitext(file_path)[0] + "_comic.md"
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(comic_text)
@@ -87,7 +84,6 @@ def process_formatted_file(file_path):
     
     return comic_text
 
-# Example usage
 if __name__ == "__main__":
     input_file = "test_2.txt"
     
