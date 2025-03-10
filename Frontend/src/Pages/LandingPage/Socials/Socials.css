@@ -1,0 +1,140 @@
+body{
+    background-color: #000000;
+}
+
+.container{
+    display: flex;
+    flex-direction: column;
+}
+
+.tag{
+    font-size: 5em;
+    margin-top: 80px;
+    margin-left: 30px;
+    background: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: "'Michroma', sans-serif";
+    
+}
+
+.underline{
+    height: 4px;
+    width: 1510px;
+    background: white;
+    margin-left: 30px;
+}
+
+.links{
+    display: flex;
+    margin-top: 60px;
+}
+
+.underline2{
+    height: 2px;
+    width: 1420px;
+    background: white;
+    margin-left: 70px;
+}
+
+h2{
+    font-size: 2em;
+    color: white;
+    margin-left: 70px;
+}
+
+.links{
+    display: flex;
+    flex-direction: column;
+}
+
+.accounts{
+    display: flex;
+    flex-direction: row;
+    gap: 100px;
+    margin-top: 50px;
+    margin-left: 70px;
+}
+
+.linkedin{
+    background: black;
+    border: 1px solid white;
+    border-radius: 10px;
+    text-align: center;
+    padding: 60px;
+    cursor: pointer;
+}
+
+a{
+    text-decoration: none;
+}
+
+.linkedin:hover{
+    background: linear-gradient(90deg, #662D8C, #ED1E79);
+    box-shadow: 6px 6px 6px white;
+    border: transparent;
+    
+}
+
+.github{
+    background: black;
+    border: 1px solid white;
+    border-radius: 10px;
+    text-align: center;
+    padding: 60px;
+    cursor: pointer;
+}
+
+.github:hover{
+    background: linear-gradient(90deg, #662D8C, #ED1E79);
+    border: transparent;
+    box-shadow: 6px 6px 6px white;
+
+}
+
+.instagram{
+    background: black;
+    border: 1px solid white;
+    border-radius: 10px;
+    text-align: center;
+    padding: 60px;
+    cursor: pointer;
+}
+
+.instagram:hover{
+    background: linear-gradient(90deg, #662D8C, #ED1E79);
+    border: transparent;
+    box-shadow: 6px 6px 6px white;
+
+}
+
+.twitter{
+    background: black;
+    border: 1px solid white;
+    border-radius: 10px;
+    text-align: center;
+    padding: 60px;
+    cursor: pointer; 
+}
+
+.twitter:hover{
+    background: linear-gradient(90deg, #662D8C, #ED1E79);
+    border: transparent;
+    box-shadow: 6px 6px 6px white;
+
+}
+
+
+
+.account-name{
+    color: white;
+    font-size: 20px;
+    font-weight: bolder;
+    margin-top: 20px;
+}
+
+.placeimage{
+    height: 130px;
+    width: 130px;
+}
+
