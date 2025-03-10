@@ -180,7 +180,6 @@ const styles = {
         height: '100vh',
         zIndex: "1",
         position: "relative",
-        filter: "drop-shadow(0px 100px 100px rgba(255, 0, 150, 1))",  // Pinkish glow effect
     },
 
     title: {
