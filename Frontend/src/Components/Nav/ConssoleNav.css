@@ -1,0 +1,85 @@
+.navbar{
+  background-color: rgb(26, 19, 29);
+  position: relative;
+  top: 0px;
+  width: 100vw;
+  box-shadow: 0px 3px 3px rgb(255, 255, 255);
+  height: 110px;
+}
+
+.art-options{
+    min-height: 10px;
+    height: 40px;
+    width: 169px;
+    overflow: scroll;
+    padding: 8px 12px;
+    border-radius: 5px;
+    align-items: center;
+}
+
+.art-options:hover{
+   background-color: rgb(202, 201, 201);
+}
+
+.grid-box{
+
+    min-height: 10px;
+    height: 40px;
+    width: 169px;
+    overflow: scroll;
+    padding: 8px 12px;
+    border-radius: 5px;
+    align-items: center;
+    box-shadow:  rgba(114, 113, 113 , 0,5);
+}
+
+.style-options{
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.Settings{
+    border: 2px solid #d72b59;
+    background: transparent;
+    color: white;
+    padding: 10px 40px;
+    border-radius: 43px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: border 0.3s ease;
+}
+
+.Settings:hover{
+      background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
+
+}
+
+.Download-pdf{
+    border: 2px solid #d72b59;
+    background: transparent;
+    color: white;
+    padding: 10px 40px;
+    border-radius: 43px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 700px;
+    cursor: pointer;
+    transition: border 0.3s ease;
+}
+
+.Download-pdf:hover{
+      background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
+
+}
+
+.Efforts{
+    height: 250px;
+    width: 250px;
+    z-index: 1;
+    object-fit: fill;
+    position: absolute;
+    margin-left: 600px;
+}
+
