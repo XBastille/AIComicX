@@ -27,11 +27,31 @@ def convert_formatted_to_comic(formatted_text):
     3. Label panels with: ### Panel 1, ### Panel 2, etc.
     4. Each panel must contain maximum 3 dialogue lines.
     5. IMPORTANT: Each panel should contain only ONE narration block if it has dialogues, else only 2.
-    6. Format narration as regular paragraphs inside each panel.
-    7. Format dialogue with character names and their lines as: **Character Name:** Their dialogue
-    8. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
-    9. Use visual language in narration that suggests what should be drawn in the panel.
-    10. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
+    6. IMPORTANT: if the story doesn't have names for the character then add a name to them.
+    7. Format narration as regular paragraphs inside each panel.
+    8. Format dialogue with character names and their lines as: **Character Name:** Their dialogue
+    9. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
+    10. Use visual language in narration that suggests what should be drawn in the panel and put them in the square bracket.
+    11. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
+    
+    Example of your output:
+    ## Page 1
+
+    ### Panel 1  
+    [detailed description of the scene]
+
+    **Character A:** character A's dialogue
+
+    **Character B:** character B's dialogue
+
+    ---
+
+    ### Panel 2  
+    [detailed description of the scene]
+
+    **Character A:** character A's dialogue
+
+    **Character B:** character B's dialogue
     
     Note: The input is already formatted with narration paragraphs and character dialogues in the format "Character: dialogue".
     Your job is to organize this into the comic book page and panel structure while maintaining the original dialogue.
@@ -51,10 +71,7 @@ def convert_formatted_to_comic(formatted_text):
                 "content": prompt,
             }
         ],
-        model="gpt-4o",
-        temperature=0.7,
-        max_tokens=4096,
-        top_p=1
+        model="o1",
     )
 
     return response.choices[0].message.content

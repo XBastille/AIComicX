@@ -31,6 +31,25 @@ def convert_formatted_to_comic(formatted_text):
     7. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
     8. Use visual language in narration that suggests what should be drawn in the panel.
     9. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
+
+    Example of your output:
+    ## Page 1
+
+    ### Panel 1  
+    [detailed description of the scene]
+
+    **Character A:** character A's dialogue
+
+    **Character B:** character B's dialogue
+
+    ---
+
+    ### Panel 2  
+    [detailed description of the scene]
+
+    **Character A:** character A's dialogue
+
+    **Character B:** character B's dialogue
     
     Note: The input is already formatted with narration paragraphs and character dialogues in the format "Character: dialogue".
     Your job is to organize this into the comic book page and panel structure while maintaining the original dialogue.

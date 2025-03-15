@@ -1,997 +1,479 @@
 import requests
-import cv2
 import numpy as np
-import os
-import math
 from PIL import Image, ImageDraw, ImageFont
+import textwrap
+import math
+import random
+import os
 
-def detect_characters(image_path, prompts):
-    """Call the API and extract multiple bounding boxes for different characters"""
-    url = "https://api.landing.ai/v1/tools/agentic-object-detection"
-    bounding_boxes = []
-    
-    for prompt in prompts:
-        with open(image_path, "rb") as img_file:
-            files = {"image": img_file}
+class SpeechBubbleGenerator:
+    def __init__(self, image_path, api_key, detection_prompt=None, 
+                 bubble_padding=15, arrow_size=20, font_path="animeace2bb_tt/animeace2_bld.ttf", 
+                 bubble_color=(255, 255, 255), text_color=(0, 0, 0), border_width=2, border_color=(0, 0, 0),
+                 narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255), narration_padding=20):
+        """Initialize the speech bubble generator."""
+        self.image_path = image_path
+        self.api_key = api_key
+        self.bubble_padding = bubble_padding
+        self.arrow_size = arrow_size
+        self.font_path = font_path
+        self.bubble_color = bubble_color
+        self.text_color = text_color
+        self.border_width = border_width
+        self.border_color = border_color
+        
+        self.narration_bg_color = narration_bg_color
+        self.narration_text_color = narration_text_color
+        self.narration_padding = narration_padding
+        
+        self.original_image = Image.open(image_path)
+        self.image = self.original_image.copy()
+        self.width, self.height = self.image.size
+        self.draw = ImageDraw.Draw(self.image)
+        
+        self.character_boxes = []
+        self.character_descriptions = {}
+        
+    def detect_character(self, description):
+        """Detect a specific character using the agentic-object-detection API."""
+        url = "https://api.va.landing.ai/v1/tools/agentic-object-detection"
+        
+        try:
+            files = {"image": open(self.image_path, "rb")}
+            data = {"prompts": f"Detect {description}", "model": "agentic"}
+            headers = {"Authorization": f"Basic {self.api_key}"}
             
-            data = {
-                "prompts": prompt,
-                "model": "agentic"
-            }
-            
-            headers = {
-                "Authorization": f"Basic {os.environ.get('LANDING_AI_API_KEY')}"
-            }
+            print(f"Detecting: {description}")
             
             response = requests.post(url, files=files, data=data, headers=headers)
-            result = response.json()
             
-            try:
-                box = result['data'][0][0]['bounding_box']
-                bounding_boxes.append(box)
-                print(f"Found character for prompt '{prompt}': {box}")
-            except (KeyError, IndexError) as e:
-                print(f"Error extracting bounding box for prompt '{prompt}': {e}")
-    
-    return bounding_boxes
-
-def get_comic_font(size=24):
-    """Get an appropriate comic-style font with platform-independent paths"""
-    font_paths = [
-        "animeace2bb_tt/animeace2_bld.ttf",
-    ]
-    
-    for font_path in font_paths:
-        try:
-            font = ImageFont.truetype(font_path, size)
-            print(f"Using font: {font_path}")
-            return font
-        except IOError:
-            continue
-    
-    print("No comic fonts found, using default font")
-    return ImageFont.load_default()
-
-def wrap_text_pil(text, font, max_width):
-    """Wrap text to fit within maximum width using PIL font"""
-    words = text.split(' ')
-    wrapped_lines = []
-    current_line = []
-    
-    for word in words:
-        test_line = ' '.join(current_line + [word])
-        text_width = font.getbbox(test_line)[2]
-        
-        if text_width <= max_width:
-            current_line.append(word)
-        else:
-            if current_line:
-                wrapped_lines.append(' '.join(current_line))
-                current_line = [word]
-            else:
-                if len(word) > 10:
-                    half = len(word) // 2
-                    wrapped_lines.append(word[:half] + "-")
-                    current_line = [word[half:]]
-                else:
-                    wrapped_lines.append(word)
-                    current_line = []
-    
-    if current_line:
-        wrapped_lines.append(' '.join(current_line))
-        
-    return wrapped_lines
-
-def calculate_text_dimensions_pil(lines, font, line_spacing):
-    """Calculate dimensions for wrapped text using PIL font"""
-    max_width = 0
-    total_height = 0
-    line_heights = []
-    
-    for line in lines:
-        bbox = font.getbbox(line)
-        line_width = bbox[2] - bbox[0]
-        line_height = bbox[3] - bbox[1]
-        line_heights.append(line_height)
-        max_width = max(max_width, line_width)
-        total_height += line_height
-    
-    if len(lines) > 1:
-        total_height += line_spacing * (len(lines) - 1)
-    
-    return max_width, total_height, line_heights
-
-def draw_comic_tail(img, bubble_x, bubble_y, bubble_width, bubble_height, target_x, target_y, pointer_position):
-    """Draw a comic-style speech bubble tail using OpenCV with improved connection"""
-    overlay = img.copy()
-    
-    tail_narrowness = 6 
-    
-    if pointer_position == "bottom":
-        bubble_bottom = int(bubble_y + bubble_height)
-        bubble_connect_x = min(max(int(target_x), int(bubble_x + 20)), int(bubble_x + bubble_width - 20))
-        
-        tail_width_at_bubble = min(25, int(bubble_width / tail_narrowness))
-        
-        left_curve_x = max(int(bubble_connect_x - tail_width_at_bubble/2), int(bubble_x))
-        right_curve_x = min(int(bubble_connect_x + tail_width_at_bubble/2), int(bubble_x + bubble_width))
-        
-        points = np.array([
-            [left_curve_x, bubble_bottom],                  
-            [int(target_x - 8), bubble_bottom + 5],        
-            [target_x, target_y],                          
-            [int(target_x + 8), bubble_bottom + 5],        
-            [right_curve_x, bubble_bottom],                
-        ], np.int32)
-        
-    elif pointer_position == "top":
-        bubble_top = int(bubble_y)
-        bubble_connect_x = min(max(int(target_x), int(bubble_x + 20)), int(bubble_x + bubble_width - 20))
-        
-        tail_width_at_bubble = min(25, int(bubble_width / tail_narrowness))
-        
-        left_curve_x = max(int(bubble_connect_x - tail_width_at_bubble/2), int(bubble_x))
-        right_curve_x = min(int(bubble_connect_x + tail_width_at_bubble/2), int(bubble_x + bubble_width))
-        
-        points = np.array([
-            [left_curve_x, bubble_top],                     
-            [int(target_x - 8), bubble_top - 5],            
-            [target_x, target_y],                           
-            [int(target_x + 8), bubble_top - 5],            
-            [right_curve_x, bubble_top],                    
-        ], np.int32)
-        
-    elif pointer_position == "left":
-        
-        bubble_left = int(bubble_x)
-        
-        bubble_connect_y = min(max(int(target_y), int(bubble_y + 20)), int(bubble_y + bubble_height - 20))
-        
-        tail_height_at_bubble = min(25, int(bubble_height / tail_narrowness))
-        
-        top_curve_y = max(int(bubble_connect_y - tail_height_at_bubble/2), int(bubble_y))
-        bottom_curve_y = min(int(bubble_connect_y + tail_height_at_bubble/2), int(bubble_y + bubble_height))
-        
-        points = np.array([
-            [bubble_left, top_curve_y],                    
-            [bubble_left - 5, int(target_y - 8)],          
-            [target_x, target_y],                          
-            [bubble_left - 5, int(target_y + 8)],          
-            [bubble_left, bottom_curve_y],                  
-        ], np.int32)
-        
-    elif pointer_position == "right":
-        bubble_right = int(bubble_x + bubble_width)
-        bubble_connect_y = min(max(int(target_y), int(bubble_y + 20)), int(bubble_y + bubble_height - 20))
-        
-        tail_height_at_bubble = min(25, int(bubble_height / tail_narrowness))
-        
-        top_curve_y = max(int(bubble_connect_y - tail_height_at_bubble/2), int(bubble_y))
-        bottom_curve_y = min(int(bubble_connect_y + tail_height_at_bubble/2), int(bubble_y + bubble_height))
-        
-        points = np.array([
-            [bubble_right, top_curve_y],                   
-            [bubble_right + 5, int(target_y - 8)],         
-            [target_x, target_y],                          
-            [bubble_right + 5, int(target_y + 8)],          
-            [bubble_right, bottom_curve_y],                
-        ], np.int32)
-    
-    cv2.fillPoly(overlay, [points], (255, 255, 255))
-    img = cv2.addWeighted(overlay, 1.0, img, 0.0, 0)
-    cv2.polylines(img, [points], True, (0, 0, 0), 2, cv2.LINE_AA)
-    
-    return img
-
-def calculate_bubble_dimensions(text, font, font_size, max_width, line_spacing):
-    """Calculate dimensions for a speech bubble based on text content"""
-    font = get_comic_font(size=font_size)
-    
-    wrap_width = max_width - 60 
-    
-    wrapped_lines = wrap_text_pil(text, font, wrap_width)
-    
-    text_width, text_height, line_heights = calculate_text_dimensions_pil(
-        wrapped_lines, font, line_spacing
-    )
-    
-    text_length = len(text)
-    if text_length < 20:  
-        horizontal_padding = 40
-        vertical_padding = 30
-        
-        padding_factor = max(1.0, min(1.5, text_length / 10))
-        bubble_width = text_width + int(horizontal_padding * padding_factor)
-        bubble_height = text_height + int(vertical_padding * padding_factor)
-        
-        if text_length < 10:  
-            avg_size = (bubble_width + bubble_height) / 2
-            bubble_width = max(int(avg_size * 1.2), bubble_width)
-            bubble_height = max(int(avg_size * 0.9), bubble_height)
-    else: 
-        horizontal_padding = 60
-        vertical_padding = 40
-        bubble_width = text_width + horizontal_padding
-        bubble_height = text_height + vertical_padding
-    
-    min_bubble_width = max(120, int(text_width * 1.2))
-    min_bubble_height = max(80, int(text_height * 1.5))
-    
-    bubble_width = max(bubble_width, min_bubble_width)
-    bubble_height = max(bubble_height, min_bubble_height)
-    
-    optimal_aspect_ratio = 1.5
-    current_ratio = bubble_width / bubble_height
-    
-    if text_length < 20:  
-        if current_ratio > 2.2:
-            bubble_height = int(bubble_width / 1.8)
-        elif current_ratio < 0.8:
-            bubble_width = int(bubble_height * 1.2)
-    else:  
-        if current_ratio > 2.0:
-            bubble_height = int(bubble_width / optimal_aspect_ratio)
-        elif current_ratio < 1.0:
-            bubble_width = int(bubble_height * optimal_aspect_ratio)
-    
-    return bubble_width, bubble_height, wrapped_lines, text_width, text_height, line_heights
-
-def draw_single_bubble(img, text, bubble_x, bubble_y, bubble_width, bubble_height, 
-                      target_x, target_y, pointer_position, wrapped_lines, line_heights):
-    """Draw a single speech bubble with text on the image"""
-    overlay = img.copy()
-    
-    cv2.ellipse(
-        overlay, 
-        (int(bubble_x + bubble_width/2), int(bubble_y + bubble_height/2)),
-        (int(bubble_width/2), int(bubble_height/2)),
-        0,
-        0, 360,
-        (255, 255, 255),
-        -1
-    )
-    
-    img = cv2.addWeighted(overlay, 1.0, img, 0.0, 0)
-    
-    num_points = 60
-    points = []
-    for i in range(num_points):
-        angle = 2 * np.pi * i / num_points
-        wobble = np.sin(angle * 6) * 2
-        x = int(bubble_x + bubble_width/2 + (bubble_width/2 + wobble) * np.cos(angle))
-        y = int(bubble_y + bubble_height/2 + (bubble_height/2 + wobble) * np.sin(angle))
-        points.append([x, y])
-    
-    points = np.array(points, np.int32)
-    points = points.reshape((-1, 1, 2))
-    cv2.polylines(img, [points], True, (0, 0, 0), 2, cv2.LINE_AA)
-    
-    img = draw_comic_tail(img, bubble_x, bubble_y, bubble_width, bubble_height, target_x, target_y, pointer_position)
-    
-    cv_img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    pil_img = Image.fromarray(cv_img_rgb)
-    draw = ImageDraw.Draw(pil_img)
-    
-    font = get_comic_font(size=26)
-    line_spacing = 14
-    
-    text_height = sum(line_heights) + line_spacing * (len(wrapped_lines) - 1)
-    remaining_height = bubble_height - text_height
-    top_padding = remaining_height // 2
-    
-    y_offset = int(bubble_y + top_padding)
-    
-    for i, line in enumerate(wrapped_lines):
-        bbox = font.getbbox(line)
-        line_width = bbox[2] - bbox[0]
-        line_height = line_heights[i]
-        
-        text_x = int(bubble_x + (bubble_width - line_width) / 2)
-        
-        draw.text((text_x, y_offset), line, fill=(0, 0, 0), font=font)
-        
-        y_offset += line_height + line_spacing
-    
-    return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-
-def check_bubble_overlap(bubble1, bubble2, padding=20):
-    """Check if two bubbles overlap with padding"""
-    x1, y1, w1, h1 = bubble1
-    x2, y2, w2, h2 = bubble2
-    
-    x1 -= padding
-    y1 -= padding
-    w1 += 2 * padding
-    h1 += 2 * padding
-    x2 -= padding
-    y2 -= padding
-    w2 += 2 * padding
-    h2 += 2 * padding
-    
-    return not (x1 + w1 < x2 or x2 + w2 < x1 or y1 + h1 < y2 or y2 + h2 < y1)
-
-def get_best_bubble_position(img_width, img_height, bounding_box, bubble_width, bubble_height, 
-                             existing_bubbles=None, bubble_index=0):
-    """Find best position for a bubble avoiding overlap with existing bubbles"""
-    if existing_bubbles is None:
-        existing_bubbles = []
-    
-    x1, y1, x2, y2 = map(int, bounding_box)
-    box_width = x2 - x1
-    box_height = y2 - y1
-    box_center_x = (x1 + x2) // 2
-    box_center_y = (y1 + y2) // 2
-    
-    bubble_margin = 50
-    top_margin = 70
-    edge_margin = 30  
-    
-    max_x = img_width - bubble_width - edge_margin
-    max_y = img_height - bubble_height - edge_margin
-    min_x = edge_margin
-    min_y = edge_margin
-    
-    positions = []
-    
-    if bubble_index == 0:
-        if y1 > bubble_height + bubble_margin:  
-            positions = ["top", "right", "left"]
-        else: 
-            positions = ["right", "left", "top"]
-    else:
-        positions = ["top", "right", "left", "top-shifted-right", "top-shifted-left"]
-    
-    for pos in positions:
-        if pos == "top":
-            bubble_x = box_center_x - bubble_width // 2
-            bubble_y = max(min_y, y1 - bubble_height - 20) 
-            pointer_position = "bottom"
-            target_x = box_center_x
-            target_y = y1
-        elif pos == "right":
-            bubble_x = min(max_x, x2 + 20)  
-            bubble_y = box_center_y - bubble_height // 2
-            pointer_position = "left"
-            target_x = x2
-            target_y = box_center_y
-        elif pos == "left":
-            bubble_x = max(min_x, x1 - bubble_width - 20) 
-            bubble_y = box_center_y - bubble_height // 2
-            pointer_position = "right"
-            target_x = x1
-            target_y = box_center_y
-        elif pos == "top-shifted-right":
-            bubble_x = min(max_x, box_center_x)  
-            bubble_y = max(min_y, y1 - bubble_height - 20)
-            pointer_position = "bottom"
-            target_x = box_center_x + box_width // 4  
-            target_y = y1
-        elif pos == "top-shifted-left":
-            bubble_x = max(min_x, box_center_x - bubble_width)  
-            bubble_y = max(min_y, y1 - bubble_height - 20)
-            pointer_position = "bottom"
-            target_x = box_center_x - box_width // 4  
-            target_y = y1
-        else:
-            bubble_x = box_center_x - bubble_width // 2
-            bubble_y = max(min_y, y1 - bubble_height - 20)
-            pointer_position = "bottom"
-            target_x = box_center_x
-            target_y = y1
-        
-        bubble_x = max(min_x, min(bubble_x, max_x))
-        bubble_y = max(min_y, min(bubble_y, max_y))
-        
-        current_bubble = (bubble_x, bubble_y, bubble_width, bubble_height)
-        overlap = False
-        
-        for existing_bubble in existing_bubbles:
-            if check_bubble_overlap(current_bubble, existing_bubble):
-                overlap = True
-                break
-        
-        if not overlap:
-            return bubble_x, bubble_y, pointer_position, target_x, target_y
-    
-    bubble_spacing = 30
-    
-    if existing_bubbles:
-        highest_bubble = min(existing_bubbles, key=lambda b: b[1])
-        
-        bubble_x = highest_bubble[0]
-        bubble_y = max(min_y, highest_y - bubble_height - bubble_spacing)
-        
-        bubble_x = max(min_x, min(bubble_x, max_x))
-        bubble_y = max(min_y, min(bubble_y, max_y))
-        
-        pointer_position = "bottom"
-        target_x = box_center_x
-        target_y = y1
-        
-        current_bubble = (bubble_x, bubble_y, bubble_width, bubble_height)
-        overlap = False
-        
-        for existing_bubble in existing_bubbles:
-            if check_bubble_overlap(current_bubble, existing_bubble):
-                overlap = True
-                break
-        
-        if not overlap:
-            return bubble_x, bubble_y, pointer_position, target_x, target_y
-    
-    grid_step_x = img_width // 4
-    grid_step_y = img_height // 4
-    
-    for grid_y in range(min_y, img_height - bubble_height - edge_margin, grid_step_y):
-        for grid_x in range(min_x, img_width - bubble_width - edge_margin, grid_step_x):
-            bubble_x = grid_x
-            bubble_y = grid_y
-            
-            pointer_position = "bottom"  
-            
-            if grid_y > box_center_y:  
-                target_x = box_center_x
-                target_y = y2  
-                pointer_position = "top"  
-            elif grid_x > box_center_x: 
-                target_x = x2  
-                target_y = box_center_y
-                pointer_position = "left" 
-            elif grid_x + bubble_width < box_center_x:  
-                target_x = x1 
-                target_y = box_center_y
-                pointer_position = "right"  
-            else:  
-                target_x = box_center_x
-                target_y = y1  
-                pointer_position = "bottom" 
-            
-            current_bubble = (bubble_x, bubble_y, bubble_width, bubble_height)
-            min_overlap_score = float('inf')
-            min_overlap_position = None
-            
-            overlap_score = 0
-            for existing_bubble in existing_bubbles:
-                if check_bubble_overlap(current_bubble, existing_bubble, padding=10):
+            if response.status_code != 200:
+                print(f"API Error: Status code {response.status_code}")
+                print(f"Response: {response.text}")
+                return None
                 
-                    ex, ey, ew, eh = existing_bubble
-                    overlap_x = min(bubble_x + bubble_width, ex + ew) - max(bubble_x, ex)
-                    overlap_y = min(bubble_y + bubble_height, ey + eh) - max(bubble_y, ey)
-                    if overlap_x > 0 and overlap_y > 0:
-                        overlap_score += overlap_x * overlap_y
+            result = response.json()
+            print(f"API Response for '{description}':", result)  
             
-            if overlap_score < min_overlap_score:
-                min_overlap_score = overlap_score
-                min_overlap_position = (bubble_x, bubble_y, pointer_position, target_x, target_y)
+            if 'data' in result and isinstance(result['data'], list) and len(result['data']) > 0:
+                for detection_list in result['data']:
+                    if detection_list and len(detection_list) > 0:
+                        detection = detection_list[0]
+                        if 'bounding_box' in detection:
+                            x1, y1, x2, y2 = detection['bounding_box']
+                            char_box = {
+                                'bbox': [x1, y1, x2, y2],
+                                'center': [(x1 + x2) / 2, (y1 + y2) / 2],
+                                'description': description
+                            }
+                            print(f"Found '{description}' at position {char_box['bbox']}")
+                            return char_box
+            
+            print(f"No detection for '{description}'")
+            return None
+            
+        except Exception as e:
+            print(f"Error in character detection for '{description}': {e}")
+            import traceback
+            traceback.print_exc()
+            return None
     
-    if min_overlap_position:
-        return min_overlap_position
-    
-    bubble_x = min(max_x, box_center_x - bubble_width // 2)
-    bubble_y = max(min_y, y1 - bubble_height - 20)
-    pointer_position = "bottom"
-    target_x = box_center_x
-    target_y = y1
-    
-    return bubble_x, bubble_y, pointer_position, target_x, target_y
-
-def draw_multi_speech_bubbles(image_path, bounding_box, texts):
-    """Draw multiple speech bubbles for the same character with non-overlapping placement"""
-    cv_img = cv2.imread(image_path)
-    if cv_img is None:
-        print(f"Error: Could not read image at {image_path}")
-        return None
-    
-    img_height, img_width = cv_img.shape[:2]
-    
-    font_size = 26
-    max_bubble_width = min(300, img_width // 3) 
-    line_spacing = 14
-    
-    existing_bubbles = []
-    
-    bubble_data = []
-    for text in texts:
-        bubble_width, bubble_height, wrapped_lines, text_width, text_height, line_heights = (
-            calculate_bubble_dimensions(text, None, font_size, max_bubble_width, line_spacing)
-        )
+    def calculate_text_size(self, text, font_size=20):
+        """Calculate the dimensions needed for the text."""
+        font = ImageFont.truetype(self.font_path, font_size)
         
-        bubble_data.append({
-            'text': text,
-            'width': bubble_width,
-            'height': bubble_height,
-            'wrapped_lines': wrapped_lines,
-            'line_heights': line_heights
-        })
-    
-    for i, data in enumerate(bubble_data):
-        bubble_x, bubble_y, pointer_position, target_x, target_y = get_best_bubble_position(
-            img_width, img_height, bounding_box, 
-            data['width'], data['height'], 
-            existing_bubbles,
-            i  
-        )
+        max_width_scale = 0.25  
+        max_line_width = int(self.width * max_width_scale)
         
-        print(f"Bubble {i}: Position ({bubble_x}, {bubble_y}), Size: {data['width']}x{data['height']}")
-        print(f"    Pointer: {pointer_position}, Target: ({target_x}, {target_y})")
+        avg_char_width = font.getlength("X")
+        chars_per_line = max(8, int(max_line_width / avg_char_width))
+        lines = textwrap.wrap(text, width=chars_per_line)
         
-        cv_img = draw_single_bubble(
-            cv_img, data['text'], 
-            bubble_x, bubble_y, 
-            data['width'], data['height'],
-            target_x, target_y, 
-            pointer_position,
-            data['wrapped_lines'], 
-            data['line_heights']
-        )
+        line_heights = []
+        line_widths = []
+        for line in lines:
+            left, top, right, bottom = font.getbbox(line)
+            line_widths.append(right - left)
+            line_heights.append(bottom - top)
         
-        existing_bubbles.append((bubble_x, bubble_y, data['width'], data['height']))
-    
-    base_name = os.path.splitext(image_path)[0]
-    output_path = f"{base_name}_with_bubbles.jpg"
-    cv2.imwrite(output_path, cv_img)
-    print(f"Image saved as {output_path}")
-    
-    return output_path
-
-def get_best_bubble_position_multi_character(img_width, img_height, character_boxes, character_index, 
-                                           bubble_width, bubble_height, all_bubbles=None, bubble_index=0):
-    """Find optimal bubble position with flexible edge placement"""
-    if all_bubbles is None:
-        all_bubbles = []
-    
-    current_box = character_boxes[character_index]
-    x1, y1, x2, y2 = map(int, current_box)
-    box_width = x2 - x1
-    box_height = y2 - y1
-    box_center_x = (x1 + x2) // 2
-    box_center_y = (y1 + y2) // 2
-    
-    edge_margin = 30
-    max_x = img_width - bubble_width - edge_margin
-    max_y = img_height - bubble_height - edge_margin
-    min_x = edge_margin
-    min_y = edge_margin
-    
-    space_top = y1 - min_y
-    space_bottom = max_y - y2
-    space_left = x1 - min_x
-    space_right = max_x - x2
-    
-    has_space_top = space_top >= bubble_height + 20
-    has_space_bottom = space_bottom >= bubble_height + 20
-    has_space_left = space_left >= bubble_width + 20
-    has_space_right = space_right >= bubble_width + 20
-    
-    target_points = []
-    
-    if has_space_top:
-        for i in range(5):
-            offset = (i - 2) * (box_width / 8)  
-            tx = box_center_x + offset
-            if x1 < tx < x2:  
-                target_points.append({
-                    'position': "top",
-                    'target_x': tx,
-                    'target_y': y1,
-                    'bubble_x': tx - bubble_width / 2,
-                    'bubble_y': max(min_y, y1 - bubble_height - 20),
-                    'pointer': "bottom"
-                })
-    
-    if has_space_bottom:
-        for i in range(5):
-            offset = (i - 2) * (box_width / 8)
-            tx = box_center_x + offset
-            if x1 < tx < x2:
-                target_points.append({
-                    'position': "bottom",
-                    'target_x': tx,
-                    'target_y': y2,
-                    'bubble_x': tx - bubble_width / 2,
-                    'bubble_y': min(max_y, y2 + 20),
-                    'pointer': "top"
-                })
-    
-    if has_space_left:
-        for i in range(5):
-            offset = (i - 2) * (box_height / 8)
-            ty = box_center_y + offset
-            if y1 < ty < y2:
-                target_points.append({
-                    'position': "left",
-                    'target_x': x1,
-                    'target_y': ty,
-                    'bubble_x': max(min_x, x1 - bubble_width - 20),
-                    'bubble_y': ty - bubble_height / 2,
-                    'pointer': "right"
-                })
-    
-    if has_space_right:
-        for i in range(5):
-            offset = (i - 2) * (box_height / 8)
-            ty = box_center_y + offset
-            if y1 < ty < y2:
-                target_points.append({
-                    'position': "right",
-                    'target_x': x2,
-                    'target_y': ty,
-                    'bubble_x': min(max_x, x2 + 20),
-                    'bubble_y': ty - bubble_height / 2,
-                    'pointer': "left"
-                })
-    
-    if not target_points:
-        if bubble_index == 0:
-            defaults = [("top", "bottom"), ("right", "left"), ("left", "right"), ("bottom", "top")]
-        elif bubble_index == 1:
-            defaults = [("right", "left"), ("top", "bottom"), ("left", "right"), ("bottom", "top")]
-        else:
-            defaults = [("left", "right"), ("top", "bottom"), ("right", "left"), ("bottom", "top")]
+        if not line_heights or not line_widths:  
+            return 0, 0, []
+            
+        text_width = max(line_widths)
+        text_height = sum(line_heights)
         
-        for pos, pointer in defaults:
-            if pos == "top":
-                target_points.append({
-                    'position': "top",
-                    'target_x': box_center_x,
-                    'target_y': y1,
-                    'bubble_x': box_center_x - bubble_width / 2,
-                    'bubble_y': max(min_y, y1 - bubble_height - 20),
-                    'pointer': pointer
-                })
-            elif pos == "bottom":
-                target_points.append({
-                    'position': "bottom",
-                    'target_x': box_center_x,
-                    'target_y': y2,
-                    'bubble_x': box_center_x - bubble_width / 2,
-                    'bubble_y': min(max_y, y2 + 20),
-                    'pointer': pointer
-                })
-            elif pos == "left":
-                target_points.append({
-                    'position': "left",
-                    'target_x': x1,
-                    'target_y': box_center_y,
-                    'bubble_x': max(min_x, x1 - bubble_width - 20),
-                    'bubble_y': box_center_y - bubble_height / 2,
-                    'pointer': pointer
-                })
-            elif pos == "right":
-                target_points.append({
-                    'position': "right",
-                    'target_x': x2,
-                    'target_y': box_center_y,
-                    'bubble_x': min(max_x, x2 + 20),
-                    'bubble_y': box_center_y - bubble_height / 2,
-                    'pointer': pointer
-                })
+        return text_width, text_height, lines
     
-    for point in target_points:
-        bubble_x = point['bubble_x']
-        bubble_y = point['bubble_y']
-        target_x = point['target_x']
-        target_y = point['target_y']
-        pointer_position = point['pointer']
+    def calculate_narration_size(self, text, font_size=20):
+        """Calculate the dimensions needed for narration text."""
+        font = ImageFont.truetype(self.font_path, font_size)
         
-        original_x, original_y = bubble_x, bubble_y
-        bubble_x = max(min_x, min(bubble_x, max_x))
-        bubble_y = max(min_y, min(bubble_y, max_y))
+        max_width_scale = 0.9  
+        max_line_width = int(self.width * max_width_scale)
         
-        current_bubble = (bubble_x, bubble_y, bubble_width, bubble_height)
+        avg_char_width = font.getlength("X")
+        chars_per_line = max(8, int(max_line_width / avg_char_width))
+        lines = textwrap.wrap(text, width=chars_per_line)
         
-        character_overlap = False
-        for char_idx, char_box in enumerate(character_boxes):
-            if char_idx == character_index:
+        line_heights = []
+        line_widths = []
+        for line in lines:
+            left, top, right, bottom = font.getbbox(line)
+            line_widths.append(right - left)
+            line_heights.append(bottom - top)
+        
+        if not line_heights or not line_widths:  
+            return 0, 0, []
+            
+        text_width = max(line_widths)
+        text_height = sum(line_heights)
+        
+        return text_width, text_height, lines
+    
+    def find_optimal_bubble_position(self, char_box, text, used_areas, font_size=20, attempt=0):
+        """Find the optimal position for a speech bubble for a specific character."""
+        if not char_box:
+            if attempt == 0:
+                print(f"No character box provided. Using random placement.")
+                return self.find_any_open_space(text, used_areas, font_size)
+            return None, None, None, None  
+            
+        char_center = char_box['center']
+        
+        text_width, text_height, lines = self.calculate_text_size(text, font_size)
+        
+        width_padding = self.bubble_padding * 1.5  
+        height_padding = self.bubble_padding
+        
+        bubble_width = text_width + width_padding * 2
+        bubble_height = text_height + height_padding * 2
+        
+        candidate_positions = [
+            (char_center[0] - bubble_width/2, char_box['bbox'][1] - bubble_height - self.arrow_size),  
+            (char_box['bbox'][2] + self.arrow_size, char_center[1] - bubble_height/2),               
+            (char_box['bbox'][0] - bubble_width - self.arrow_size, char_center[1] - bubble_height/2),  
+            (char_box['bbox'][0] - bubble_width, char_box['bbox'][1] - bubble_height),                
+            (char_box['bbox'][2], char_box['bbox'][1] - bubble_height),                              
+            (char_center[0] - bubble_width/2, char_box['bbox'][3] + self.arrow_size)                 
+        ]
+        
+        for _ in range(3):
+            rand_x = max(0, min(self.width - bubble_width, char_center[0] + random.randint(-200, 200)))
+            rand_y = max(0, min(self.height - bubble_height, char_center[1] + random.randint(-200, 200)))
+            candidate_positions.append((rand_x, rand_y))
+        
+        best_pos = None
+        best_score = float('-inf')
+        best_arrow_pos = None
+        
+        for pos_x, pos_y in candidate_positions:
+            margin = 5
+            if (pos_x < margin or pos_y < margin or 
+                pos_x + bubble_width > self.width - margin or 
+                pos_y + bubble_height > self.height - margin):
                 continue
+                
+            bubble_rect = [pos_x, pos_y, pos_x + bubble_width, pos_y + bubble_height]
             
-            cx1, cy1, cx2, cy2 = map(int, char_box)
-            char_rect = (cx1, cy1, cx2-cx1, cy2-cy1)
-            
-            if check_bubble_overlap_with_character(current_bubble, char_rect):
-                character_overlap = True
-                break
-        
-        bubble_overlap = False
-        for existing_bubble in all_bubbles:
-            if check_bubble_overlap(current_bubble, existing_bubble):
-                bubble_overlap = True
-                break
-        
-        if not character_overlap and not bubble_overlap:
-            return bubble_x, bubble_y, pointer_position, target_x, target_y
-    
-    edge_points = []
-    
-    if has_space_top:
-        for offset_x in range(-box_width, box_width, box_width//4):
-            tx = box_center_x + offset_x
-            if tx > edge_margin and tx < img_width - edge_margin:
-                edge_points.append({
-                    'position': "top",
-                    'target_x': max(min(tx, x2-5), x1+5), 
-                    'target_y': y1,
-                    'bubble_x': tx - bubble_width / 2,
-                    'bubble_y': max(min_y, y1 - bubble_height - 20),
-                    'pointer': "bottom"
-                })
-    
-    
-    for point in edge_points:
-        bubble_x = max(min_x, min(point['bubble_x'], max_x))
-        bubble_y = max(min_y, min(point['bubble_y'], max_y))
-        target_x = point['target_x']
-        target_y = point['target_y']
-        pointer_position = point['pointer']
-        
-        current_bubble = (bubble_x, bubble_y, bubble_width, bubble_height)
-        overlap = False
-        
-        for existing_bubble in all_bubbles:
-            if check_bubble_overlap(current_bubble, existing_bubble):
-                overlap = True
-                break
-        
-        if not overlap:
-            return bubble_x, bubble_y, pointer_position, target_x, target_y
-    
-    min_overlap_score = float('inf')
-    min_overlap_position = None
-    
-    grid_step_x = img_width // 8  
-    grid_step_y = img_height // 8
-    
-    for grid_y in range(min_y, img_height - bubble_height - edge_margin, grid_step_y):
-        for grid_x in range(min_x, img_width - bubble_width - edge_margin, grid_step_x):
-            bubble_x = grid_x
-            bubble_y = grid_y
-            
-            
-            if grid_x + bubble_width/2 < x1:  
-                target_x = x1
-                target_y = min(max(grid_y + bubble_height/2, y1), y2)
-                pointer_position = "right"
-            elif grid_x > x2:  
-                target_x = x2
-                target_y = min(max(grid_y + bubble_height/2, y1), y2)
-                pointer_position = "left"
-            elif grid_y + bubble_height < y1:  
-                target_x = min(max(grid_x + bubble_width/2, x1), x2)
-                target_y = y1
-                pointer_position = "bottom"
-            else: 
-                target_x = min(max(grid_x + bubble_width/2, x1), x2)
-                target_y = y2
-                pointer_position = "top"
-            
-            current_bubble = (bubble_x, bubble_y, bubble_width, bubble_height)
-            overlap_score = 0
-            
-            for existing_bubble in all_bubbles:
-                if check_bubble_overlap(current_bubble, existing_bubble, padding=10):
-                    ex, ey, ew, eh = existing_bubble
-                    overlap_x = min(bubble_x + bubble_width, ex + ew) - max(bubble_x, ex)
-                    overlap_y = min(bubble_y + bubble_height, ey + eh) - max(bubble_y, ey)
+            overlaps = False
+            for area in used_areas:
+                if self.check_overlap(bubble_rect, area):
+                    overlaps = True
+                    break
                     
-                    if overlap_x > 0 and overlap_y > 0:
-                        overlap_score += overlap_x * overlap_y
+            if overlaps:
+                continue
+                
+            arrow_pos = self.calculate_arrow_position_for_oval(bubble_rect, char_center)
             
-            if overlap_score < min_overlap_score:
-                min_overlap_score = overlap_score
-                min_overlap_position = (bubble_x, bubble_y, pointer_position, target_x, target_y)
-    
-    if min_overlap_position:
-        return min_overlap_position
-    
-    bubble_x = min(max_x, box_center_x - bubble_width // 2)
-    bubble_y = max(min_y, y1 - bubble_height - 20)
-    pointer_position = "bottom"
-    target_x = box_center_x
-    target_y = y1
-    
-    return bubble_x, bubble_y, pointer_position, target_x, target_y
-
-def check_bubble_overlap_with_character(bubble, char_box, padding=20):
-    """Check if a bubble overlaps with a character bounding box"""
-    bx, by, bw, bh = bubble
-    
-    cx, cy, cw, ch = char_box
-    
-    bx -= padding
-    by -= padding
-    bw += 2 * padding
-    bh += 2 * padding
-    
-    return not (bx + bw < cx or cx + cw < bx or by + bh < cy or cy + ch < by)
-
-def draw_multi_character_speech_bubbles(image_path, prompts, dialogs):
-    """Draw speech bubbles for multiple characters in an image"""
-    character_boxes = detect_characters(image_path, prompts)
-    
-    cv_img = cv2.imread(image_path)
-    if cv_img is None:
-        print(f"Error: Could not read image at {image_path}")
-        return None
-    
-    img_height, img_width = cv_img.shape[:2]
-    
-    font_size = 26
-    max_bubble_width = min(300, img_width // 3)
-    line_spacing = 14
-    
-    all_bubbles = []
-    
-    for char_idx, char_box in enumerate(character_boxes):
-        if char_idx >= len(dialogs):
-            print(f"Warning: No dialog for character {char_idx+1}")
-            continue
+            distance_to_char = math.sqrt(
+                (arrow_pos[0] - char_center[0])**2 + 
+                (arrow_pos[1] - char_center[1])**2
+            )
             
-        char_dialog = dialogs[char_idx]
+            height_score = self.height - pos_y
+            
+            centrality = -abs(pos_x + bubble_width/2 - self.width/2) + (self.height - pos_y)
+            
+            score = -distance_to_char + height_score * 0.5 + centrality * 0.3
+            
+            if score > best_score:
+                best_score = score
+                best_pos = (pos_x, pos_y, bubble_width, bubble_height)
+                best_arrow_pos = arrow_pos
+                
+        if best_pos:
+            return best_pos, best_arrow_pos, lines, font_size
         
-        bubble_width, bubble_height, wrapped_lines, _, _, line_heights = (
-            calculate_bubble_dimensions(char_dialog, None, font_size, max_bubble_width, line_spacing)
-        )
+        if font_size > 10:
+            return self.find_optimal_bubble_position(char_box, text, used_areas, font_size - 2, attempt)
         
-        bubble_x, bubble_y, pointer_position, target_x, target_y = get_best_bubble_position_multi_character(
-            img_width, img_height, 
-            character_boxes, char_idx,  
-            bubble_width, bubble_height, 
-            all_bubbles,  
-            0  
-        )
+        if attempt < 1:
+            print(f"Couldn't find position for character. Trying random placement.")
+            return self.find_any_open_space(text, used_areas, font_size)
         
-        cv_img = draw_single_bubble(
-            cv_img, char_dialog, 
-            bubble_x, bubble_y, 
-            bubble_width, bubble_height,
-            target_x, target_y, 
-            pointer_position,
-            wrapped_lines, 
-            line_heights
-        )
+        return None, None, None, None
+    
+    def find_any_open_space(self, text, used_areas, font_size=20):
+        """Find any open space for a speech bubble when normal positioning fails."""
+        text_width, text_height, lines = self.calculate_text_size(text, font_size)
         
-        all_bubbles.append((bubble_x, bubble_y, bubble_width, bubble_height))
-    
-    base_name = os.path.splitext(image_path)[0]
-    output_path = f"{base_name}_multi_char_bubbles.jpg"
-    cv2.imwrite(output_path, cv_img)
-    print(f"Image saved as {output_path}")
-    
-    return output_path
-
-def draw_multi_character_multi_dialog_bubbles(image_path, prompts, character_dialogs):
-    """
-    Draw speech bubbles for multiple characters with multiple dialogs each
-    
-    Args:
-        image_path: Path to the image file
-        prompts: List of prompts to detect characters (one per character)
-        character_dialogs: Dictionary mapping character index to list of dialogs
-                          e.g., {0: ["First dialog", "Second dialog"], 1: ["Dialog for character 2"]}
-    """
-    character_boxes = detect_characters(image_path, prompts)
-    
-    cv_img = cv2.imread(image_path)
-    if cv_img is None:
-        print(f"Error: Could not read image at {image_path}")
-        return None
-
-    debug_img = draw_bounding_boxes(cv_img, character_boxes)
-    base_name = os.path.splitext(image_path)[0]
-    debug_path = f"{base_name}_debug_boxes.jpg"
-    cv2.imwrite(debug_path, debug_img)
-    print(f"Debug image with bounding boxes saved as {debug_path}")
-    
-    
-    img_height, img_width = cv_img.shape[:2]
-    
-    font_size = 26
-    max_bubble_width = min(300, img_width // 3)
-    line_spacing = 14
-    
-    all_bubbles = []
-    
-    total_dialogs = sum(len(dialogs) for dialogs in character_dialogs.values())
-    max_bubbles = 3 
-    
-    all_dialog_info = []
-    for char_idx, dialogs in character_dialogs.items():
-        if char_idx >= len(character_boxes):
-            print(f"Warning: No detected character for index {char_idx}")
-            continue
+        width_padding = self.bubble_padding * 1.5
+        height_padding = self.bubble_padding
         
-        for dialog in dialogs:
-            all_dialog_info.append({
-                'char_idx': char_idx,
-                'dialog': dialog
-            })
+        bubble_width = text_width + width_padding * 2
+        bubble_height = text_height + height_padding * 2
+        
+        grid_size = 10
+        for i in range(grid_size):
+            for j in range(grid_size):
+                pos_x = i * (self.width - bubble_width) / (grid_size - 1)
+                pos_y = j * (self.height - bubble_height) / (grid_size - 1)
+                
+                bubble_rect = [pos_x, pos_y, pos_x + bubble_width, pos_y + bubble_height]
+                
+                overlaps = False
+                for area in used_areas:
+                    if self.check_overlap(bubble_rect, area):
+                        overlaps = True
+                        break
+                        
+                if not overlaps:
+                    arrow_pos = (pos_x + bubble_width/2, pos_y + bubble_height)
+                    return (pos_x, pos_y, bubble_width, bubble_height), arrow_pos, lines, font_size
+        
+        if font_size > 10:
+            return self.find_any_open_space(text, used_areas, font_size - 2)
+        
+        return None, None, None, None
     
-    if len(all_dialog_info) > max_bubbles:
-        print(f"Warning: Total dialogs ({len(all_dialog_info)}) exceeds maximum allowed bubbles ({max_bubbles}). Using only first {max_bubbles}.")
-        all_dialog_info = all_dialog_info[:max_bubbles]
+    def check_overlap(self, rect1, rect2):
+        """Check if two rectangles overlap."""
+        return not (rect1[2] < rect2[0] or  
+                   rect1[0] > rect2[2] or  
+                   rect1[3] < rect2[1] or  
+                   rect1[1] > rect2[3])   
+                   
+    def calculate_arrow_position_for_oval(self, bubble_rect, char_center):
+        """Calculate the best position for the speech bubble arrow, accounting for oval shape."""
+        x_center = (bubble_rect[0] + bubble_rect[2]) / 2
+        y_center = (bubble_rect[1] + bubble_rect[3]) / 2
+        a = (bubble_rect[2] - bubble_rect[0]) / 2  
+        b = (bubble_rect[3] - bubble_rect[1]) / 2  
+        
+        dx = char_center[0] - x_center
+        dy = char_center[1] - y_center
+        
+        if dx == 0:
+            theta = math.pi/2 if dy > 0 else -math.pi/2
+        else:
+            theta = math.atan(dy / dx)
+            if dx < 0:
+                theta += math.pi
+        
+        x = x_center + a * math.cos(theta)
+        y = y_center + b * math.sin(theta)
+        
+        return (x, y)
     
-    for dialog_idx, dialog_info in enumerate(all_dialog_info):
-        char_idx = dialog_info['char_idx']
-        dialog = dialog_info['dialog']
+    def draw_speech_bubble(self, pos, arrow_pos, lines, font_size):
+        """Draw a speech bubble and its text."""
+        x, y, width, height = pos
         
-        if char_idx >= len(character_boxes):
-            print(f"Error: Character index {char_idx} exceeds available characters ({len(character_boxes)})")
-            continue
+        bubble_rect = (x, y, x + width, y + height)
         
-        char_box = character_boxes[char_idx]
+        self.draw.ellipse(bubble_rect, fill=self.bubble_color)
         
-        bubble_width, bubble_height, wrapped_lines, _, _, line_heights = (
-            calculate_bubble_dimensions(dialog, None, font_size, max_bubble_width, line_spacing)
-        )
+        self.draw.ellipse(bubble_rect, outline=self.border_color, width=self.border_width)
         
-        dialog_count_for_char = len(character_dialogs.get(char_idx, []))
-        bubble_idx_for_char = character_dialogs[char_idx].index(dialog) if dialog in character_dialogs.get(char_idx, []) else 0
+        bubble_center_x = x + width / 2
+        bubble_center_y = y + height / 2
         
-        bubble_x, bubble_y, pointer_position, target_x, target_y = get_best_bubble_position_multi_character(
-            img_width, img_height, 
-            character_boxes, char_idx,  
-            bubble_width, bubble_height, 
-            all_bubbles,  
-            bubble_idx_for_char  
-        )
+        vector_x = arrow_pos[0] - bubble_center_x
+        vector_y = arrow_pos[1] - bubble_center_y
         
-        print(f"Bubble for Character {char_idx}, Dialog {bubble_idx_for_char+1}/{dialog_count_for_char}: "
-              f"Position ({bubble_x}, {bubble_y}), Size: {bubble_width}x{bubble_height}")
-        print(f"    Pointer: {pointer_position}, Target: ({target_x}, {target_y})")
+        magnitude = math.sqrt(vector_x**2 + vector_y**2)
+        if magnitude < 0.001:  
+            vector_x, vector_y = 0, -1  
+        else:
+            vector_x /= magnitude
+            vector_y /= magnitude
+            
+        target_x = arrow_pos[0] + vector_x * self.arrow_size * 1.5
+        target_y = arrow_pos[1] + vector_y * self.arrow_size * 1.5
         
-        cv_img = draw_single_bubble(
-            cv_img, dialog, 
-            bubble_x, bubble_y, 
-            bubble_width, bubble_height,
-            target_x, target_y, 
-            pointer_position,
-            wrapped_lines, 
-            line_heights
-        )
+        perp_x = -vector_y
+        perp_y = vector_x
+        base_half_width = self.arrow_size / 2
         
-        all_bubbles.append((bubble_x, bubble_y, bubble_width, bubble_height))
+        arrow_points = [
+            (target_x, target_y),
+            (arrow_pos[0] + perp_x * base_half_width, arrow_pos[1] + perp_y * base_half_width),
+            (arrow_pos[0] - perp_x * base_half_width, arrow_pos[1] - perp_y * base_half_width)
+        ]
+        
+        self.draw.polygon(arrow_points, fill=self.bubble_color)
+        
+        self.draw.line([arrow_points[0], arrow_points[1]], fill=self.border_color, width=self.border_width)
+        self.draw.line([arrow_points[0], arrow_points[2]], fill=self.border_color, width=self.border_width)
+        self.draw.line([arrow_points[1], arrow_points[2]], fill=self.border_color, width=self.border_width)
+        
+        font = ImageFont.truetype(self.font_path, font_size)
+        text_y = y + self.bubble_padding
+        
+        for line in lines:
+            left, top, right, bottom = font.getbbox(line)
+            line_width = right - left
+            line_height = bottom - top
+            
+            text_x = x + (width - line_width) / 2
+            self.draw.text((text_x, text_y), line, fill=self.text_color, font=font)
+            text_y += line_height
     
-    base_name = os.path.splitext(image_path)[0]
-    output_path = f"{base_name}_multi_dialogs.jpg"
-    cv2.imwrite(output_path, cv_img)
-    print(f"Image with multiple character dialogs saved as {output_path}")
-    
-    return output_path
-
-def draw_bounding_boxes(img, character_boxes):
-    """Draw bounding boxes for detected characters to help with debugging"""
-    debug_img = img.copy()
-    
-    colors = [
-        (0, 255, 0),    
-        (255, 0, 0),    
-        (0, 0, 255),    
-        (255, 255, 0),  
-        (255, 0, 255),  
-    ]
-    
-    for i, box in enumerate(character_boxes):
-        x1, y1, x2, y2 = map(int, box)
-        color = colors[i % len(colors)]
+    def add_narration(self, narration_text, position="top", font_size=20):
+        """
+        Add narration text at the top or bottom of the image.
         
-        cv2.rectangle(debug_img, (x1, y1), (x2, y2), color, 2)
+        Args:
+            narration_text: The narration text to add
+            position: "top" or "bottom" - where to place the narration
+            font_size: Size of the font for narration text
         
-        cv2.putText(debug_img, f"Char {i}", (x1, y1-10), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+        Returns:
+            PIL Image with narration added
+        """
+        if not narration_text:
+            return self.image
+            
+        print(f"Adding narration text at {position}")
+        
+        text_width, text_height, lines = self.calculate_narration_size(narration_text, font_size)
+        
+        total_height = text_height + self.narration_padding * 2
+        
+        if position.lower() == "top":
+            new_height = self.height + total_height
+            new_img = Image.new('RGB', (self.width, new_height), self.narration_bg_color)
+            new_img.paste(self.image, (0, total_height))
+            narration_y = self.narration_padding
+        else:  
+            new_height = self.height + total_height
+            new_img = Image.new('RGB', (self.width, new_height), self.narration_bg_color)
+            new_img.paste(self.image, (0, 0))
+            narration_y = self.height + self.narration_padding
+        
+        draw = ImageDraw.Draw(new_img)
+        font = ImageFont.truetype(self.font_path, font_size)
+        
+        for line in lines:
+            left, top, right, bottom = font.getbbox(line)
+            line_width = right - left
+            line_height = bottom - top
+            
+            text_x = (self.width - line_width) / 2
+            
+            draw.text((text_x, narration_y), line, fill=self.narration_text_color, font=font)
+            narration_y += line_height
+        
+        self.image = new_img
+        self.draw = ImageDraw.Draw(self.image)
+        
+        return self.image
     
-    return debug_img
-
-def main():
-    image_path = "testing_3.jpg"
+    def generate_speech_bubbles(self, dialogues, narration=None, narration_position="top"):
+        """
+        Generate speech bubbles for the given dialogues and optionally add narration.
+        
+        Args:
+            dialogues: List of dialogue dictionaries
+            narration: Optional narration text
+            narration_position: "top" or "bottom" - where to place the narration
+        """
+        self.image = self.original_image.copy()
+        self.draw = ImageDraw.Draw(self.image)
+        
+        dialogues = dialogues[:3]
+        print(f"Generating {len(dialogues)} speech bubbles")
+        
+        character_boxes = []
+        for dialogue in dialogues:
+            if 'character_description' in dialogue:
+                char_box = self.detect_character(dialogue['character_description'])
+                if char_box:
+                    character_boxes.append(char_box)
+        
+        if not character_boxes:
+            print("No characters detected in the image")
+        else:
+            used_areas = [box['bbox'] for box in character_boxes]
+            
+            for i, dialogue in enumerate(dialogues):
+                char_box = None
+                if 'character_description' in dialogue:
+                    for box in character_boxes:
+                        if box['description'] == dialogue['character_description']:
+                            char_box = box
+                            break
+                
+                if not char_box and character_boxes:
+                    char_box = random.choice(character_boxes)
+                    print(f"No character found for dialogue {i+1}. Using a random character.")
+                
+                text = dialogue.get('text', '')
+                
+                if not text:
+                    continue
+                    
+                char_desc = dialogue.get('character_description', 'Unknown')
+                print(f"Generating bubble {i+1} for character '{char_desc}': '{text[:20]}...'")
+                
+                pos, arrow_pos, lines, font_size = self.find_optimal_bubble_position(
+                    char_box, text, used_areas
+                )
+                
+                if pos:
+                    print(f"Placed bubble {i+1} at position {pos}")
+                    used_areas.append([pos[0], pos[1], pos[0] + pos[2], pos[1] + pos[3]])
+                    
+                    self.draw_speech_bubble(pos, arrow_pos, lines, font_size)
+                else:
+                    print(f"Failed to place bubble {i+1}")
+        
+        if narration:
+            self.add_narration(narration, narration_position)
+        
+        return self.image
     
-    character_dialogs = {
-        0: ["Hey, I'm here for you, tell me what's going on"],  
-        1: ["Nothing seems to work", "Don't worry about it"],  
-          
-    }
-    
-    output_path = draw_multi_character_multi_dialog_bubbles(image_path, prompts, character_dialogs)
-    print(f"Multi-character multi-dialog speech bubbles added. Output saved to: {output_path}")
+    def save(self, output_path):
+        """Save the image with speech bubbles."""
+        self.image.save(output_path)
 
 if __name__ == "__main__":
-    main()
+    image_path = "output/test_2_comic_page_7/panel_01.png"
+    api_key = os.environ.get("LANDING_AI_API_KEY")
+    
+    try:
+        generator = SpeechBubbleGenerator(image_path, api_key)
+        
+        dialogues = [
+
+ 
+            {
+                "character_description": "a grey hair guy's head", 
+                "text": "For Eldoria!"
+            },
+            
+            
+        ]
+        
+        narration = "They stand side by side—friends, warriors—united by trial and sacrifice. And in that moment, hope was born anew."
+        
+        result_image = generator.generate_speech_bubbles(dialogues, narration=narration, narration_position="top")
+        
+        generator.save("output_comic_panel_with_narration.jpg")
+        print("Speech bubbles and narration added successfully!")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
