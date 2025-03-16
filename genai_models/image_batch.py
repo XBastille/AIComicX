@@ -2,12 +2,15 @@ import os
 import re
 import json
 import torch
-from openai import OpenAI
 from gradio_client import Client
 from diffusers import StableDiffusion3Pipeline
 import shutil
 import markdown
 import bs4
+from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference.models import SystemMessage
+from azure.ai.inference.models import UserMessage
+from azure.core.credentials import AzureKeyCredential
 
 def extract_panel_content(markdown_file, target_page=None):
     """Extract pages and panels content from markdown file"""
@@ -68,13 +71,29 @@ def extract_full_comic_structure(markdown_file):
     """Extract the entire comic structure with all pages and panels"""
     return extract_panel_content(markdown_file)
 
+def extract_json_from_response(response_text):
+    """Extract JSON from response text that might include markdown code blocks"""
+    if "```json" in response_text:
+        start_idx = response_text.find("```json") + 7
+        end_idx = response_text.find("```", start_idx)
+        if end_idx > start_idx:
+            return response_text[start_idx:end_idx].strip()
+    
+    if "```" in response_text:
+        start_idx = response_text.find("```") + 3
+        end_idx = response_text.find("```", start_idx)
+        if end_idx > start_idx:
+            return response_text[start_idx:end_idx].strip()
+    
+    return response_text
+
 def generate_character_descriptions(comic_structure, style):
     """Generate concise character descriptions from the complete story"""
-    client = OpenAI(
-        base_url="https://models.inference.ai.azure.com",
-        api_key=os.environ.get("GITHUB_TOKEN"),
+    client = ChatCompletionsClient(
+        endpoint="https://models.inference.ai.azure.com",
+        credential=AzureKeyCredential(os.environ.get("GITHUB_TOKEN")),
     )
-    
+
     story_context = ""
     character_names = set()
     
@@ -131,26 +150,23 @@ def generate_character_descriptions(comic_structure, style):
     }}
     """
     
-    response = client.chat.completions.create(
+    response = client.complete(
         messages=[
-            {
-                "role": "system",
-                "content": "You create extremely concise one-sentence character descriptions for comics. Focus only on the essential visual details needed for consistency.",
-            },
-            {
-                "role": "user",
-                "content": llm_prompt,
-            }
+            SystemMessage("You create extremely concise one-sentence character descriptions for comics. Focus only on the essential visual details needed for consistency. IMPORTANT: Always respond with valid JSON."),
+            UserMessage(llm_prompt)
         ],
-        model="gpt-4o",
+        model="Meta-Llama-3.1-8B-Instruct",
         temperature=0.5,
         max_tokens=2000,
-        top_p=1,
-        response_format={"type": "json_object"}
+        top_p=1
     )
     
+    response_content = response.choices[0].message.content
+    
     try:
-        character_descriptions = json.loads(response.choices[0].message.content)
+        json_content = extract_json_from_response(response_content)
+        character_descriptions = json.loads(json_content)
+        
         print(f"Generated descriptions for {len(character_descriptions)} characters")
         for char, desc in character_descriptions.items():
             base_desc = desc.get("base", "No description")
@@ -158,6 +174,17 @@ def generate_character_descriptions(comic_structure, style):
         return character_descriptions
     except json.JSONDecodeError as e:
         print(f"Error parsing character descriptions JSON: {e}")
+        print(f"Full response content: \n{response_content}")
+        try:
+            if response_content.find('{') >= 0 and response_content.rfind('}') > response_content.find('{'):
+                start_idx = response_content.find('{')
+                end_idx = response_content.rfind('}') + 1
+                json_content = response_content[start_idx:end_idx]
+                character_descriptions = json.loads(json_content)
+                print("Recovered JSON content successfully")
+                return character_descriptions
+        except:
+            pass
         return {}
 
 def get_character_description(character_descriptions, character_name, page_num, panel_num):
@@ -181,9 +208,9 @@ def get_character_description(character_descriptions, character_name, page_num, 
 
 def generate_panel_prompts(comic_structure, character_descriptions, style):
     """Generate prompts for each panel using the pre-generated character descriptions"""
-    client = OpenAI(
-        base_url="https://models.inference.ai.azure.com",
-        api_key=os.environ.get("GITHUB_TOKEN"),
+    client = ChatCompletionsClient(
+        endpoint="https://models.inference.ai.azure.com",
+        credential=AzureKeyCredential(os.environ.get("GITHUB_TOKEN")),
     )
     
     all_prompts = {}
@@ -243,18 +270,12 @@ def generate_panel_prompts(comic_structure, character_descriptions, style):
             OUTPUT ONLY THE PROMPT with no explanations.
             """
             
-            response = client.chat.completions.create(
+            response = client.complete(
                 messages=[
-                    {
-                        "role": "system",
-                        "content": "You create comic panel image prompts, always incorporating the exact character descriptions provided.",
-                    },
-                    {
-                        "role": "user",
-                        "content": llm_prompt,
-                    }
+                    SystemMessage("You create comic panel image prompts, always incorporating the exact character descriptions provided."),
+                    UserMessage(llm_prompt)
                 ],
-                model="gpt-4o",
+                model="Meta-Llama-3.1-8B-Instruct",
                 temperature=0.7,
                 max_tokens=200,
                 top_p=1
@@ -296,9 +317,9 @@ def generate_prompt_with_llm_full_context(comic_structure, style):
 def generate_prompt_with_llm(panel_content, style):
     """Generate detailed image prompt using LLM based on panel content and chosen style
     (Used as fallback when full context generation fails)"""
-    client = OpenAI(
-        base_url="https://models.inference.ai.azure.com",
-        api_key=os.environ.get("GITHUB_TOKEN"),
+    client = ChatCompletionsClient(
+        endpoint="https://models.inference.ai.azure.com",
+        credential=AzureKeyCredential(os.environ.get("GITHUB_TOKEN")),
     )
     
     narration = panel_content['narration']
@@ -333,18 +354,12 @@ def generate_prompt_with_llm(panel_content, style):
     OUTPUT ONLY THE PROMPT TEXT with no explanations or meta-commentary.
     """
     
-    response = client.chat.completions.create(
+    response = client.complete(
         messages=[
-            {
-                "role": "system",
-                "content": "You are an expert at creating detailed image prompts for comic panels. Your prompts must include specific character visual details to ensure consistency. Never include text, dialogue, or speech bubbles.",
-            },
-            {
-                "role": "user",
-                "content": llm_prompt,
-            }
+            SystemMessage("You are an expert at creating detailed image prompts for comic panels. Your prompts must include specific character visual details to ensure consistency. Never include text, dialogue, or speech bubbles."),
+            UserMessage(llm_prompt)
         ],
-        model="gpt-4o",
+        model="Meta-Llama-3.1-8B-Instruct",
         temperature=0.7,
         max_tokens=150,
         top_p=1
@@ -404,6 +419,7 @@ def generate_with_diffusers(prompt, negative_prompt, seed, randomize_seed, width
         negative_prompt=negative_prompt,
         width=width,
         height=height,
+        max_sequence_length=512,
         guidance_scale=guidance_scale,
         num_inference_steps=num_inference_steps,
         generator=generator
@@ -458,6 +474,10 @@ def generate_comic_images_for_page(settings=None):
     page_number = settings['page_number']
     style = settings['style']
     
+    panel_dimensions = settings.get('panel_dimensions', [])
+    default_width = settings['width']
+    default_height = settings['height']
+    
     prompts_data = None
     
     if page_number == 1:
@@ -484,9 +504,27 @@ def generate_comic_images_for_page(settings=None):
     generated_images = []
     page = comic_structure[0]  
     
-    for panel in page['panels']:
+    total_panels = len(page['panels'])
+    
+    if not panel_dimensions or len(panel_dimensions) < total_panels:
+        panel_dimensions = panel_dimensions + [(default_width, default_height)] * (total_panels - len(panel_dimensions))
+    
+    for panel_idx, panel in enumerate(page['panels']):
         panel_num = panel['panel_number']
         
+        panel_dim = panel_dimensions[panel_idx]
+        
+        if isinstance(panel_dim, str) and ":" in panel_dim:
+            width_ratio, height_ratio = map(int, panel_dim.split(":"))
+            area = default_width * default_height
+            new_width = int((area * width_ratio / height_ratio) ** 0.5)
+            new_height = int(area / new_width)
+            width, height = new_width, new_height
+        elif isinstance(panel_dim, tuple) and len(panel_dim) == 2:
+            width, height = panel_dim
+        else:
+            width, height = default_width, default_height
+            
         prompt = None
         if prompts_data and 'panel_prompts' in prompts_data:
             try:
@@ -502,8 +540,9 @@ def generate_comic_images_for_page(settings=None):
         if not prompt:
             print(f"Generating individual prompt for Page {page_number}, Panel {panel_num}")
             prompt = generate_prompt_with_llm(panel, style)
-        
+
         print(f"Prompt for Panel {panel_num}: {prompt}")
+        print(f"Using dimensions: {width}x{height}")
         
         current_seed = settings['seed'] if not settings['randomize_seed'] else None
         
@@ -513,8 +552,8 @@ def generate_comic_images_for_page(settings=None):
                 negative_prompt=settings['negative_prompt'],
                 seed=current_seed,
                 randomize_seed=settings['randomize_seed'],
-                width=settings['width'],
-                height=settings['height'],
+                width=width,
+                height=height,
                 guidance_scale=settings['guidance_scale'],
                 num_inference_steps=settings['num_inference_steps']
             )
@@ -527,10 +566,12 @@ def generate_comic_images_for_page(settings=None):
                 'panel': panel_num,
                 'prompt': prompt,
                 'path': final_image_path,
-                'dialogues': panel['dialogues'] 
+                'dialogues': panel['dialogues'],
+                'width': width,
+                'height': height
             })
             
-            print(f"Generated image for Page {page['page_number']}, Panel {panel_num}")
+            print(f"Generated image for Page {page['page_number']}, Panel {panel_num} at {width}x{height}")
         except Exception as e:
             print(f"Failed to generate image for Panel {panel_num}: {e}")
     
@@ -546,7 +587,9 @@ def generate_comic_images_for_page(settings=None):
                 'panel': img['panel'],
                 'prompt': img['prompt'],
                 'path': img['path'],
-                'dialogues': img['dialogues']
+                'dialogues': img['dialogues'],
+                'width': img.get('width', default_width),
+                'height': img.get('height', default_height)
             }
             panel_data['panels'].append(panel_info)
         
@@ -558,6 +601,7 @@ def generate_comic_images_for_page(settings=None):
         with open(prompt_log, 'w', encoding='utf-8') as f:
             for img in generated_images:
                 f.write(f"Page {img['page']}, Panel {img['panel']}:\n")
+                f.write(f"Dimensions: {img.get('width', default_width)}x{img.get('height', default_height)}\n")
                 f.write(f"Prompt: {img['prompt']}\n")
                 f.write(f"Dialogues: {len(img['dialogues'])}\n")
                 for d in img['dialogues']:
@@ -568,14 +612,19 @@ def generate_comic_images_for_page(settings=None):
 
 if __name__ == "__main__":
     custom_settings = {
-        "markdown_file": "test_comic.md",   
-        "page_number": 5,                   
+        "markdown_file": "test_2_comic.md",   
+        "page_number": 2,                   
         "style": "american comic (modern)",  
         "negative_prompt": "photorealistic, realistic, photo, 3d render, photography, photographic, hyperrealistic, low quality, bad anatomy, worst quality, low resolution, text, words, speech, dialogue, speech bubble, bubble",
         "seed": 9,
         "randomize_seed": False,
-        "width": 768,
-        "height": 1024,
+        "width": 768, 
+        "height": 1024, 
+        "panel_dimensions": [
+            (768, 1024), 
+            (768, 512),       
+            (1024, 512),  
+        ],
         "guidance_scale": 7.5,             
         "num_inference_steps": 40
     }
