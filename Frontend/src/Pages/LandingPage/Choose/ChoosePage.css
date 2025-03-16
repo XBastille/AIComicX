@@ -1,0 +1,62 @@
+.Story-Container{
+    height: 670px;
+    background-color: rgb(31, 22, 35);
+}
+
+.Story-tag{
+    position: relative;
+    font-size: 5em;
+    font-weight: bolder;
+    text-align: center;
+    margin-top: 120px;
+    margin-left: 30px;
+    background: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: "'Michroma', sans-serif";
+}
+
+
+.smallText{
+    color: white;
+    text-align: center;
+    margin-top: 320px;
+    font-size: 1.2em;
+    font-weight: bolder;
+    cursor: pointer;
+}
+
+.Boxes{
+display: flex;
+ flex-direction: row;
+ justify-content: space-evenly;
+ margin-top: 80px;
+}
+
+.Box1{
+   -webkit-border-radius: 10px;
+    border: 1px solid transparent;
+    border-image: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) ) 1;
+    width: 380px;
+    height: 380px; 
+}
+
+
+
+
+.Box2{
+    border: 1px solid transparent;
+    border-image: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) ) 1;
+    width: 380px;
+    height: 380px;
+    border-radius: 7%;
+}
+
+.Box3{
+    border: 1px solid transparent;
+    border-image: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) ) 1;
+    width: 380px;
+    height: 380px;
+    border-radius: 7%;
+}
+
