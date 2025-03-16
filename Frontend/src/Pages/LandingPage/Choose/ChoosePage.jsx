@@ -181,13 +181,11 @@ function ChoosePage() {
     return (
         <div className="Story-Container">
             <div className="heading-wrapper" ref={headingWrapperRef}>
-                {/* Energy beam scan effect */}
+                
                 <div className="energy-beam" ref={energyBeamRef}></div>
                 
-                {/* Glitch overlay */}
                 <div className="glitch-layer" ref={glitchLayerRef}></div>
                 
-                {/* Main heading */}
                 <h1 
                     ref={headingRef} 
                     className={`Story-tag cyber-text ${animationComplete ? 'animation-complete' : ''}`}
@@ -197,9 +195,7 @@ function ChoosePage() {
             </div>
 
             <div ref={containerRef} className="Boxes">
-                {/* Your existing box code */}
                 <div ref={box1Ref} className="Box1">
-                    {/* Rest of the component remains the same */}
                     <div className="info-btn">i</div>
                     <div className="info-tooltip">
                         This option allows you to upload a dialogue-narration style story format.
@@ -209,7 +205,6 @@ function ChoosePage() {
                     </div>
                     <p className="smallText">Dialogue-Story Style</p>
                 </div>
-                {/* ... other boxes ... */}
                 <div ref={box2Ref} className="Box2">
                     <div className="info-btn">i</div>
                     <div className="info-tooltip">
