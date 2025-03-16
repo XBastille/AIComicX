@@ -1,62 +1,364 @@
-.Story-Container{
-    height: 670px;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap');
+
+.Story-Container {
+    height: 850px;
     background-color: rgb(31, 22, 35);
+    perspective: 1000px; 
+    overflow: hidden; 
 }
 
-.Story-tag{
+.Story-tag {
     position: relative;
     font-size: 5em;
-    font-weight: bolder;
+    font-weight: 700;
     text-align: center;
     margin-top: 120px;
-    margin-left: 30px;
-    background: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-family: "'Michroma', sans-serif";
+    margin-bottom: 40px;
+    font-family: 'Orbitron', sans-serif; 
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    z-index: 10;
+    opacity: 0; 
+    transform: perspective(400px) rotateX(30deg);
+    transform-origin: center;
 }
 
+.heading-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9;
+    opacity: 0;
+}
+
+.cyber-text {
+    background: linear-gradient(to right, rgb(223, 30, 114), rgb(255, 123, 0), rgb(255, 191, 0));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+    display: block;
+    text-shadow: 
+        0 0 10px rgba(223, 30, 114, 0.3),
+        0 0 20px rgba(223, 30, 114, 0.2);
+}
+
+.clip-container {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+}
+
+.animation-complete.Story-tag {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: perspective(400px) rotateX(0deg) !important;
+}
+
+.Story-tag span {
+    display: inline-block;
+    will-change: transform, opacity, text-shadow;
+    transform-origin: center;
+}
+
+@keyframes textFlicker {
+    0% { text-shadow: 0 0 4px rgba(223, 30, 114, 0.5); }
+    30% { text-shadow: 0 0 15px rgba(230, 110, 41, 0.8); }
+    60% { text-shadow: 0 0 4px rgba(255, 191, 0, 0.5); }
+    100% { text-shadow: 0 0 4px rgba(223, 30, 114, 0.5); }
+}
 
 .smallText{
     color: white;
     text-align: center;
-    margin-top: 320px;
     font-size: 1.2em;
     font-weight: bolder;
     cursor: pointer;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px 10px;
+    margin: 0;
+    z-index: 5; 
+    background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    opacity: 0;
+    transform: translateY(50px); 
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.Box1:hover .smallText,
+.Box2:hover .smallText,
+.Box3:hover .smallText {
+    opacity: 1;
+    transform: translateY(0); 
 }
 
 .Boxes{
-display: flex;
- flex-direction: row;
- justify-content: space-evenly;
- margin-top: 80px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    margin-top: 50px; 
+    margin-bottom: 50px; 
+    transform-style: preserve-3d; 
+    will-change: transform;
+    position: relative; 
+    z-index: 2; 
 }
 
-.Box1{
-   -webkit-border-radius: 10px;
-    border: 1px solid transparent;
-    border-image: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) ) 1;
+.Box1, .Box2, .Box3{
+    position: relative;
     width: 380px;
-    height: 380px; 
+    height: 507px;
+    border-radius: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+    background: linear-gradient(to right, rgb(223, 30, 114), rgb(230, 110, 41), rgb(255, 191, 0));
+    padding: 1px; 
+    transform-style: preserve-3d;
+    will-change: transform, opacity, box-shadow;
 }
 
-
-
-
-.Box2{
-    border: 1px solid transparent;
-    border-image: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) ) 1;
-    width: 380px;
-    height: 380px;
-    border-radius: 7%;
+.Box1::after, .Box2::after, .Box3::after {
+    content: "";
+    position: absolute;
+    inset: 1px; 
+    background-color: rgb(31, 22, 35); 
+    border-radius: 19px; 
+    z-index: 0;
 }
 
-.Box3{
-    border: 1px solid transparent;
-    border-image: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) ) 1;
-    width: 380px;
-    height: 380px;
-    border-radius: 7%;
+.Box1::before, .Box2::before, .Box3::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2) 50%, rgba(0,0,0,0));
+    z-index: 1;
+    pointer-events: none;
+    transition: background 0.3s ease;
+}
+
+.Box1:hover::before, 
+.Box2:hover::before, 
+.Box3:hover::before {
+    background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1));
+}
+
+.Box1:hover, .Box2:hover, .Box3:hover{
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 191, 0, 0.5);
+}
+
+.info-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 25px;
+    height: 25px;
+    background: linear-gradient(to right, rgb(223, 30, 114), rgb(230, 110, 41));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    z-index: 5;
+    opacity: 0;
+    transform: translateX(50px); 
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.Box1:hover .info-btn,
+.Box2:hover .info-btn,
+.Box3:hover .info-btn {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.info-btn:hover + .info-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.info-tooltip {
+    position: absolute;
+    top: 50px;
+    right: 15px;
+    width: 200px;
+    background-color: rgba(31, 22, 35, 0.95);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgb(223, 30, 114);
+    font-size: 14px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 6; 
+}
+
+.image-container {
+    height: 100%; 
+    width: 100%;
+    position: absolute; 
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.Box1 img, .Box2 img, .Box3 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+@keyframes boxGlow1 {
+    0% { box-shadow: 0 0 15px rgba(223, 30, 114, 0.5); }
+    50% { box-shadow: 0 0 25px rgba(223, 30, 114, 0.8); }
+    100% { box-shadow: 0 0 15px rgba(223, 30, 114, 0.5); }
+}
+
+@keyframes boxGlow2 {
+    0% { box-shadow: 0 0 15px rgba(230, 110, 41, 0.5); }
+    50% { box-shadow: 0 0 25px rgba(230, 110, 41, 0.8); }
+    100% { box-shadow: 0 0 15px rgba(230, 110, 41, 0.5); }
+}
+
+@keyframes boxGlow3 {
+    0% { box-shadow: 0 0 15px rgba(255, 191, 0, 0.5); }
+    50% { box-shadow: 0 0 25px rgba(255, 191, 0, 0.8); }
+    100% { box-shadow: 0 0 15px rgba(255, 191, 0, 0.5); }
+}
+
+.Box1 {
+    animation: boxGlow1 3s ease-in-out infinite;
+    animation-play-state: paused; 
+}
+
+.Box2 {
+    animation: boxGlow2 4s ease-in-out infinite;
+    animation-play-state: paused; 
+}
+
+.Box3 {
+    animation: boxGlow3 5s ease-in-out infinite;
+    animation-play-state: paused; 
+}
+
+.heading-wrapper {
+    position: relative;
+    margin-top: 120px;
+    height: 150px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.energy-beam {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    background: linear-gradient(to right, 
+        rgba(223, 30, 114, 0), 
+        rgba(223, 30, 114, 0.8) 20%, 
+        rgba(255, 191, 0, 0.8) 50%,
+        rgba(230, 110, 41, 0.8) 80%, 
+        rgba(223, 30, 114, 0));
+    transform: translateY(-50%) scaleX(0);
+    transform-origin: left center;
+    filter: blur(5px);
+    box-shadow: 0 0 30px rgba(223, 30, 114, 0.9), 
+                0 0 50px rgba(255, 191, 0, 0.5);
+    z-index: 9;
+}
+
+.glitch-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        rgba(255, 255, 255, 0.03) 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 8;
+    mix-blend-mode: overlay;
+}
+
+.Story-tag {
+    position: relative;
+    font-size: 5em;
+    font-weight: 700;
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    z-index: 10;
+    margin: 0;
+    will-change: opacity, transform, text-shadow;
+    mix-blend-mode: lighten;
+}
+
+.cyber-text {
+    background: linear-gradient(to right, 
+        rgb(223, 30, 114), 
+        rgb(255, 123, 0) 50%, 
+        rgb(255, 191, 0));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+    display: block;
+    text-shadow: 
+        0 0 10px rgba(223, 30, 114, 0.4),
+        0 0 20px rgba(255, 191, 0, 0.2);
+    filter: drop-shadow(0 0 5px rgba(223, 30, 114, 0.3));
+}
+
+.animation-complete.Story-tag {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+@keyframes glitchEffect {
+    0% {
+        clip-path: inset(80% 0 0 0);
+        transform: translate(-2px, 2px);
+    }
+    20% {
+        clip-path: inset(20% 0 50% 0);
+        transform: translate(2px, -2px);
+    }
+    40% {
+        clip-path: inset(40% 0 10% 0);
+        transform: translate(-2px, 2px);
+    }
+    60% {
+        clip-path: inset(0% 0 80% 0);
+        transform: translate(2px, -2px);
+    }
+    80% {
+        clip-path: inset(60% 0 5% 0);
+        transform: translate(-2px, 2px);
+    }
+    100% {
+        clip-path: inset(0% 0 0% 0);
+        transform: translate(0);
+    }
 }
 
