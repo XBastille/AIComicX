@@ -71,7 +71,7 @@ def convert_formatted_to_comic(formatted_text):
                 "content": prompt,
             }
         ],
-        model="o1",
+        model="gpt-4o",
     )
 
     return response.choices[0].message.content
