@@ -25,8 +25,10 @@ Follow these exact rules when converting stories:
 6. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
 7. Use visual language in narration that suggests what should be drawn in the panel.
 8. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
-9. IMPORTANT: Do not add any expressions like (whispers), (off-panel), (to himself) or other parenthetical directions to character names.
-10. IMPORTANT: Do not include phrases like "A full-page panel" in your panel descriptions. Just describe the scene directly.
+9. IMPORTANT: Do not include phrases like "A full-page panel" in your panel descriptions. Just describe the scene directly.
+10. IMPORTANT: Do not include any parenthetical descriptions after character names like "(off-panel)" or "(shouting)".
+11. IMPORTANT: Include all character actions as part of the narration, not as separate italicized lines.
+12. IMPORTANT: Do not use any markdown formatting (asterisks, italics, etc.) inside narration text.
 
 Format each panel like this:
 ### Panel X  
