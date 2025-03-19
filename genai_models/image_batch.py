@@ -155,7 +155,7 @@ def generate_character_descriptions(comic_structure, style):
             SystemMessage("You create extremely concise one-sentence character descriptions for comics. Focus only on the essential visual details needed for consistency. IMPORTANT: Always respond with valid JSON."),
             UserMessage(llm_prompt)
         ],
-        model="Meta-Llama-3.1-8B-Instruct",
+        model="Ministral-3B",
         temperature=0.5,
         max_tokens=2000,
         top_p=1
@@ -275,7 +275,7 @@ def generate_panel_prompts(comic_structure, character_descriptions, style):
                     SystemMessage("You create comic panel image prompts, always incorporating the exact character descriptions provided."),
                     UserMessage(llm_prompt)
                 ],
-                model="Meta-Llama-3.1-8B-Instruct",
+                model="Ministral-3B",
                 temperature=0.7,
                 max_tokens=200,
                 top_p=1
@@ -359,7 +359,7 @@ def generate_prompt_with_llm(panel_content, style):
             SystemMessage("You are an expert at creating detailed image prompts for comic panels. Your prompts must include specific character visual details to ensure consistency. Never include text, dialogue, or speech bubbles."),
             UserMessage(llm_prompt)
         ],
-        model="Meta-Llama-3.1-8B-Instruct",
+        model="Ministral-3B",
         temperature=0.7,
         max_tokens=150,
         top_p=1
@@ -609,24 +609,3 @@ def generate_comic_images_for_page(settings=None):
                 f.write("\n")
     
     return generated_images
-
-if __name__ == "__main__":
-    custom_settings = {
-        "markdown_file": "test_2_comic.md",   
-        "page_number": 2,                   
-        "style": "american comic (modern)",  
-        "negative_prompt": "photorealistic, realistic, photo, 3d render, photography, photographic, hyperrealistic, low quality, bad anatomy, worst quality, low resolution, text, words, speech, dialogue, speech bubble, bubble",
-        "seed": 9,
-        "randomize_seed": False,
-        "width": 768, 
-        "height": 1024, 
-        "panel_dimensions": [
-            (768, 1024), 
-            (768, 512),       
-            (1024, 512),  
-        ],
-        "guidance_scale": 7.5,             
-        "num_inference_steps": 40
-    }
-    
-    generate_comic_images_for_page(custom_settings)

@@ -4,7 +4,6 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import math
 import random
-import os
 
 class SpeechBubbleGenerator:
     def __init__(self, image_path, api_key, detection_prompt=None, 
@@ -214,6 +213,66 @@ class SpeechBubbleGenerator:
         
         return None, None, None, None
     
+    def find_off_panel_bubble_position(self, text, used_areas, font_size=20):
+        """Find position for a speech bubble for off-panel dialogue following priority order."""
+        text_width, text_height, lines = self.calculate_text_size(text, font_size)
+        
+        width_padding = self.bubble_padding * 1.5
+        height_padding = self.bubble_padding
+        
+        bubble_width = text_width + width_padding * 2
+        bubble_height = text_height + height_padding * 2
+        
+        priority_positions = [
+            (self.bubble_padding, self.height - bubble_height - self.bubble_padding),
+            (self.width - bubble_width - self.bubble_padding, self.height - bubble_height - self.bubble_padding),
+            (self.bubble_padding, self.bubble_padding),
+            (self.width - bubble_width - self.bubble_padding, self.bubble_padding),
+        ]
+        
+        for pos_x, pos_y in priority_positions:
+            bubble_rect = [pos_x, pos_y, pos_x + bubble_width, pos_y + bubble_height]
+            
+            if (pos_x < 0 or pos_y < 0 or 
+                pos_x + bubble_width > self.width or 
+                pos_y + bubble_height > self.height):
+                continue
+                
+            overlaps = False
+            for area in used_areas:
+                if self.check_overlap(bubble_rect, area):
+                    overlaps = True
+                    break
+                    
+            if not overlaps:
+                print(f"Placed off-panel bubble at position ({pos_x}, {pos_y})")
+                return (pos_x, pos_y, bubble_width, bubble_height), lines, font_size
+        
+        grid_size = 6
+        for i in range(grid_size):
+            for j in range(grid_size):
+                pos_x = i * (self.width - bubble_width) / (grid_size - 1)
+                pos_y = j * (self.height - bubble_height) / (grid_size - 1)
+                
+                bubble_rect = [pos_x, pos_y, pos_x + bubble_width, pos_y + bubble_height]
+                
+                overlaps = False
+                for area in used_areas:
+                    if self.check_overlap(bubble_rect, area):
+                        overlaps = True
+                        break
+                        
+                if not overlaps:
+                    print(f"Placed off-panel bubble at grid position ({pos_x}, {pos_y})")
+                    return (pos_x, pos_y, bubble_width, bubble_height), lines, font_size
+        
+        if font_size > 10:
+            print(f"Couldn't place off-panel bubble. Trying smaller font size.")
+            return self.find_off_panel_bubble_position(text, used_areas, font_size - 2)
+            
+        print("Failed to place off-panel bubble at any position.")
+        return None, None, None
+    
     def find_any_open_space(self, text, used_areas, font_size=20):
         """Find any open space for a speech bubble when normal positioning fails."""
         text_width, text_height, lines = self.calculate_text_size(text, font_size)
@@ -276,47 +335,47 @@ class SpeechBubbleGenerator:
         
         return (x, y)
     
-    def draw_speech_bubble(self, pos, arrow_pos, lines, font_size):
+    def draw_speech_bubble(self, pos, arrow_pos, lines, font_size, draw_arrow=True):
         """Draw a speech bubble and its text."""
         x, y, width, height = pos
         
         bubble_rect = (x, y, x + width, y + height)
         
         self.draw.ellipse(bubble_rect, fill=self.bubble_color)
-        
         self.draw.ellipse(bubble_rect, outline=self.border_color, width=self.border_width)
         
-        bubble_center_x = x + width / 2
-        bubble_center_y = y + height / 2
-        
-        vector_x = arrow_pos[0] - bubble_center_x
-        vector_y = arrow_pos[1] - bubble_center_y
-        
-        magnitude = math.sqrt(vector_x**2 + vector_y**2)
-        if magnitude < 0.001:  
-            vector_x, vector_y = 0, -1  
-        else:
-            vector_x /= magnitude
-            vector_y /= magnitude
+        if draw_arrow and arrow_pos:
+            bubble_center_x = x + width / 2
+            bubble_center_y = y + height / 2
             
-        target_x = arrow_pos[0] + vector_x * self.arrow_size * 1.5
-        target_y = arrow_pos[1] + vector_y * self.arrow_size * 1.5
-        
-        perp_x = -vector_y
-        perp_y = vector_x
-        base_half_width = self.arrow_size / 2
-        
-        arrow_points = [
-            (target_x, target_y),
-            (arrow_pos[0] + perp_x * base_half_width, arrow_pos[1] + perp_y * base_half_width),
-            (arrow_pos[0] - perp_x * base_half_width, arrow_pos[1] - perp_y * base_half_width)
-        ]
-        
-        self.draw.polygon(arrow_points, fill=self.bubble_color)
-        
-        self.draw.line([arrow_points[0], arrow_points[1]], fill=self.border_color, width=self.border_width)
-        self.draw.line([arrow_points[0], arrow_points[2]], fill=self.border_color, width=self.border_width)
-        self.draw.line([arrow_points[1], arrow_points[2]], fill=self.border_color, width=self.border_width)
+            vector_x = arrow_pos[0] - bubble_center_x
+            vector_y = arrow_pos[1] - bubble_center_y
+            
+            magnitude = math.sqrt(vector_x**2 + vector_y**2)
+            if magnitude < 0.001:  
+                vector_x, vector_y = 0, -1  
+            else:
+                vector_x /= magnitude
+                vector_y /= magnitude
+                
+            target_x = arrow_pos[0] + vector_x * self.arrow_size * 1.5
+            target_y = arrow_pos[1] + vector_y * self.arrow_size * 1.5
+            
+            perp_x = -vector_y
+            perp_y = vector_x
+            base_half_width = self.arrow_size / 2
+            
+            arrow_points = [
+                (target_x, target_y),
+                (arrow_pos[0] + perp_x * base_half_width, arrow_pos[1] + perp_y * base_half_width),
+                (arrow_pos[0] - perp_x * base_half_width, arrow_pos[1] - perp_y * base_half_width)
+            ]
+            
+            self.draw.polygon(arrow_points, fill=self.bubble_color)
+            
+            self.draw.line([arrow_points[0], arrow_points[1]], fill=self.border_color, width=self.border_width)
+            self.draw.line([arrow_points[0], arrow_points[2]], fill=self.border_color, width=self.border_width)
+            self.draw.line([arrow_points[1], arrow_points[2]], fill=self.border_color, width=self.border_width)
         
         font = ImageFont.truetype(self.font_path, font_size)
         text_y = y + self.bubble_padding
@@ -392,22 +451,33 @@ class SpeechBubbleGenerator:
         self.image = self.original_image.copy()
         self.draw = ImageDraw.Draw(self.image)
         
-        dialogues = dialogues[:3]
-        print(f"Generating {len(dialogues)} speech bubbles")
+        dialogues = dialogues[:5]
+        print(f"Processing {len(dialogues)} dialogues")
+        
+        on_panel_dialogues = []
+        off_panel_dialogues = []
         
         character_boxes = []
         for dialogue in dialogues:
-            if 'character_description' in dialogue:
+            if 'character_description' in dialogue and not dialogue.get('is_off_panel', False):
                 char_box = self.detect_character(dialogue['character_description'])
                 if char_box:
                     character_boxes.append(char_box)
+                    on_panel_dialogues.append(dialogue)
+                else:
+                    print(f"Character '{dialogue['character_description']}' not detected. Making dialogue off-panel.")
+                    off_panel_dialogues.append(dialogue)
+            else:
+                off_panel_dialogues.append(dialogue)
         
-        if not character_boxes:
-            print("No characters detected in the image")
-        else:
-            used_areas = [box['bbox'] for box in character_boxes]
-            
-            for i, dialogue in enumerate(dialogues):
+        print(f"On-panel dialogues: {len(on_panel_dialogues)}, Off-panel dialogues: {len(off_panel_dialogues)}")
+        
+        on_panel_dialogues = on_panel_dialogues[:3]  
+        
+        used_areas = [box['bbox'] for box in character_boxes] if character_boxes else []
+        
+        if character_boxes:
+            for i, dialogue in enumerate(on_panel_dialogues):
                 char_box = None
                 if 'character_description' in dialogue:
                     for box in character_boxes:
@@ -415,29 +485,51 @@ class SpeechBubbleGenerator:
                             char_box = box
                             break
                 
-                if not char_box and character_boxes:
-                    char_box = random.choice(character_boxes)
-                    print(f"No character found for dialogue {i+1}. Using a random character.")
-                
                 text = dialogue.get('text', '')
                 
                 if not text:
                     continue
                     
                 char_desc = dialogue.get('character_description', 'Unknown')
-                print(f"Generating bubble {i+1} for character '{char_desc}': '{text[:20]}...'")
+                print(f"Generating on-panel bubble {i+1} for character '{char_desc}': '{text[:20]}...'")
                 
                 pos, arrow_pos, lines, font_size = self.find_optimal_bubble_position(
                     char_box, text, used_areas
                 )
                 
                 if pos:
-                    print(f"Placed bubble {i+1} at position {pos}")
+                    print(f"Placed on-panel bubble {i+1} at position {pos}")
                     used_areas.append([pos[0], pos[1], pos[0] + pos[2], pos[1] + pos[3]])
                     
-                    self.draw_speech_bubble(pos, arrow_pos, lines, font_size)
+                    self.draw_speech_bubble(pos, arrow_pos, lines, font_size, draw_arrow=True)
                 else:
-                    print(f"Failed to place bubble {i+1}")
+                    print(f"Failed to place on-panel bubble {i+1}")
+        
+        for i, dialogue in enumerate(off_panel_dialogues):
+            text = dialogue.get('text', '')
+            
+            if not text:
+                continue
+                
+            speaker = dialogue.get('character_description', 'Unknown speaker')
+            character_name = dialogue.get('character_name', '')
+            
+            if character_name:
+                formatted_text = f"{character_name}: \"{text}\""
+            else:
+                formatted_text = text
+            
+            print(f"Generating off-panel bubble {i+1} for '{speaker}' ({character_name}): '{formatted_text[:20]}...'")
+            
+            pos, lines, font_size = self.find_off_panel_bubble_position(formatted_text, used_areas)
+            
+            if pos:
+                print(f"Placed off-panel bubble {i+1} at position {pos}")
+                used_areas.append([pos[0], pos[1], pos[0] + pos[2], pos[1] + pos[3]])
+                
+                self.draw_speech_bubble(pos, None, lines, font_size, draw_arrow=False)
+            else:
+                print(f"Failed to place off-panel bubble {i+1}")
         
         if narration:
             self.add_narration(narration, narration_position)
@@ -448,32 +540,3 @@ class SpeechBubbleGenerator:
         """Save the image with speech bubbles."""
         self.image.save(output_path)
 
-if __name__ == "__main__":
-    image_path = "output/test_2_comic_page_7/panel_01.png"
-    api_key = os.environ.get("LANDING_AI_API_KEY")
-    
-    try:
-        generator = SpeechBubbleGenerator(image_path, api_key)
-        
-        dialogues = [
-
- 
-            {
-                "character_description": "a grey hair guy's head", 
-                "text": "For Eldoria!"
-            },
-            
-            
-        ]
-        
-        narration = "They stand side by side—friends, warriors—united by trial and sacrifice. And in that moment, hope was born anew."
-        
-        result_image = generator.generate_speech_bubbles(dialogues, narration=narration, narration_position="top")
-        
-        generator.save("output_comic_panel_with_narration.jpg")
-        print("Speech bubbles and narration added successfully!")
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
