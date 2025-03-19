@@ -34,23 +34,19 @@ def convert_formatted_to_comic(formatted_text):
     7. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
     8. Use visual language in narration that suggests what should be drawn in the panel.
     9. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
+    10. IMPORTANT: Do not include any parenthetical descriptions after character names like "(off-panel)" or "(shouting)".
+    11. IMPORTANT: Include all character actions as part of the narration, not as separate italicized lines.
+    12. IMPORTANT: Do not use any markdown formatting (asterisks, italics, etc.) inside narration text.
 
     Example of your output:
     ## Page 1
 
     ### Panel 1  
-    [detailed description of the scene]
+    [detailed description of the scene in square brackets]
 
     **Character A:** character A's dialogue
 
-    **Character B:** character B's dialogue
-
-    ---
-
-    ### Panel 2  
-    [detailed description of the scene]
-
-    **Character A:** character A's dialogue
+    **Narration**: Any narration text goes here, including character actions. Do not format this with italics or stars.
 
     **Character B:** character B's dialogue
     
