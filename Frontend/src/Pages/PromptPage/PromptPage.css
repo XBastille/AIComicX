@@ -1,0 +1,122 @@
+/* App.css */
+body {
+  background-color:  rgb(31, 22, 35);
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+#chatGpt{
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-image: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) ) 1; 
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+select option [value = "option1"]{
+  background-color: transparent !important;
+  color: black;
+}
+
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #222;
+  border-radius: 12px; 
+  padding: 5px;
+  width: 800px;
+  margin-top: 80px;
+  position: relative;
+}
+
+.search-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 2px; 
+  background: linear-gradient(90deg, rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0));
+  -webkit-mask: linear-gradient(white, white) content-box, linear-gradient(white, white);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  outline: none;
+  padding: 5px;
+  font-size: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.search-bar:focus-within::before {
+  opacity: 1;
+}
+
+.Mascot{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.Mascot-logo{
+  height: 550px;
+  width: 400px;
+ 
+}
+
+.Sent-logo{
+  height: 20px;
+  width: 20px;
+ /* pointer-events: none;*/
+  cursor: pointer;
+}
+
+
+.hidden{
+  opacity: 0;
+  transform: scale(0.9);
+  /*transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;*/
+  pointer-events: none;
+}
+
+
+.Send_Button{
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+/*.send-button:active {
+  transform: scale(0.9); 
+}*/
+
+
+
+
+
+
+
+
+

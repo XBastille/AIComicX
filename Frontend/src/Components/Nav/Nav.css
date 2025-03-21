@@ -1,0 +1,54 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+
+  .Navbar{
+  width: 100%;
+  background-color:  rgb(31, 22, 35);
+  position: absolute;
+  top: -90px;
+  height: 300px;
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  
+  }
+
+  .play-btn {
+    border: 2px solid #d72b59;
+    background: transparent;
+    color: white;
+    padding: 10px 40px;
+    border-radius: 43px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: border 0.3s ease;
+  }
+
+  .play-btn:hover{
+    background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
+    
+  }
+
+  .menu {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .menu-text {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    margin-right: 30px;
+    font-family: "'Michroma', sans-serif"
+  }
+  
+  
+  
