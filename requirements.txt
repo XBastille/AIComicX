@@ -1,0 +1,8 @@
+beautifulsoup4==4.13.3
+diffusers==0.32.2
+gradio_client==1.8.0
+markitdown==0.0.2
+numpy==1.26.4
+pillow==11.1.0
+requests==2.32.3
+torch==2.2.1+cu121
