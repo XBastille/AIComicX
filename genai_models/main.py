@@ -3,6 +3,8 @@ import json
 import sys
 import traceback
 import re
+
+from numpy.lib.polynomial import _5Tup
 from image_batch import generate_comic_images_for_page, extract_panel_content
 from speech_bubble import SpeechBubbleGenerator
 from azure.ai.inference import ChatCompletionsClient
@@ -355,7 +357,7 @@ def generate_character_detection_prompts(panel_info, character_descriptions):
     
     return generate_character_detection_prompts_llm(character_names, character_descriptions)
 
-def process_comic_page(markdown_file, page_number, api_key, style="american comic (modern)"):
+def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensions, guidance_scale, inference_steps):
     """
     Generate comic page and add speech bubbles to each panel.
     
@@ -376,13 +378,9 @@ def process_comic_page(markdown_file, page_number, api_key, style="american comi
         "randomize_seed": False,
         "width": 768,
         "height": 1024,
-        "panel_dimensions": [
-            (768, 1024),
-            (768, 1024),
-            (768, 1024)
-        ],
-        "guidance_scale": 7.5,
-        "num_inference_steps": 40
+        "panel_dimensions": panel_dimensions,
+        "guidance_scale": guidance_scale,
+        "num_inference_steps": inference_steps
     }
     
     panel_images = generate_comic_images_for_page(settings)
@@ -495,5 +493,12 @@ if __name__ == "__main__":
         markdown_file="test_2_comic.md", 
         page_number=1, 
         api_key=api_key,
-        style="american comic (modern)"
+        style="american comic (modern)",
+        panel_dimensions=[
+            (768, 1024),
+            (768, 1024),
+            (768, 1024)
+            ],
+        guidance_scale = 7.5,
+        inference_steps=40
     )
