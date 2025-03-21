@@ -1,14 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
+import "./Grid.css"
 
 function Grid3(){
+
+    const[zoom,setzoom]=useState(1);
+    const gap=6
+    const boxWidth=zoom*200
+    const boxHeight=zoom*350
+
     return (
         <div style={styles.container}>
             <div style={styles.inner}>
-                <div style={styles.grid}>
-                    <div style={styles.box1}>1</div>
-                    <div style={styles.box2}>2</div>
-                    <div style={styles.box2}>3</div>
-                    <div style={styles.box1}>4</div>
+                <div style={{...styles.grid,width: `${zoom * 615}px`,gap: `${gap}px`, gridTemplateColumns: `repeat(3, ${boxWidth}px)`, gridTemplateRows: `repeat(2, ${boxHeight}px)`, maxWidth: "90vw",
+                        maxHeight: "90vh",
+                        overflow: "scroll",}} className="grid">
+                    <div style={{...styles.box1}}>1</div>
+                    <div style={{...styles.box2}}>2</div>
+                    <div style={{...styles.box2}}>3</div>
+                    <div style={{...styles.box1}}>4</div>
                 </div>
             </div>
         </div>
