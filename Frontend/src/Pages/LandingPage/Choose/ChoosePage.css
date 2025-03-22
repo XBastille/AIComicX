@@ -7,6 +7,7 @@
     background-color: rgb(31, 22, 35);
     perspective: 1000px; 
     overflow: hidden; 
+    padding-top: 90px;
 }
 
 .Story-tag {
@@ -116,6 +117,7 @@
     width: 380px;
     height: 507px;
     border-radius: 20px;
+    cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
     background: linear-gradient(to right, rgb(223, 30, 114), rgb(230, 110, 41), rgb(255, 191, 0));
