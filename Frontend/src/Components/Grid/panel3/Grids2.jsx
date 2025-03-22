@@ -1,14 +1,35 @@
-import React from "react";
-
+import React, { useState } from "react";
+import "../panel4/Grid.css"
 function Grids2() {
+    const [zoom, setzoom] = useState(1);
+    const gap = 6;
+    const boxWidth = zoom * 320;
+    const boxHeight = zoom * 320
+
+
     return (
-        <div style={styles.container}>
-            <div style={styles.inner}>
-                <div style={styles.grid}>
-                    <div style={styles.box1}>1</div>
-                    <div style={styles.box2}>2</div>
-                    <div style={styles.box4}>3</div>
+        <div style={styles.flex}>
+            <div style={styles.container}>
+                <div style={styles.inner}>
+                    <div style={{
+                        ...styles.grid, gap: `${gap}px`, gridTemplateColumns: `repeat(2, ${boxWidth}px)`, gridTemplateRows: `repeat(2, ${boxHeight}px)`, maxWidth: "90vw",
+                        maxHeight: "90vh",
+                        overflow: "scroll",
+                    }} className="grids1">
+                        <div style={{ ...styles.box1, width: `${zoom * 320}px`, height: `${zoom * 320}px` }}>1</div>
+                        <div style={{ ...styles.box2, width: `${zoom * 320}px`, height: `${zoom * 320}px` }}>2</div>
+                        <div style={{ ...styles.box4, width: `${zoom * 643}px`, height: `${zoom * 320}px` }}>3</div>
+                    </div>
                 </div>
+            </div>
+            <div>
+                <input type="range"
+                    min="1"
+                    max="2"
+                    step={0.1}
+                    value={zoom}
+                    onChange={(e) => setzoom((e.target.value))}
+                ></input>
             </div>
         </div>
     )
@@ -75,6 +96,16 @@ const styles = {
     inner: {
         backgroundColor: "rgb(31, 31, 31)",
         padding: "8px",
+        transition: "width 0.3s ease-in-out",
+        overflow: 'auto'
+    },
+    flex: {
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        overflow: "auto"
     },
 };
 

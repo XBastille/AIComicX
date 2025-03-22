@@ -1,24 +1,37 @@
 import React, { useState } from "react";
 import "./Grid.css"
 
-function Grid3(){
+function Grid3() {
 
-    const[zoom,setzoom]=useState(1);
-    const gap=6
-    const boxWidth=zoom*200
-    const boxHeight=zoom*350
+    const [zoom, setzoom] = useState(1);
+    const gap = 6
+    const boxWidth = zoom * 200
+    const boxHeight = zoom * 310
 
     return (
-        <div style={styles.container}>
-            <div style={styles.inner}>
-                <div style={{...styles.grid,width: `${zoom * 615}px`,gap: `${gap}px`, gridTemplateColumns: `repeat(3, ${boxWidth}px)`, gridTemplateRows: `repeat(2, ${boxHeight}px)`, maxWidth: "90vw",
+        <div style={styles.flex}>
+            <div style={styles.container}>
+                <div style={styles.inner}>
+                    <div style={{
+                        ...styles.grid, width: `${zoom * 615}px`, gap: `${gap}px`, gridTemplateColumns: `repeat(3, ${boxWidth}px)`, gridTemplateRows: `repeat(2, ${boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
-                        overflow: "scroll",}} className="grid">
-                    <div style={{...styles.box1}}>1</div>
-                    <div style={{...styles.box2}}>2</div>
-                    <div style={{...styles.box2}}>3</div>
-                    <div style={{...styles.box1}}>4</div>
+                        overflow: "scroll",
+                    }} className="grid">
+                        <div style={{ ...styles.box1, width: `${zoom * 405}px`, height: `${zoom * 310}px` }}>1</div>
+                        <div style={{ ...styles.box2, width: `${zoom * 200}px`, height: `${zoom * 310}px` }}>2</div>
+                        <div style={{ ...styles.box2, width: `${zoom * 200}px`, height: `${zoom * 310}px` }}>3</div>
+                        <div style={{ ...styles.box1, width: `${zoom * 405}px`, height: `${zoom * 310}px` }}>4</div>
+                    </div>
                 </div>
+            </div>
+            <div>
+                <input type="range"
+                    min="1"
+                    max="2"
+                    step={0.1}
+                    value={zoom}
+                    onChange={(e) => setzoom((e.target.value))}
+                ></input>
             </div>
         </div>
     )
@@ -27,9 +40,9 @@ function Grid3(){
 const styles = {
     grid: {
         display: "grid",
-        gridTemplateColumns: "repeat(3, 200px)",  // 3 equal columns
-        gridTemplateRows: "repeat(2, 350px)",      // Auto-adjust height
-        gap: "6px",
+        // gridTemplateColumns: "repeat(3, 200px)",  // 3 equal columns
+        // gridTemplateRows: "repeat(2, 350px)",      // Auto-adjust height
+        // gap: "6px",
     },
     container: {
         display: "flex",
@@ -40,7 +53,7 @@ const styles = {
         backgroundColor: "black",
         color: "white",
     },
-    box1: {  
+    box1: {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -49,25 +62,37 @@ const styles = {
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
-        width: "100%",   // Ensures it spans correctly
-        height: "350px", // Square shape
+        // width: "100%",   // Ensures it spans correctly
+        height: "310px", // Square shape
         gridColumn: "span 2", // Spanning 2 columns
+        overflow: "auto"
     },
-    box2: {  
+    box2: {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        width: "200px",
-        height: "350px",  // Shorter height
+        //  width: "200px",
+        height: "310px",  // Shorter height
         backgroundColor: "rgb(31, 31, 31)",
         color: "white",
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
+        overflow: "auto"
     },
     inner: {
         backgroundColor: "rgb(31, 31, 31)",
         padding: "8px",
+        transition: "width 0.3s ease-in-out",
+        overflow: 'auto'
+    },
+    flex: {
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        overflow: "auto"
     },
 };
 export default Grid3;
