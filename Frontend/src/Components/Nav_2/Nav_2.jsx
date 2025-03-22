@@ -4,34 +4,34 @@ import "./Nav_2.css";
 import Header from "../Header/Header";
 
 function Nav_2({ showBack, onBackClick }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const navigate = useNavigate();
-  
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
+    const [menuOpen, setMenuOpen] = useState(false);
+    const navigate = useNavigate();
 
-  return (
-    <>
-      <nav className="Navbar nav_2">
-        {showBack ? (
-          <button className="back-btn" onClick={onBackClick}>
-            <span className="back-arrow">←</span> BACK
-          </button>
-        ) : (
-          <button className="back-btn" onClick={() => navigate("/")}>
-            <span className="back-arrow">←</span> HOME
-          </button>
-        )}
+    const toggleMenu = () => {
+        setMenuOpen(!menuOpen);
+    };
 
-        <div className="menu" onClick={toggleMenu}>
-          <span className="menu-text">MENU</span>
-        </div>
-      </nav>
+    return (
+        <>
+            <nav className="Navbar nav_2">
+                {showBack ? (
+                    <button className="back-btn" onClick={onBackClick}>
+                        <span className="back-arrow">←</span> BACK
+                    </button>
+                ) : (
+                    <button className="back-btn" onClick={() => navigate("/")}>
+                        <span className="back-arrow">←</span> HOME
+                    </button>
+                )}
 
-      <Header toggleMenu={toggleMenu} menuOpen={menuOpen} />
-    </>
-  );
+                <div className="menu" onClick={toggleMenu}>
+                    <span className="menu-text">MENU</span>
+                </div>
+            </nav>
+
+            <Header toggleMenu={toggleMenu} menuOpen={menuOpen} />
+        </>
+    );
 }
 
 export default Nav_2;
