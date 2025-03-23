@@ -3,6 +3,9 @@ import { color, motion } from "framer-motion";
 import { useState } from "react";
 import { windowlistner } from "../WindowListener/WindowListener"
 import "../Register/Register.css"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faGithub, faGoogle } from '@fortawesome/free-brands-svg-icons';
+import axios from 'axios'
 
 function Register() {
 
@@ -10,36 +13,48 @@ function Register() {
     // const navigate = useNavigate();
 
     const [name, setname] = useState('')
-    const [username, setusername] = useState('')
     const [email, setemail] = useState('')
     const [password, setpassword] = useState('')
     const [confirm, setconfirm] = useState('')
 
     const [errors, setErrors] = useState('');
 
-    // const submits = async (event) => {
-    //     event.preventDefault();
-    //     setname('')
-    //     setusername('')
-    //     setemail('')
-    //     setpassword('')
-    //     setconfirm('')
+    const submits = async (event) => {
+        event.preventDefault();
+        setname('')
+        setemail('')
+        setpassword('')
+        setconfirm('')
 
-    //     try {
-    //         const response = await axios.post('http://localhost:3001/user/Register', { name, username, email, password, confirm })
-    //         console.log(response.data)
-    //         if (response.data.success === 'true') {
-    //             navigate('/user/Login')
-    //         }
-    //         if (response.data.success === 'false') {
-    //             navigate('/user/Register')
-    //             setErrors(response.data.error[0].msg)
-    //         }
-    //         console.log(name, username, email, password, confirm)
-    //     } catch (error) {
-    //         console.log(error)
-    //     }
-    // }
+        try {
+            const response = await axios.post('http://localhost:3000/user/signup', { name, email, password, confirm })
+            console.log(response.data)
+            if (response.data.sucess === true) {
+                // navigate('/user/Login')
+                console.log("navigate karna h")
+            }
+            if (response.data.sucess === false) {
+                // navigate('/user/Register')
+                console.log("navigate to signup")
+                console.log(response.data.error[0].msg)
+                setErrors(response.data.error[0].msg)
+            }
+            //   console.log(name, email, password, confirm)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const google = () => {
+        try {
+            console.log("hello")
+            window.location.href = "http://localhost:3000/user/auth/google";
+            //const res=await axios.get('http://localhost:3000/user/auth/google')
+            console.log(res)
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
     windowlistner('pointermove', (e) => {
         setposition({ x: e.clientX, y: e.clientY })
@@ -52,7 +67,7 @@ function Register() {
     function timingout() {
         setTimeout(() => {
             setErrors('')
-        }, 4000);
+        }, 5000);
     }
     return (
         <motion.div style={styles.login}>
@@ -63,14 +78,26 @@ function Register() {
 
             <motion.div style={styles.innerLogin}>
                 <motion.div>
-                    
+
                     <h1 style={styles.artist}>ARTISTS & STORYTELLERS, ASSEMBLE!</h1>
                     <p style={styles.stories}><span style={{ fontWeight: 'bold', color: 'rgb(222, 218, 219)', fontFamily: "sans-serif" }}>BRING YOUR STORIES TO LIFE.</span>™ New here? Sign up today and get a free character template and your first comic panel on us. Create, share, and experience storytelling like never before on our cutting-edge platform!"?</p>
                 </motion.div>
                 <motion.div style={styles.centerss}>
                     <motion.div >
                         <p style={styles.heading}>SIGN UP</p>
-                        <p style={styles.subheading}>Join us today and unlock endless possibilities!</p>
+                        <p style={{
+                            ...styles.subheading,
+                            marginBottom: errors ? "70px" : "30px",
+                        }}>Join us today and unlock endless possibilities!</p>
+                        <motion.div>
+                            {errors && (
+                                <p className="error" style={{
+                                    ...styles.error,
+                                    marginTop: errors ? "40px" : "20px",
+
+                                }} {...timingout()} > {errors} </p>
+                            )}
+                        </motion.div>
                     </motion.div>
                     <motion.div>
                         <motion.div style={styles.emailContainer}>
@@ -92,26 +119,26 @@ function Register() {
                         <motion.button style={styles.button}
                             whileHover={{
                                 scale: 1.04,
-                                color: 'rgb(196, 195, 195)',
-                                background: "linear-gradient(to right,rgb(244, 29, 122),rgb(255, 191, 0))",
+                                color: 'rgb(255, 255, 255)',
+                                background: "linear-gradient(to right,rgba(233, 29, 83, 0.67), rgba(251, 231, 81, 0.69))",
                             }}
                             whileTap={{
                                 scale: 1.01,
                             }}
-                            type="submit">SIGN UP</motion.button>
+                            type="submit" onClick={submits}>SIGN UP</motion.button>
                         <motion.div className="Account" style={styles.accountText} >
                             Already have account?{" "}
                             <motion.a title="No account" style={styles.links}>
                                 Login!
                             </motion.a>
                         </motion.div>
+                        <motion.div className="iconss">
+                            <motion.button className="btn" onClick={google}><FontAwesomeIcon icon={faGoogle} className="icons" /><span>Google</span></motion.button>
+                            <motion.button className="btn"><FontAwesomeIcon icon={faGithub} className="icons"
+                            /><span>Github</span></motion.button>
+                        </motion.div>
                     </motion.div>
                 </motion.div>
-            </motion.div>
-            <motion.div>
-                {errors && (
-                    <p className="error" style={styles.error} {...timingout()} > {errors} </p>
-                )}
             </motion.div>
         </motion.div>
     )
@@ -140,7 +167,7 @@ const styles = {
         fontWeight: '900',
         marginBottom: '5px',
         marginTop: "10%",
-            
+
     },
     subheading: {
         fontSize: '18px',
@@ -196,7 +223,8 @@ const styles = {
         backgroundColor: 'rgb(24, 18, 28)',
         fontSize: "18px",
         color: 'white',
-        fontWeight: "900"
+        fontWeight: "900",
+
     },
     links: {
         borderBottom: '2px solid rgb(173, 167, 167)',
@@ -214,12 +242,11 @@ const styles = {
         top: -30,
         zIndex: 9999,
         opacity: '0.9',
-        backdropFilter: "blur(20px)",
     },
     error: {
         position: 'absolute',
-        top: '20px',
-        right: '20px',
+        top: '410px',
+        left: '280px',
         backgroundColor: 'rgba(255, 0, 0, 0.8)',
         color: 'white',
         padding: '13px 35px',
@@ -227,7 +254,6 @@ const styles = {
         fontSize: '16px',
         fontWeight: 'bold',
         textAlign: 'center',
-        boxShadow: '0px 0px 10px rgba(255, 0, 0, 0.5)'
     },
     artist: {
         fontSize: '38px',
