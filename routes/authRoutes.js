@@ -11,43 +11,37 @@ router.post('/signup', async (req, res) => {
     console.log('signup k andar');
 
     try {
-        const { userName, email, password, confirmPassword } = req.body;
+        const { name, email, password, confirm } = req.body;
+        let error = [];
+        console.log(name, email, password, confirm)
         console.log('try k andar');
-        if (!userName || !email || !password || !confirmPassword) {
-            return res.status(500).json({
-                sucess: false,
-                message: 'please fill all the feilds ',
-            })
 
+        if (name === '' || email === '' || !password === '' || !confirm === '') {
+            error.push({ msg: "Please fill all the blanks" })
         }
 
         if (!validator.isEmail(email)) {
-            return res.status(500).json({
-                sucess: false,
-                message: 'email is not valid please provide valid email'
-            })
+            error.push({ msg: "Email is not valid" });
         }
 
-        if (password === confirmPassword) {
-            return res.status(500).json({
-                sucess: false,
-                message: 'password and confirm password are not same ',
-            })
+        if (password !== confirm) {
+            error.push({ msg: "Password mismatch" })
         }
 
         if (password.length < 6) {
-            return res.status(500).json({
-                sucess: false,
-                message: 'password is too short'
-            })
+            error.push({ msg: "password is too short" })
+        }
+        if (error.length > 0) {
+            return res.json({ sucess: false, msg: "re render the register", error })
         }
 
         const exist = await schema.findOne({ email: email })
         if (exist) {
-            console.log('exist wala check');
-            return res.status(500).json({
+            error.push({ msg: 'username already exist' })
+            return res.json({
                 sucess: false,
                 message: 'user already exits try to sinup',
+                error
             })
         }
         var salt = bcrypt.genSaltSync(15);
@@ -55,20 +49,23 @@ router.post('/signup', async (req, res) => {
 
 
         const newuser = await schema.create({
-            userName: userName,
+            name: name,
             email: email,
             password: newPassword,
         })
         req.session.userId = newuser._id;
-        res.status(201).json({
+        return res.json({
             sucess: true,
             message: 'new User Created'
         })
     } catch (error) {
         console.log(error);
-        res.status(500).json('Internal Server Error');
+        return res.status(500).json('Internal Server Error');
     }
 })
+
+
+//LOGIN_________________________________________________________________________________________
 
 router.post('/login', async (req, res) => {
     try {
