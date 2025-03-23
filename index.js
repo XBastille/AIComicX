@@ -15,6 +15,7 @@ app.use(session({
 }));
 
 app.use("", require('./routes/authRoutes'));
+app.use("", require('./routes/chatRoutes'));
 
 app.get('/', (req, res) => {
     res.send('home page');
