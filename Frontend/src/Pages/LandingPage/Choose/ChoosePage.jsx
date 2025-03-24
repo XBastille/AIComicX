@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./ChoosePage.css";
-import narrationImage from "../../../Picture/nar.jpg";
-import storyImage from "../../../Picture/story.jpg";
-import sam from "../../../Picture/sam.png";
-import Nav_2 from "../../../Components/Nav_2/Nav_2";
+import narrationImage from "../../Picture/nar.jpg"
+import storyImage from "../../Picture/story.jpg";
+import sam from "../../Picture/sam.png";
+import Nav_2 from "../../Components/Nav_2/Nav_2";
+import axios from 'axios'
 import { gsap } from "gsap";
 
 function ChoosePage() {
@@ -26,6 +27,8 @@ function ChoosePage() {
 
     const selectionPulseRef = useRef(null);
     const digitalParticlesRef = useRef(null);
+
+
 
     useEffect(() => {
         gsap.set([box1Ref.current, box2Ref.current, box3Ref.current], {
@@ -482,9 +485,9 @@ function ChoosePage() {
             }, "-=0.2");
         }, 50);
     };
-
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
+        // console.log(file)
         if (!file) return;
 
         setUploadedFile(file);
@@ -535,6 +538,52 @@ function ChoosePage() {
         });
     };
 
+    const conti = async (e) => {
+        console.log(uploadedFile)
+
+        const file = new FormData()
+        file.append('file', uploadedFile)
+
+        try {
+            const response = await axios.post('http://localhost:3000/chat/transfer', file, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            console.log(response.data);
+
+        } catch (error) {
+            console.log("Cannot send file to backend " + error)
+        }
+        gsap.to(".file-preview", {
+            y: 20,
+            opacity: 0,
+            duration: 0.3,
+            ease: "power2.in",
+            onComplete: () => {
+                setUploadedFile(null);
+                setFilePreview('');
+
+                setTimeout(() => {
+                    const uploadBox = document.querySelector(".upload-box");
+                    if (uploadBox) {
+                        gsap.set(uploadBox, {
+                            opacity: 0,
+                            y: 20
+                        });
+
+                        gsap.to(uploadBox, {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.4,
+                            ease: "back.out(1.4)"
+                        });
+                    }
+                }, 0);
+            }
+        });
+    }
+
     const formatFileSize = (bytes) => {
         if (bytes < 1024) return bytes + ' bytes';
         else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
@@ -563,6 +612,7 @@ function ChoosePage() {
                                     className="file-input"
                                     onChange={handleFileUpload}
                                     accept=".txt,.doc,.docx,.pdf"
+                                    name="file"
                                 />
                             </div>
                         ) : (
@@ -600,8 +650,7 @@ function ChoosePage() {
                         <button
                             className="continue-button"
                             disabled={!uploadedFile}
-                            style={{ opacity: uploadedFile ? 1 : 0.6, cursor: uploadedFile ? 'pointer' : 'not-allowed', width: '100%' }}
-                        >
+                            style={{ opacity: uploadedFile ? 1 : 0.6, cursor: uploadedFile ? 'pointer' : 'not-allowed', width: '100%' }} onClick={conti} >
                             Continue
                         </button>
                     </div>
