@@ -28,6 +28,10 @@ AIComicX is an AI-powered platform that allows users to upload their stories and
 - 🖌 **AI-Powered Character & Scene Design**: Effortlessly create characters and backgrounds.
 - 💬 **AI-Assisted Dialogues**: Generate story-based dialogues for seamless storytelling.
 
+## 📜 License
+
+This project is licensed under the Creative Commons BY-NC-ND License - see the [LICENSE](LICENSE) file for details.
+
 ## 📌 Status
 
 AIComicX is currently under active development. 🚧 New features are continuously being integrated, and improvements are ongoing. Stay tuned for updates! 🔧✨
