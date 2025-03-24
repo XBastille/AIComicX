@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const { SourceTextModule } = require("vm");
 const spawn = require('child_process').spawn;
 
 
@@ -14,7 +15,15 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post("/upload", upload.single("file"), (req, res) => {
+router.get("/", (req, res) => {
+    res.send("hello woeld")
+    console.log("route hitted")
+})
+
+router.post("/transfer", upload.single("file"), (req, res) => {
+    //res.send("teri ma ki chut")
+    console.log("route is hitting")
+
     if (!req.file) {
         return res.status(400).json({
             success: false,
@@ -23,7 +32,7 @@ router.post("/upload", upload.single("file"), (req, res) => {
     }
 
     const filePath = req.file.path;
-
+    console.log(filePath)
 
     const pythonProcess = spawn("python3", ["../genai_models/nar2nar.py", filePath]);
 
@@ -44,3 +53,5 @@ router.post("/upload", upload.single("file"), (req, res) => {
         });
     });
 });
+
+module.exports = router;

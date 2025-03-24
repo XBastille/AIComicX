@@ -12,21 +12,19 @@ passport.deserializeUser(async (id, done) => {
 });
 
 passport.use(new GoogleStrategy({
-    clientID: process.env.GITHUB_CLIENT_ID,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
     callbackURL: 'http://localhost:3000/auth/google/callback',
     passReqToCallback: true
 },
     async function (request, accessToken, refreshToken, profile, done) {
         try {
-            let user = await User.findOne({ google_id: profile.id });
+            let user = await User.findOne({ _id: profile.id });
             if (!user) {
-                const newuser = await User.create({
-                    google_Id: profile.id,
+                const newuser = User.create({
                     userName: profile.displayName,
                     email: profile.emails[0].value,
                     password: null,
-                    provider: 'google'
 
                 })
             }
@@ -37,6 +35,8 @@ passport.use(new GoogleStrategy({
     }
 ));
 
+
+//______________________________GITHUB AUTH___________________________________________-
 passport.use(new GithubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,

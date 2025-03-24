@@ -7,6 +7,8 @@ require('../passport');
 
 const router = express.Router();
 
+
+//___________________________________SIGN UP______________________________________________________________
 router.post('/signup', async (req, res) => {
     console.log('signup k andar');
 
@@ -69,16 +71,16 @@ router.post('/signup', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
-        const { userName, email, password } = req.body;
-        if (!userName || !email || !password) {
-            return res.status(500).json({
+        const { name, email, password } = req.body;
+        if (!name || !email || !password) {
+            return res.json({
                 sucess: false,
                 message: 'form pura bharo'
             })
         }
         const exist = await schema.findOne({ email: email });
         if (!exist) {
-            return res.status(500).json({
+            return res.json({
                 sucess: false,
                 message: 'user not found'
             })
@@ -87,27 +89,29 @@ router.post('/login', async (req, res) => {
         const same = await bcrypt.compare(password, exist.password);
         console.log('same wala line run ho gaya h');
         if (!same) {
-            return res.status(500).json({
+            return res.json({
                 sucess: false,
                 message: 'password incorrect',
             })
         }
         req.session.userId = exist._id;
-        res.status(200).json({
+        return res.json({
             sucess: true,
             message: 'user found'
         })
     } catch (error) {
         console.log(error);
     }
-});
+})
+
+//______________________________GOOGLE AUTH___________________________________________________________________
 
 router.get('/auth/google', passport.authenticate('google', {
     scope:
         ['email', 'profile']
 }));
 
-router.get('/auth/google/callback', passport.authenticate('google', {
+router.get('auth/google/callback', passport.authenticate('google', {
     successRedirect: '/success',
     failureRedirect: '/faliure'
 }));
@@ -125,8 +129,10 @@ router.get('/faliure', (req, res) => {
         sucess: false,
         message: 'failed to authenticate'
     })
-});
+})
 
+
+//__________________GITHUB AUTH_________________________________________________
 app.get('/auth/github',
     passport.authenticate('github', { scope: ['user:email'] }));
 
