@@ -21,7 +21,6 @@ router.get("/", (req, res) => {
 })
 
 router.post("/transfer", upload.single("file"), (req, res) => {
-    //res.send("teri ma ki chut")
     console.log("route is hitting")
 
     if (!req.file) {
