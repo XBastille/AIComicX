@@ -95,6 +95,8 @@ def process_formatted_file(file_path):
     return comic_text
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        sys.exit(1)
     input_file = "test_2.txt"
     
     result = process_formatted_file(input_file)
