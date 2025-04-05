@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Sigmar&family=Sofadi+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Lilita+One&family=Outfit:wght@900&family=Sigmar&family=Sofadi+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Lilita+One&family=Outfit:wght@900&family=Rubik+Mono+One&family=Sigmar&family=Sofadi+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Michroma&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Atkinson+Hyperlegible+Mono:ital,wght@0,200..800;1,200..800&family=Lilita+One&family=Outfit:wght@900&family=Rubik+Mono+One&family=Sigmar&family=Sofadi+One&display=swap');
+
+
+.btn {
+    border: 2px solid rgb(173, 167, 167);
+    border-radius: 30px;
+    padding: 15px;
+    width: 30%;
+    margin-top: 20px;
+    background-color: rgb(24, 18, 28);
+    font-size: 18px;
+    background: transparent;
+    color: white;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn:hover {
+    background:linear-gradient(90deg, rgba(255, 235, 59, 0.85), rgba(255, 204, 204, 0.85));
+    color: rgb(255, 255, 255);
+    transform: scale(1.04);
+}
+
+
+.btn:active {
+    transform: scale(0.9);
+}
+
+.iconss{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+}
+
+.icons{
+    font-size: 20px;
+}

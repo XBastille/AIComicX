@@ -1,0 +1,123 @@
+body {
+    background-color: rgb(37, 27, 41);
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+}
+
+.sidebar {
+    width: 260px;
+    background-color: rgb(48, 36, 52);
+    height: 100vh;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    color: #d3d5d4;
+    margin-top: 40px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 15px;
+    cursor: pointer;
+}
+
+.sidebar ul li a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: rgb(202, 201, 201);
+    padding: 15px;
+    /* height: 100%; */
+    /* border: 2px solid white; */
+    border-radius: 1rem;
+
+
+}
+
+.sidebar ul li a:hover,
+.sidebar ul li a.active {
+    background-color: rgb(67, 51, 73);
+    color: #ffffff;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+.logout-btn {
+    background: #161717;
+    padding: 18px 50px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: rgb(213, 209, 209);
+    border-radius: 10px;
+    margin-right: 26px;
+    font-size: 16px;
+    margin-top: 35px;
+}
+
+.logout-btn:hover{
+    background: linear-gradient(90deg, rgba(255, 235, 59, 0.85), rgba(255, 204, 204, 0.85));
+    color: rgb(254, 254, 254);
+}
+
+.pending{
+    color: #d0d2d1;
+    margin-top: 20px;
+    margin-left: 15px;
+}
+
+.layout-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.judging-section {
+    margin-top: 20px;
+}
+
+.submission-card {
+    background: #1b1b1b;
+    margin-bottom: 15px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 255, 153, 0.2);
+}
+
+.submission-card h3 {
+    margin: 0 0 10px 0;
+}
+
+.submission-card button {
+    background: #00ff99;
+    border: none;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.welcome {
+    font-family: 'Michroma', sans-serif;
+    background: linear-gradient(90deg, rgba(255, 235, 59, 0.85), rgba(255, 204, 204, 0.85));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    margin-top: 30px;
+}

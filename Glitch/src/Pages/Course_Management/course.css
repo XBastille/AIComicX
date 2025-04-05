@@ -1,0 +1,434 @@
+@import url('https://fonts.googleapis.com/css2?family=Michroma&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+.course-management {
+    display: grid;
+    grid-template-columns: 80% 1fr;
+    min-height: 100vh;
+    background-color: rgb(38, 27, 42);
+    color: #fff;
+}
+
+.course-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+}
+
+.course-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.create-course-form {
+    background-color: rgb(48, 36, 52);
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.form-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #f0f0f0;
+    border-bottom: 2px solid #cec9c9;
+    padding-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #cec9c9;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    background-color: rgb(37, 27, 41);
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 16px;
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.courses-list {
+    padding: 20px;
+}
+
+.section-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #cec9c9;
+    border-bottom: 2px solid #cec9c9;
+    padding-bottom: 10px;
+}
+
+.empty-state {
+    background-color: rgb(37, 27, 41);
+    padding: 40px;
+    text-align: center;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.empty-state p {
+    font-size: 18px;
+    color: #aaa;
+}
+
+.content-textarea {
+    min-height: 400px !important;
+    font-family: monospace !important;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.course-tile {
+    position: relative;
+    background-color: rgb(37, 27, 41);
+    border-radius: 10px;
+    aspect-ratio: 16/9; 
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.course-tile:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 235, 59, 0.5);
+}
+
+.course-tile-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.course-name-display {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3498db;
+    text-align: center;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+}
+
+
+
+
+.course-initials {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #3498db;
+}
+
+.course-actions-overlay {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+.info-btn, .edit-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: rgba(35, 34, 34, 0.8);
+    border: 1px solid #444;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    position: relative; 
+}
+
+
+.info-btn:hover, .edit-btn:hover {
+    background: linear-gradient(to right, rgba(255, 235, 59, 0.85), rgba(255, 204, 204, 0.85));
+    color: #000;
+}
+
+.course-hover-info {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    background-color: rgb(48, 36, 52);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.course-hover-info:after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -10px;
+    border-width: 10px;
+    border-style: solid;
+    border-color: rgb(48, 36, 52) transparent transparent transparent;
+}
+
+.course-hover-info h4 {
+    margin-bottom: 8px;
+    color: #f0f0f0;
+    font-size: 16px;
+}
+
+.course-hover-info p {
+    color: #aaa;
+    font-size: 14px;
+    margin: 0;
+}
+
+.course-card {
+    background-color: rgb(37, 27, 41);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-bottom: 2px solid #cec9c9;
+}
+
+.course-name {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: #3498db;
+}
+
+.course-description {
+    color: #cec9c9;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.course-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-small {
+    padding: 8px 16px;
+    background-color: #232222;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-small:hover {
+    background: linear-gradient(to right, rgba(255, 235, 59, 0.85), rgba(255, 204, 204, 0.85));
+    color: #000;
+}
+
+.btn-danger {
+    background-color: #922424;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(to right, #ff5252, #ff8080);
+}
+
+.course-detail-view {
+    background-color: rgb(48, 36, 52);
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #cec9c9;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.detail-title {
+    font-size: 28px;
+    color: #3498db;
+    margin: 0;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: #cec9c9;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.btn-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.detail-description, .detail-content {
+    margin-bottom: 25px;
+}
+
+.detail-description h4, .detail-content h4 {
+    font-size: 20px;
+    color: #f0f0f0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(206, 201, 201, 0.3);
+    padding-bottom: 5px;
+}
+
+.detail-description p {
+    color: #cec9c9;
+    line-height: 1.6;
+}
+
+.markdown-content {
+    background-color: rgb(37, 27, 41);
+    padding: 20px;
+    border-radius: 8px;
+    color: #f0f0f0;
+    line-height: 1.8;
+    overflow-x: auto;
+}
+
+.markdown-content h1 {
+    font-size: 24px;
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 8px;
+}
+
+.markdown-content h2 {
+    font-size: 20px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #f0f0f0;
+}
+
+.markdown-content h3, .markdown-content h4 {
+    font-size: 18px;
+    margin-top: 16px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+.markdown-content p {
+    margin-bottom: 16px;
+}
+
+.markdown-content code {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 16px;
+    overflow: auto;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.9em;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid #3498db;
+    padding-left: 16px;
+    margin-left: 0;
+    margin-right: 0;
+    color: #ccc;
+}
+
+.markdown-content ul, .markdown-content ol {
+    padding-left: 2em;
+    margin-bottom: 16px;
+}
+
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.markdown-content table th, .markdown-content table td {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 12px;
+}
+
+.markdown-content table th {
+    background-color: rgba(255, 255, 255, 0.1);
+}
