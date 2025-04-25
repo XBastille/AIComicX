@@ -1,10 +1,10 @@
 import os
 import json
 import sys
+import shutil
 import traceback
 import re
 
-from numpy.lib.polynomial import _5Tup
 from image_batch import generate_comic_images_for_page, extract_panel_content
 from speech_bubble import SpeechBubbleGenerator
 from azure.ai.inference import ChatCompletionsClient
@@ -60,7 +60,7 @@ def parse_direct_from_markdown(markdown_file, page_number, panel_number):
         panel_number: Panel number to extract dialogues from
         
     Returns:
-        List of dialogue dictionaries
+        List of dialogue dictionaries with sequence information
     """
     try:
         with open(markdown_file, 'r', encoding='utf-8') as f:
@@ -89,42 +89,55 @@ def parse_direct_from_markdown(markdown_file, page_number, panel_number):
         panel_content = panel_match.group(1)
         print(f"Found panel {panel_number} content: \n{panel_content}")
         
+        result = []
+        
         narration_pattern = r"\*\*Narration\*\*:[ \t]*(.*?)(?:\n\n|\n\*\*|\Z)"
-        narration_match = re.search(narration_pattern, panel_content, re.DOTALL)
-        narration_text = narration_match.group(1).strip() if narration_match else ""
+        for narration_match in re.finditer(narration_pattern, panel_content, re.DOTALL):
+            narration_text = narration_match.group(1).strip()
+            if narration_text:
+                narration_start = narration_match.start()
+                result.append({
+                    'character': 'Narration',
+                    'text': narration_text,
+                    'sequence_position': narration_start,
+                    'type': 'narration'
+                })
+                print(f"Added narration at position {narration_start}: {narration_text[:30]}...")
         
         dialogue_pattern = r"\*\*([^*:]+)\*\*:[ \t]*\"((?:[^\"\\]|\\.)*)\""
-        
-        if not re.search(dialogue_pattern, panel_content):
-            print("First pattern found no matches, trying alternative...")
-            lines = panel_content.split("\n")
-            dialogues = []
-            for line in lines:
-                if "**" in line and ":" in line and "\"" in line:
-                    parts = line.split("**")
-                    if len(parts) >= 3:
-                        char_part = parts[1].strip()
-                        text_parts = line.split("\"")
-                        if len(text_parts) >= 2:
-                            text_part = text_parts[1].strip()
-                            dialogues.append((char_part, text_part))
-                            print(f"Found dialogue using alternative method: {char_part}: \"{text_part}\"")
-        else:
-            dialogues = re.findall(dialogue_pattern, panel_content, re.DOTALL)
+        for dialogue_match in re.finditer(dialogue_pattern, panel_content, re.DOTALL):
+            char_name = dialogue_match.group(1).strip()
+            dialogue_text = dialogue_match.group(2).strip()
+            dialogue_start = dialogue_match.start()
             
-        print(f"Regex found {len(dialogues)} character dialogues:")
-        for i, (char, text) in enumerate(dialogues):
-            print(f"  {i+1}. {char}: \"{text[:30]}...\"")
+            if char_name.lower() != "narration":
+                result.append({
+                    'character': char_name,
+                    'text': dialogue_text,
+                    'sequence_position': dialogue_start,
+                    'type': 'dialogue'
+                })
+                print(f"Added dialogue at position {dialogue_start}: {char_name}: {dialogue_text[:30]}...")
         
-        print("\nRAW CONTENT LINES:")
-        for i, line in enumerate(panel_content.split('\n')):
-            print(f"Line {i+1}: {line}")
-        
-        if not dialogues:
+        if not result:
             print("\nAttempting manual dialogue extraction:")
             manual_dialogues = []
+            sequence_position = 0
             for line in panel_content.split('\n'):
-                if "**" in line and ":" in line and "\"" in line:
+                if "**Narration**:" in line:
+                    try:
+                        narr_text = line.split("**Narration**:")[1].strip()
+                        if narr_text:
+                            manual_dialogues.append({
+                                'character': 'Narration',
+                                'text': narr_text,
+                                'sequence_position': sequence_position,
+                                'type': 'narration'
+                            })
+                            print(f"Manually extracted narration: {narr_text[:30]}...")
+                    except Exception as e:
+                        print(f"Error extracting narration: {e}")
+                elif "**" in line and ":" in line and "\"" in line:
                     try:
                         char_start = line.find("**") + 2
                         char_end = line.find("**", char_start)
@@ -134,39 +147,29 @@ def parse_direct_from_markdown(markdown_file, page_number, panel_number):
                         quote_end = line.rfind("\"")
                         if quote_start != -1 and quote_end != -1 and quote_end > quote_start:
                             dialogue_text = line[quote_start+1:quote_end].strip()
-                            manual_dialogues.append((char_name, dialogue_text))
-                            print(f"Manually extracted: {char_name}: \"{dialogue_text}\"")
+                            
+                            if char_name.lower() != "narration":
+                                manual_dialogues.append({
+                                    'character': char_name,
+                                    'text': dialogue_text,
+                                    'sequence_position': sequence_position,
+                                    'type': 'dialogue'
+                                })
+                                print(f"Manually extracted: {char_name}: \"{dialogue_text[:30]}...\"")
                     except Exception as e:
                         print(f"Error in manual extraction: {e}")
                         continue
+                sequence_position += 1
             
-            dialogues = manual_dialogues
+            if manual_dialogues:
+                result = manual_dialogues
         
-        result = []
+        result.sort(key=lambda x: x.get('sequence_position', 0))
         
-        if narration_text:
-            result.append({
-                'character': 'Narration',
-                'text': narration_text
-            })
-            print(f"Added narration: {narration_text[:30]}...")
-        
-        for char, text in dialogues:
-            char_name = char.strip()
-            char_text = text.strip()
-            
-            if char_name.lower() == "narration":
-                continue
-                
-            result.append({
-                'character': char_name,
-                'text': char_text
-            })
-            print(f"Added character dialogue: {char_name}: {char_text[:30]}...")
-        
-        print(f"Direct parsing found {len(result)} dialogues in panel {panel_number}:")
-        for i, dialogue in enumerate(result):
-            print(f"  {i+1}. {dialogue['character']}: {dialogue['text'][:30]}...")
+        print(f"Direct parsing found {len(result)} entries in panel {panel_number} in sequence order:")
+        for i, item in enumerate(result):
+            item_type = item.get('type', 'unknown')
+            print(f"  {i+1}. [{item_type}] {item['character']}: {item['text'][:30]}...")
         
         return result
         
@@ -357,7 +360,9 @@ def generate_character_detection_prompts(panel_info, character_descriptions):
     
     return generate_character_detection_prompts_llm(character_names, character_descriptions)
 
-def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensions, guidance_scale, inference_steps):
+def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensions, guidance_scale, inference_steps,
+                      bubble_color=(255, 255, 255), text_color=(0, 0, 0),
+                      narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255)):
     """
     Generate comic page and add speech bubbles to each panel.
     
@@ -366,8 +371,16 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         page_number: Page number to process
         api_key: API key for character detection
         style: Comic style for image generation
+        panel_dimensions: List of panel dimensions (width, height) for each panel
+        guidance_scale: Guidance scale for image generation
+        inference_steps: Number of inference steps
+        bubble_color: RGB tuple for speech bubble background color
+        text_color: RGB tuple for speech bubble text color
+        narration_bg_color: RGB tuple for narration background color
+        narration_text_color: RGB tuple for narration text color
     """
     print(f"Processing page {page_number} from {markdown_file}")
+    print(f"Using colors - Bubble: {bubble_color}, Text: {text_color}, Narration BG: {narration_bg_color}, Narration Text: {narration_text_color}")
     
     settings = {
         "markdown_file": markdown_file,
@@ -424,29 +437,47 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
             print(f"Warning: No content found for panel {panel_num}")
             continue
         
-        all_dialogues = parse_direct_from_markdown(markdown_file, page_number, panel_num)
+        all_content = parse_direct_from_markdown(markdown_file, page_number, panel_num)
         
-        if all_dialogues:
-            panel_content['dialogues'] = all_dialogues
+        if all_content:
+            panel_dialogues = []
+            narrations = []
+            
+            for item in all_content:
+                if item['character'].lower() == "narration":
+                    narrations.append({
+                        'text': item['text'],
+                        'sequence_position': item['sequence_position']
+                    })
+                else:
+                    panel_dialogues.append(item)
         else:
-            print(f"WARNING: No dialogues found through direct parsing for panel {panel_num}!")
+            print(f"WARNING: No content found through direct parsing for panel {panel_num}!")
+            panel_dialogues = panel_content.get('dialogues', [])
+            narrations = []
+            
+            for dialogue in panel_dialogues:
+                if dialogue['character'].lower() == "narration":
+                    narrations.append({
+                        'text': dialogue['text'],
+                        'sequence_position': 0
+                    })
+                    panel_dialogues.remove(dialogue)
         
-        print(f"\nPanel {panel_num} dialogues:")
-        for i, dialogue in enumerate(panel_content.get('dialogues', [])):
+        print(f"\nPanel {panel_num} dialogues: {len(panel_dialogues)}")
+        for i, dialogue in enumerate(panel_dialogues):
             print(f"  {i+1}. {dialogue.get('character', 'Unknown')}: {dialogue.get('text', '')[:30]}...")
         
-        detection_prompts = generate_character_detection_prompts(panel_content, character_descriptions)
+        print(f"\nPanel {panel_num} narrations: {len(narrations)}")
+        for i, narration in enumerate(narrations):
+            print(f"  {i+1}. {narration['text'][:30]}...")
+        
+        detection_prompts = generate_character_detection_prompts({"dialogues": panel_dialogues}, character_descriptions)
         print(f"Generated detection prompts for panel {panel_num}: {detection_prompts}")
         
         dialogues = []
-        narration_text = ""
         
-        for dialogue in panel_content.get('dialogues', []):
-            if dialogue['character'].lower() == "narration":
-                narration_text = dialogue['text']
-                print(f"Found narration: {narration_text}")
-        
-        for dialogue in panel_content.get('dialogues', []):
+        for dialogue in panel_dialogues:
             char_name = dialogue['character']
             
             if char_name.lower() == "narration":
@@ -467,38 +498,105 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
                     'character_name': clean_char_name  
                 })
         
-        print(f"Panel {panel_num} narration text: '{narration_text}'")
-        print(f"Panel {panel_num} has {len(dialogues)} character dialogues")
+        top_narration = None
+        bottom_narration = None
         
-        print(f"Adding speech bubbles to panel {panel_num}")
+        if narrations:
+            narrations.sort(key=lambda x: x.get('sequence_position', 0))
+            
+            if len(narrations) == 1:
+                if not panel_dialogues:
+                    top_narration = narrations[0]['text']
+                else:
+                    first_dialogue_pos = min(d.get('sequence_position', float('inf')) for d in panel_dialogues)
+                    if narrations[0]['sequence_position'] < first_dialogue_pos:
+                        top_narration = narrations[0]['text']
+                    else:
+                        bottom_narration = narrations[0]['text']
+            else:
+                top_narration = narrations[0]['text']
+                bottom_narration = narrations[-1]['text']
+        
+        print(f"Panel {panel_num} narration placement:")
+        print(f"  Top narration: {top_narration[:30]}..." if top_narration else "  No top narration")
+        print(f"  Bottom narration: {bottom_narration[:30]}..." if bottom_narration else "  No bottom narration")
+        
         try:
-            generator = SpeechBubbleGenerator(panel_image_path, api_key)
+            generator = SpeechBubbleGenerator(
+                panel_image_path, 
+                api_key,
+                bubble_color=bubble_color,
+                text_color=text_color,
+                narration_bg_color=narration_bg_color,
+                narration_text_color=narration_text_color
+            )
             result_image = generator.generate_speech_bubbles(
                 dialogues, 
-                narration=narration_text,  
-                narration_position="top" if narration_text else None 
+                top_narration=top_narration,
+                bottom_narration=bottom_narration
             )
             
             output_path = os.path.join(output_dir, f"panel_{panel_num:02d}_with_bubbles.png")
             generator.save(output_path)
             print(f"Saved panel with speech bubbles to {output_path}")
+            
+            debug_path = panel_image_path.replace('.png', '_debug.png')
+            if os.path.exists(debug_path):
+                debug_output_path = os.path.join(output_dir, f"panel_{panel_num:02d}_debug.png")
+                shutil.copy(debug_path, debug_output_path)
+                print(f"Saved debug visualization to {debug_output_path}")
         except Exception as e:
             print(f"Error processing panel {panel_num}: {e}")
             traceback.print_exc()
 
 if __name__ == "__main__":
+    
     api_key = os.environ.get("LANDING_AI_API_KEY")
+    
+    default_colors = {
+        "bubble_color": (255, 255, 255),  # White
+        "text_color": (0, 0, 0),          # Black
+        "narration_bg_color": (0, 0, 0),  # Black
+        "narration_text_color": (255, 255, 255)  # White
+    }
+    
+    sepia_colors = {
+        "bubble_color": (245, 222, 179),  # Tan
+        "text_color": (101, 67, 33),      # Brown
+        "narration_bg_color": (101, 67, 33),  # Brown
+        "narration_text_color": (255, 248, 220)  # Cream
+    }
+    
+    noir_colors = {
+        "bubble_color": (220, 220, 220),  # Light Gray
+        "text_color": (0, 0, 0),          # Black
+        "narration_bg_color": (0, 0, 0),  # Black
+        "narration_text_color": (180, 180, 180)  # Gray
+    }
+    
+    modern_colors = {
+        "bubble_color": (230, 240, 250),  # Light Blue
+        "text_color": (0, 51, 102),       # Dark Blue
+        "narration_bg_color": (0, 51, 102),  # Dark Blue
+        "narration_text_color": (230, 240, 250)  # Light Blue
+    }
+    
+    colors = sepia_colors
     
     process_comic_page(
         markdown_file="test_2_comic.md", 
-        page_number=1, 
+        page_number=3, 
         api_key=api_key,
         style="american comic (modern)",
         panel_dimensions=[
             (768, 1024),
             (768, 1024),
             (768, 1024)
-            ],
-        guidance_scale = 7.5,
-        inference_steps=40
+        ],
+        guidance_scale=7.5,
+        inference_steps=40,
+        bubble_color=colors["bubble_color"],
+        text_color=colors["text_color"],
+        narration_bg_color=colors["narration_bg_color"],
+        narration_text_color=colors["narration_text_color"]
     )

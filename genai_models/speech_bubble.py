@@ -439,17 +439,166 @@ class SpeechBubbleGenerator:
         
         return self.image
     
-    def generate_speech_bubbles(self, dialogues, narration=None, narration_position="top"):
+    def add_both_narrations(self, top_narration, bottom_narration, font_size=20):
         """
-        Generate speech bubbles for the given dialogues and optionally add narration.
+        Add both top and bottom narrations with proper black backgrounds.
+        
+        Args:
+            top_narration: Text for top narration (can be None)
+            bottom_narration: Text for bottom narration (can be None)
+            font_size: Size of the font for narration text
+        
+        Returns:
+            PIL Image with both narrations added
+        """
+        top_height = 0
+        bottom_height = 0
+        top_lines = []
+        bottom_lines = []
+        
+        if top_narration:
+            _, text_height, lines = self.calculate_narration_size(top_narration, font_size)
+            top_height = text_height + self.narration_padding * 2
+            top_lines = lines
+        
+        if bottom_narration:
+            _, text_height, lines = self.calculate_narration_size(bottom_narration, font_size)
+            bottom_height = text_height + self.narration_padding * 2
+            bottom_lines = lines
+        
+        new_height = self.height + top_height + bottom_height
+        new_img = Image.new('RGB', (self.width, new_height), (255, 255, 255))  
+        
+        if top_height > 0:
+            top_bg = Image.new('RGB', (self.width, top_height), self.narration_bg_color)
+            new_img.paste(top_bg, (0, 0))
+        
+        new_img.paste(self.image, (0, top_height))
+        
+        if bottom_height > 0:
+            bottom_bg = Image.new('RGB', (self.width, bottom_height), self.narration_bg_color)
+            new_img.paste(bottom_bg, (0, top_height + self.height))
+        
+        draw = ImageDraw.Draw(new_img)
+        font = ImageFont.truetype(self.font_path, font_size)
+        
+        if top_narration:
+            narration_y = self.narration_padding
+            for line in top_lines:
+                left, top, right, bottom = font.getbbox(line)
+                line_width = right - left
+                line_height = bottom - top
+                
+                text_x = (self.width - line_width) / 2
+                draw.text((text_x, narration_y), line, fill=self.narration_text_color, font=font)
+                narration_y += line_height
+        
+        if bottom_narration:
+            narration_y = top_height + self.height + self.narration_padding
+            for line in bottom_lines:
+                left, top, right, bottom = font.getbbox(line)
+                line_width = right - left
+                line_height = bottom - top
+                
+                text_x = (self.width - line_width) / 2
+                draw.text((text_x, narration_y), line, fill=self.narration_text_color, font=font)
+                narration_y += line_height
+        
+        self.image = new_img
+        self.draw = ImageDraw.Draw(self.image)
+        
+        return self.image
+    
+    def detect_all_heads(self):
+        """
+        Detect all heads in the image using a generic prompt.
+        This helps catch heads that might be missed by specific character detection.
+        
+        Returns:
+            List of detected head boxes
+        """
+        url = "https://api.va.landing.ai/v1/tools/agentic-object-detection"
+        
+        try:
+            files = {"image": open(self.image_path, "rb")}
+            data = {"prompts": "Detect all human and humanoid heads", "model": "agentic"}
+            headers = {"Authorization": f"Basic {self.api_key}"}
+            
+            print(f"Detecting all heads in the image...")
+            
+            response = requests.post(url, files=files, data=data, headers=headers)
+            
+            if response.status_code != 200:
+                print(f"API Error: Status code {response.status_code}")
+                print(f"Response: {response.text}")
+                return []
+                
+            result = response.json()
+            print(f"API Response for all heads detection:", result)  
+            
+            head_boxes = []
+            if 'data' in result and isinstance(result['data'], list) and len(result['data']) > 0:
+                for detection_list in result['data']:
+                    if detection_list and len(detection_list) > 0:
+                        for detection in detection_list:
+                            if 'bounding_box' in detection:
+                                x1, y1, x2, y2 = detection['bounding_box']
+                                head_box = {
+                                    'bbox': [x1, y1, x2, y2],
+                                    'center': [(x1 + x2) / 2, (y1 + y2) / 2],
+                                    'description': "generic_head",
+                                    'detection_type': 'generic'
+                                }
+                                head_boxes.append(head_box)
+                                print(f"Found generic head at position {head_box['bbox']}")
+            
+            return head_boxes
+            
+        except Exception as e:
+            print(f"Error in generic head detection: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+    
+    def save_debug_image(self, filename, character_boxes=None):
+        """
+        Save a debug image with colored bounding boxes for detected heads.
+        
+        Args:
+            filename: Path to save the debug image
+            character_boxes: List of character boxes to draw
+        """
+        debug_img = self.original_image.copy()
+        draw = ImageDraw.Draw(debug_img)
+        
+        for box in self.all_head_boxes:
+            x1, y1, x2, y2 = box['bbox']
+            draw.rectangle([x1, y1, x2, y2], outline=(255, 0, 0), width=3)
+        
+        if character_boxes:
+            for box in character_boxes:
+                x1, y1, x2, y2 = box['bbox']
+                draw.rectangle([x1, y1, x2, y2], outline=(0, 0, 255), width=2)
+        
+        debug_img.save(filename)
+        print(f"Saved debug image with bounding boxes to: {filename}")
+        
+    def generate_speech_bubbles(self, dialogues, narration=None, narration_position="top", top_narration=None, bottom_narration=None):
+        """
+        Generate speech bubbles for the given dialogues and add narrations.
         
         Args:
             dialogues: List of dialogue dictionaries
-            narration: Optional narration text
-            narration_position: "top" or "bottom" - where to place the narration
+            narration: Optional single narration text (legacy parameter)
+            narration_position: "top" or "bottom" - where to place the single narration
+            top_narration: Optional narration text to place at the top
+            bottom_narration: Optional narration text to place at the bottom
         """
         self.image = self.original_image.copy()
         self.draw = ImageDraw.Draw(self.image)
+        
+        self.all_head_boxes = self.detect_all_heads()
+        print(f"Detected {len(self.all_head_boxes)} generic heads in the image")
         
         dialogues = dialogues[:5]
         print(f"Processing {len(dialogues)} dialogues")
@@ -457,12 +606,18 @@ class SpeechBubbleGenerator:
         on_panel_dialogues = []
         off_panel_dialogues = []
         
+        all_detected_boxes = []
+        all_detected_boxes.extend(self.all_head_boxes)
+        
         character_boxes = []
+        
         for dialogue in dialogues:
             if 'character_description' in dialogue and not dialogue.get('is_off_panel', False):
                 char_box = self.detect_character(dialogue['character_description'])
                 if char_box:
+                    char_box['detection_type'] = 'specific'
                     character_boxes.append(char_box)
+                    all_detected_boxes.append(char_box)
                     on_panel_dialogues.append(dialogue)
                 else:
                     print(f"Character '{dialogue['character_description']}' not detected. Making dialogue off-panel.")
@@ -474,7 +629,10 @@ class SpeechBubbleGenerator:
         
         on_panel_dialogues = on_panel_dialogues[:3]  
         
-        used_areas = [box['bbox'] for box in character_boxes] if character_boxes else []
+        used_areas = [box['bbox'] for box in all_detected_boxes] if all_detected_boxes else []
+        
+        debug_image_path = self.image_path.replace('.png', '_debug.png')
+        self.save_debug_image(debug_image_path, character_boxes)
         
         if character_boxes:
             for i, dialogue in enumerate(on_panel_dialogues):
@@ -530,9 +688,15 @@ class SpeechBubbleGenerator:
                 self.draw_speech_bubble(pos, None, lines, font_size, draw_arrow=False)
             else:
                 print(f"Failed to place off-panel bubble {i+1}")
-        
-        if narration:
+    
+        if top_narration and bottom_narration:
+            self.add_both_narrations(top_narration, bottom_narration)
+        elif narration:  
             self.add_narration(narration, narration_position)
+        elif top_narration:  
+            self.add_narration(top_narration, "top")
+        elif bottom_narration: 
+            self.add_narration(bottom_narration, "bottom")
         
         return self.image
     
