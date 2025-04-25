@@ -3,7 +3,7 @@ const schema = require('../model/schema');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const passport = require('passport');
-require('../passport');
+// require('../passport');
 
 const router = express.Router();
 
@@ -133,10 +133,10 @@ router.get('/faliure', (req, res) => {
 
 
 //__________________GITHUB AUTH_________________________________________________
-app.get('/auth/github',
+router.get('/auth/github',
     passport.authenticate('github', { scope: ['user:email'] }));
 
-app.get('/auth/github/callback',
+router.get('/auth/github/callback',
     passport.authenticate('github', { failureRedirect: '/login' }),
     function (req, res) {
 

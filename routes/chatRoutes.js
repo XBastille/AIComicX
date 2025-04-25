@@ -81,7 +81,7 @@ router.post("/transfer", upload.single("file"), async (req, res) => {
             message: "Nothing is uploaded buddy"
         });
     }
-    const pythonnar2nar = path.join(__dirname, "../pythonInput/first");
+    const pythonnar2nar = path.join(__dirname, "../pythonInput/nar2nar");
     const filePath = req.file.path;
 
     let dataBuffer = fs.readFileSync(filePath);
@@ -146,4 +146,27 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
 
 });
+
+
+router.post('/transferSam', async (req, res) => {
+    const scriptPath = path.join(__dirname, '../genai_models/sam.py');
+    const pythonProcess = spawn('python', [scriptPath, req.body.text]);
+    console.log("hii");
+
+    pythonProcess.stdout.on('data', (data) => {
+        console.log(data.toString());
+        res.json(data.toString());
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        console.log(data.toString());
+        res.json(data.toString());
+    });
+
+    pythonProcess.on('close', (code) => {
+        console.log(`Process exited with code ${code}`);
+    });
+});
+
+
 module.exports = router;
