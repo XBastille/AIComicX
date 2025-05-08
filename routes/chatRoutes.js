@@ -149,18 +149,20 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
 
 router.post('/transferSam', async (req, res) => {
+    const { text } = req.body
+    console.log(text);
     const scriptPath = path.join(__dirname, '../genai_models/sam.py');
-    const pythonProcess = spawn('python', [scriptPath, req.body.text]);
+    const pythonProcess = spawn('python', [scriptPath, text]);
     console.log("hii");
 
     pythonProcess.stdout.on('data', (data) => {
         console.log(data.toString());
-        res.json(data.toString());
+        return res.json(data.toString());
     });
 
     pythonProcess.stderr.on('data', (data) => {
         console.log(data.toString());
-        res.json(data.toString());
+        return res.json(data.toString());
     });
 
     pythonProcess.on('close', (code) => {
