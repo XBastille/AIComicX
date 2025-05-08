@@ -159,7 +159,7 @@ function Body() {
                     whileHover={{
                         scale: 1.04,
                         color: 'rgb(255, 255, 255)',
-                        background: "linear-gradient(to right,rgb(244, 29, 122),rgb(255, 191, 0))",
+                        background: "linear-gradient(to right, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5))",
                     }}
                     whileTap={{
                         scale: 1.01,
@@ -196,6 +196,7 @@ const styles = {
         fontStyle: "normal",
         fontDisplay: "swap",
         fontFamily: "'Michroma', sans-serif",
+        marginTop: "20px"
     },
     p: {
         position: "relative",
@@ -207,16 +208,19 @@ const styles = {
         fontSize: '38px',
         fontFamily: "monospace,serif",
         fontWeight: '400',
+        marginTop: "30px"
     },
     button: {
         fontFamily: "'Michroma', sans-serif",
-        color: 'white',
-        backgroundColor: 'transparent',
+        border: "2px solid #d72b59",
+        background: "transparent",
+        color: "white",
         backdropFilter: "blur(2px)",
         padding: '15px 55px',
         borderRadius: '30px',
-        border: '1px solid red',
-        marginBottom: "20px"
+        border: '2px solid red',
+        marginBottom: "20px",
+        marginTop: "50px"
     },
     image: {
         height: "600px", // Increased for better visibility
@@ -248,7 +252,6 @@ const styles = {
         top: -30,
         zIndex: 9999,
         opacity: '0.9',
-        backdropFilter: "blur(20px)",
     }
 }
 

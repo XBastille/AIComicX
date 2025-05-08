@@ -1,11 +1,10 @@
 import React from "react";
 import "./ConssoleNav.css"
-import AIComicX from "../../Picture/aicomic2.jpg"
 
-function ConssoleNav(){
-    return(
-        <div className="navbar">
-        <div className="style-options">
+function ConssoleNav() {
+  return (
+    <div className="Navbar">
+      <div className="style-options">
         <select className="art-options">
           <option value="Neutral(No Style)" >Neutral(No Style)</option>
           <option value="American">American</option>
@@ -19,20 +18,14 @@ function ConssoleNav(){
         </select>
 
         <select className="grid-box">
-            <option value="Grid 0">Grid 0</option>
-            <option value="Grid 1">Grid 1</option>
-            <option value="Grid 2">Grid 2</option>
-            <option value="Grid 3">Grid 3</option>
+          <option value="Grid 0">Grid 0</option>
+          <option value="Grid 1">Grid 1</option>
+          <option value="Grid 2">Grid 2</option>
+          <option value="Grid 3">Grid 3</option>
         </select>
-        </div>
-
-        <img src={AIComicX} className="Efforts" ></img>
-
-        <button className="Download-pdf">Download PDF</button>
-
-        <button className="Settings">Settings</button>
-  </div>
-    )
+      </div>
+    </div>
+  )
 }
 
 export default ConssoleNav;
