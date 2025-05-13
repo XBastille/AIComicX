@@ -70,29 +70,26 @@ router.post('/signup', async (req, res) => {
 //LOGIN_________________________________________________________________________________________
 
 router.post('/login', async (req, res) => {
+    console.log("login ke andar")
+    let error = [];
     try {
-        const { name, email, password } = req.body;
-        if (!name || !email || !password) {
-            return res.json({
-                sucess: false,
-                message: 'form pura bharo'
-            })
+        const { email, password } = req.body;
+        if (!email || !password) {
+            error.push({ msg: "Fill the form properly" })
         }
         const exist = await schema.findOne({ email: email });
         if (!exist) {
-            return res.json({
-                sucess: false,
-                message: 'user not found'
-            })
+            error.push({ msg: "User not found" })
         }
 
         const same = await bcrypt.compare(password, exist.password);
         console.log('same wala line run ho gaya h');
         if (!same) {
-            return res.json({
-                sucess: false,
-                message: 'password incorrect',
-            })
+            error.push({ msg: "Password incorrect" })
+        }
+
+        if (error.length > 0) {
+            return res.json({ sucess: false, msg: "Re render the form", error })
         }
         req.session.userId = exist._id;
         return res.json({
@@ -106,41 +103,41 @@ router.post('/login', async (req, res) => {
 
 //______________________________GOOGLE AUTH___________________________________________________________________
 
-router.get('/auth/google', passport.authenticate('google', {
-    scope:
-        ['email', 'profile']
-}));
+// router.get('/auth/google', passport.authenticate('google', {
+//     scope:
+//         ['email', 'profile']
+// }));
 
-router.get('auth/google/callback', passport.authenticate('google', {
-    successRedirect: '/success',
-    failureRedirect: '/faliure'
-}));
+// router.get('auth/google/callback', passport.authenticate('google', {
+//     successRedirect: '/success',
+//     failureRedirect: '/faliure'
+// }));
 
-router.get('/success', (req, res) => {
-    console.log(req.user);
-    res.json({
-        sucess: true,
-        message: 'successfull authentication',
-    })
-})
+// router.get('/success', (req, res) => {
+//     console.log(req.user);
+//     res.json({
+//         sucess: true,
+//         message: 'successfull authentication',
+//     })
+// })
 
-router.get('/faliure', (req, res) => {
-    res.json({
-        sucess: false,
-        message: 'failed to authenticate'
-    })
-})
+// router.get('/faliure', (req, res) => {
+//     res.json({
+//         sucess: false,
+//         message: 'failed to authenticate'
+//     })
+// })
 
 
-//__________________GITHUB AUTH_________________________________________________
-app.get('/auth/github',
-    passport.authenticate('github', { scope: ['user:email'] }));
+// //__________________GITHUB AUTH_________________________________________________
+// app.get('/auth/github',
+//     passport.authenticate('github', { scope: ['user:email'] }));
 
-app.get('/auth/github/callback',
-    passport.authenticate('github', { failureRedirect: '/login' }),
-    function (req, res) {
+// app.get('/auth/github/callback',
+//     passport.authenticate('github', { failureRedirect: '/login' }),
+//     function (req, res) {
 
-        res.json('/');
-    });
+//         res.json('/');
+//     });
 
 module.exports = router;

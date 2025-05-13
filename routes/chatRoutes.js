@@ -111,40 +111,57 @@ router.post("/transfer", upload.single("file"), async (req, res) => {
 });
 
 router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
+    const error = []
     if (!req.file) {
-        return res.status(400).json({
-            success: false,
-            message: "Nothing is uploaded buddy"
-        });
+        error.push({ msg: "Nothing has been uploaded" })
     }
 
     const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar");
     const filePath = req.file.path;
 
-    let dataBuffer = fs.readFileSync(filePath);
+    const ext = path.extname(req.file.originalname).toLowerCase();
+
+    try {
+        if (ext === '.pdf') {
+            let dataBuffer = fs.readFileSync(filePath);
 
 
-    pdf(dataBuffer).then(function (data) {
-        try {
-            fs.writeFileSync(pythonst2nar, data.text);
+            pdf(dataBuffer).then(function (data) {
+                try {
+                    fs.writeFileSync(pythonst2nar, data.text);
 
-        } catch (error) {
-            console.log('Error in writing the file', error);
+                } catch (error) {
+                    console.log('Error in writing the file', error);
+                }
+
+            });
         }
+        else if (ext === '.txt') {
+            const data = fs.readFileSync(filePath, "utf-8");
+            fs.writeFileSync(pythonst2nar, data);
+        }
+        else {
+            error.push({ msg: "Unsupported file type" });
+            return res.json({ success: false, msg: "Only PDF and TXT files allowed", error });
+        }
+    } catch (error) {
+        console.log(error);
+    }
 
-    });
-
-
+    if (error.length > 0) {
+        return res.json({ sucess: false, msg: "re render the choose page", error })
+    }
     const scriptPath = path.join(__dirname, '../genai_models/st2nar.py');
 
     try {
-        await pythonConnect(res, scriptPath, pythonst2nar);
+        const response = await pythonConnect(res, scriptPath, pythonst2nar);
+        if (response) {
+            return res.json({ sucess: true, msg: "Data is ready" })
+        }
 
     } catch (err) {
         console.error("Python execution failed:", err);
     }
-
-
 });
 
 
