@@ -2,6 +2,8 @@ import React from "react";
 import { color, motion } from "framer-motion";
 import { useState } from "react";
 import { windowlistner } from "../WindowListener/WindowListener"
+import axios from 'axios'
+import { useNavigate } from "react-router-dom";
 import "../Register/Register.css"
 
 function Login() {
@@ -13,11 +15,38 @@ function Login() {
     const [confirm, setconfirm] = useState('')
 
     const [errors, setErrors] = useState('');
-
+    const navigate = useNavigate();
 
     windowlistner('pointermove', (e) => {
         setposition({ x: e.clientX, y: e.clientY })
     })
+
+    const submitss = async (event) => {
+        event.preventDefault();
+        setemail('')
+        setpassword('')
+        setconfirm('')
+
+
+        try {
+            const response = await axios.post('http://localhost:3000/user/login', { email, password })
+            console.log(response.data)
+            if (response.data.sucess === true) {
+                navigate('/SelectPage')
+                console.log("navigate karna h")
+            }
+            if (response.data.sucess === false) {
+                setErrors(response.data.error[0].msg)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const no_account = () => {
+        console.log("click ho rha h")
+        navigate("/user/Register")
+    }
 
 
     function timingout() {
@@ -65,19 +94,23 @@ function Login() {
                             whileTap={{
                                 scale: 1.01,
                             }}
-                            type="submit">LOGIN</motion.button>
+                            type="submit" onClick={submitss}>LOGIN</motion.button>
                         <motion.div className="Account" style={styles.accountText} >
                             No account yet?{" "}
-                            <motion.a title="No account" style={styles.links}>
+                            <motion.button title="No account" style={styles.links_button} onClick={no_account}>
                                 Create your account now
-                            </motion.a>
+                            </motion.button>
                         </motion.div>
                     </motion.div>
                 </motion.div>
             </motion.div>
             <motion.div>
                 {errors && (
-                    <p className="error" style={styles.error} {...timingout()} > {errors} </p>
+                    <p className="error" style={{
+                        ...styles.error,
+                        marginTop: errors ? "40px" : "20px",
+
+                    }} {...timingout()} > {errors} </p>
                 )}
             </motion.div>
         </motion.div>
@@ -181,12 +214,11 @@ const styles = {
         top: -30,
         zIndex: 9999,
         opacity: '0.9',
-        backdropFilter: "blur(20px)",
     },
     error: {
         position: 'absolute',
-        top: '20px',
-        right: '20px',
+        top: '300px',
+        left: '260px',
         backgroundColor: 'rgba(255, 0, 0, 0.8)',
         color: 'white',
         padding: '13px 35px',
@@ -194,7 +226,8 @@ const styles = {
         fontSize: '16px',
         fontWeight: 'bold',
         textAlign: 'center',
-        boxShadow: '0px 0px 10px rgba(255, 0, 0, 0.5)'
+        marginTop: "40px",
+        marginBottom: "20px"
     },
     artist: {
         fontSize: '38px',
@@ -216,5 +249,12 @@ const styles = {
         // display:'flex',
         textAlign: 'center'
     },
+    links_button: {
+        background: "transparent",
+        color: "white",
+        border: "none",
+        fontSize: "15px",
+        borderBottom: "1px solid white"
+    }
 }
 export default Login

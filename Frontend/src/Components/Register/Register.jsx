@@ -5,12 +5,13 @@ import { windowlistner } from "../WindowListener/WindowListener"
 import "../Register/Register.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGithub, faGoogle } from '@fortawesome/free-brands-svg-icons';
+import { useNavigate } from "react-router";
 import axios from 'axios'
 
 function Register() {
 
     const [position, setposition] = useState({ x: 0, y: 0 });
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
 
     const [name, setname] = useState('')
     const [email, setemail] = useState('')
@@ -30,11 +31,11 @@ function Register() {
             const response = await axios.post('http://localhost:3000/user/signup', { name, email, password, confirm })
             console.log(response.data)
             if (response.data.sucess === true) {
-                // navigate('/user/Login')
+                navigate('/user/Login')
                 console.log("navigate karna h")
             }
             if (response.data.sucess === false) {
-                // navigate('/user/Register')
+                navigate('/user/Register')
                 console.log("navigate to signup")
                 console.log(response.data.error[0].msg)
                 setErrors(response.data.error[0].msg)
@@ -47,7 +48,6 @@ function Register() {
 
     const google = () => {
         try {
-            console.log("hello")
             window.location.href = "http://localhost:3000/user/auth/google";
             //const res=await axios.get('http://localhost:3000/user/auth/google')
             console.log(res)
@@ -60,14 +60,14 @@ function Register() {
         setposition({ x: e.clientX, y: e.clientY })
     })
 
-    // const login = () => {
-    //     navigate('/user/Login')
-    // }
+    const changeLogin = () => {
+        navigate('/user/Login')
+    }
 
     function timingout() {
         setTimeout(() => {
             setErrors('')
-        }, 5000);
+        }, 4000);
     }
     return (
         <motion.div style={styles.login}>
@@ -128,9 +128,9 @@ function Register() {
                             type="submit" onClick={submits}>SIGN UP</motion.button>
                         <motion.div className="Account" style={styles.accountText} >
                             Already have account?{" "}
-                            <motion.a title="No account" style={styles.links}>
+                            <motion.button title="No account" style={styles.links_button} onClick={changeLogin}>
                                 Login!
-                            </motion.a>
+                            </motion.button>
                         </motion.div>
                         <motion.div className="iconss">
                             <motion.button className="btn" onClick={google}><FontAwesomeIcon icon={faGoogle} className="icons" /><span>Google</span></motion.button>
@@ -241,7 +241,6 @@ const styles = {
         left: -30,
         top: -30,
         zIndex: 9999,
-        opacity: '0.9',
     },
     error: {
         position: 'absolute',
@@ -275,5 +274,12 @@ const styles = {
         // display:'flex',
         textAlign: 'center'
     },
+    links_button: {
+        background: "transparent",
+        color: "white",
+        border: "none",
+        fontSize: "16px",
+        borderBottom: "1px solid white"
+    }
 }
 export default Register

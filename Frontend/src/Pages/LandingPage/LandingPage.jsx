@@ -7,6 +7,7 @@ import { color, motion } from "framer-motion";
 import eye from "../../Picture/eye.jpg"
 import aicomicx2 from "../../Picture/aicomic2.jpg"
 import Epoch_Present from "../../Picture/Epoch_Present.png"
+import { useNavigate } from "react-router-dom";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -14,22 +15,11 @@ function Body() {
     const [position, setposition] = useState({ x: 0, y: 0 });
     const [backend, setbackend] = useState('');
 
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
 
     windowlistner('pointermove', (e) => {
         setposition({ x: e.clientX, y: e.clientY })
     })
-
-    // const getdata = async () => {
-    //     const res = await Axios.get("http://localhost:3001")
-    //     setbackend(res.data.message)
-    //     console.log(res.data.message)
-    // }
-
-    // useEffect(() => {
-    //     getdata()
-    // }, [])
-
 
     useGSAP(() => {
         gsap.from(".summary", {
@@ -136,6 +126,11 @@ function Body() {
             scrollTrigger: ".innovation"
         })
     })
+
+    const dive = () => {
+        navigate('/user/Register')
+    }
+
     return (
         <div style={styles.maindiv} className="!scroll-smooth">
             <div className="cursor" style={{
@@ -164,7 +159,7 @@ function Body() {
                     whileTap={{
                         scale: 1.01,
                     }}
-                    type="submit" className="button">DIVE IN</motion.button>
+                    className="button" onClick={dive}>DIVE IN</motion.button>
             </div>
 
         </div>

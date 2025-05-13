@@ -23,13 +23,14 @@ function Grids() {
                     </div>
                 </div>
             </div>
-            <div>
+           <div className="controller" style={styles.controller}>
                 <input type="range"
                     min="1"
                     max="2"
                     step={0.1}
                     value={zoom}
                     onChange={(e) => setzoom((e.target.value))}
+                    className="color"
                 ></input>
             </div>
         </div>
@@ -49,7 +50,6 @@ const styles = {
         alignItems: "center",
         height: "100vh",
         width: "100vw",
-        backgroundColor: "black",
         color: "white",
     },
     box: {

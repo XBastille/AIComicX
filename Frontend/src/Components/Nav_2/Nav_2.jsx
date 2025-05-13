@@ -13,7 +13,7 @@ function Nav_2({ showBack, onBackClick }) {
 
     return (
         <>
-            <nav className="Navbar nav_2">
+            <nav className="nav_2">
                 {showBack ? (
                     <button className="back-btn" onClick={onBackClick}>
                         <span className="back-arrow">←</span> BACK

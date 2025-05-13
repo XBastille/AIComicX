@@ -6,6 +6,7 @@ import sam from "../../Picture/sam.png";
 import Nav_2 from "../../Components/Nav_2/Nav_2";
 import axios from 'axios'
 import { gsap } from "gsap";
+import { useNavigate } from "react-router-dom";
 
 function ChoosePage() {
     const [selectedType, setSelectedType] = useState(null);
@@ -21,13 +22,12 @@ function ChoosePage() {
     const containerRef = useRef(null);
     const uploadContainerRef = useRef(null);
     const [animationComplete, setAnimationComplete] = useState(false);
-
     const [uploadedFile, setUploadedFile] = useState(null);
     const [filePreview, setFilePreview] = useState('');
-
+    const [errors, setErrors] = useState('');
     const selectionPulseRef = useRef(null);
     const digitalParticlesRef = useRef(null);
-
+    const navigate = useNavigate();
 
 
     useEffect(() => {
@@ -537,6 +537,11 @@ function ChoosePage() {
             }
         });
     };
+    function timingout() {
+        setTimeout(() => {
+            setErrors('')
+        }, 5000);
+    }
 
     const conti = async (e) => {
         console.log(uploadedFile)
@@ -589,6 +594,58 @@ function ChoosePage() {
         else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
         else return (bytes / 1048576).toFixed(1) + ' MB';
     };
+
+    const st2nar = async () => {
+        console.log(uploadedFile)
+
+        const file = new FormData()
+        file.append('file', uploadedFile)
+
+        try {
+            const response = await axios.post('http://localhost:3000/chat/transferSt2nar', file, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            console.log(response.data);
+            if (response.data.sucess === true) {
+                navigate('/Generate_Story')
+            }
+            else if (response.data.sucess === false) {
+                setErrors(response.data.error[0].msg)
+            }
+
+        } catch (error) {
+            console.log("Cannot send file to backend " + error)
+        }
+        gsap.to(".file-preview", {
+            y: 20,
+            opacity: 0,
+            duration: 0.3,
+            ease: "power2.in",
+            onComplete: () => {
+                setUploadedFile(null);
+                setFilePreview('');
+
+                setTimeout(() => {
+                    const uploadBox = document.querySelector(".upload-box");
+                    if (uploadBox) {
+                        gsap.set(uploadBox, {
+                            opacity: 0,
+                            y: 20
+                        });
+
+                        gsap.to(uploadBox, {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.4,
+                            ease: "back.out(1.4)"
+                        });
+                    }
+                }, 0);
+            }
+        });
+    }
 
     const renderUploadUI = () => {
         if (selectedType === 'dialogue') {
@@ -715,12 +772,22 @@ function ChoosePage() {
                             className="continue-button"
                             disabled={!uploadedFile}
                             style={{ opacity: uploadedFile ? 1 : 0.6, cursor: uploadedFile ? 'pointer' : 'not-allowed', width: '100%' }}
+                            onClick={st2nar}
                         >
                             Continue
                         </button>
                     </div>
                 </div>
             );
+        }
+        {
+            errors && (
+                <p className="error" style={{
+                    ...styles.error,
+                    marginTop: errors ? "40px" : "20px",
+
+                }} {...timingout()} > {errors} </p>
+            )
         }
 
         return null;
@@ -788,6 +855,7 @@ function ChoosePage() {
         });
     };
 
+
     return (
         <>
             <Nav_2 showBack={selectedType !== null} onBackClick={handleBack} />
@@ -837,7 +905,10 @@ function ChoosePage() {
                         <div
                             ref={box3Ref}
                             className="Box3"
-                            onClick={() => handleBoxSelect('sam')}
+                            onClick={() => {
+                                handleBoxSelect('sam')
+                            }
+                            }
                         >
                             <div className="info-btn">i</div>
                             <div className="info-tooltip">
@@ -855,6 +926,21 @@ function ChoosePage() {
             </div>
         </>
     );
+}
+
+const styles = {
+    error: {
+        position: 'absolute',
+        top: '410px',
+        left: '280px',
+        backgroundColor: 'rgba(255, 0, 0, 0.8)',
+        color: 'white',
+        padding: '13px 35px',
+        borderRadius: '7px',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
 }
 
 export default ChoosePage;

@@ -1,34 +1,52 @@
-.gids{
+.gids {
   scrollbar-width: none;
   display: none;
 }
 
-.giids{
+.giids {
   scrollbar-width: none;
   display: none;
 }
 
-.giiids{
+.giiids {
   scrollbar-width: none;
   display: none;
 }
-.grid{
+
+.grid {
   scrollbar-width: none;
   display: none;
 }
-.grids{
+
+.grids {
   scrollbar-width: none;
   display: none;
 }
-.grids2{
+
+.grids2 {
   scrollbar-width: none;
   display: none;
 }
-.grids1{
+
+.grids1 {
   scrollbar-width: none;
   display: none;
 }
-.gidds{
+
+.gidds {
   scrollbar-width: none;
   display: none;
+}
+
+.controller {
+  position: relative;
+  left: 690px;
+  z-index: 999;
+  bottom:60%;
+  transform: rotate(-90deg);
+}
+
+.color{
+ width: 280px;
+ accent-color: rgb(142, 142, 142);
 }

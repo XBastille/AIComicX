@@ -17,7 +17,7 @@ function Grid1() {
                         ...styles.grid, width: `${zoom * 1000}`, gap: `${gap}px`, gridTemplateColumns: `repeat(2, ${boxWidth}px)`, gridTemplateRows: `repeat(3, ${boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
                         overflow: "scroll",
-                       
+
                     }} className="giids">
                         <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }}>1</div>
                         <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }}>2</div>
@@ -26,13 +26,14 @@ function Grid1() {
                     </div>
                 </div>
             </div>
-            <div>
+            <div className="controller" style={styles.controller}>
                 <input type="range"
                     min="1"
                     max="2"
                     step={0.1}
                     value={zoom}
                     onChange={(e) => setzoom((e.target.value))}
+                    className="color"
                 ></input>
             </div>
         </div>
@@ -52,7 +53,6 @@ const styles = {
         alignItems: "center",
         height: "100vh",
         width: "100vw",
-        backgroundColor: "black",
         color: "white",
     },
     box1: {
@@ -94,6 +94,7 @@ const styles = {
         height: "100vh",
         overflow: "auto"
     },
+  
 };
 
 export default Grid1

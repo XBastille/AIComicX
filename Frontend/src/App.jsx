@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from './Components/Login/Login'
 import Register from './Components/Register/Register'
 import Body from './Pages/LandingPage/LandingPage'
@@ -8,28 +8,31 @@ import Nav from './Components/Nav/Nav'
 import Footer from './Components/Footer/Footer'
 import Conssole from './Pages/Conssole/Conssole'
 import ConssoleNav from './Components/Nav/ConssoleNav'
-import Grid1 from './Components/Grid/panel4/Grid1'
+import One from './Components/Grid/panel1/One';
 import PromptPage from './Pages/PromptPage/PromptPage'
 
 import './App.css'
 
 function App() {
    return (
-      <div>
-         {/* <Login /> */}
-         {/* <Register /> */}
-         {/* {<Body />} */}
-         {/* <Footer />  */}
-         {/* <Socials />  */}
-         {/* <PromptPage />  */}
-         {/* <Nav /> 
-      <ChoosePage />
-      <Footer /> */}
-      
-      {/* <Conssole />
-      <Grid1 /> */}
-      <PromptPage />
-      </div>
+      <Router>
+         <Routes>
+            <Route path='/' element={<Body />} />
+
+            {/* Authentication Routes */}
+            <Route path='/user/Register' element={<Register />} />
+            <Route path='/user/Login' element={<Login />} />
+
+
+            {/*Main Pages routing */}
+
+            <Route path="/SelectPage" element={<ChoosePage />} />
+            <Route path="/Generate_Story" element={<Conssole />} />
+         </Routes>
+      </Router>
+      // <div>
+      //    <Body />
+      // </div>
    )
 }
 
