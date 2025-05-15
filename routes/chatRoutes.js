@@ -4,6 +4,7 @@ const path = require("path");
 const spawn = require('child_process').spawn;
 const fs = require('fs');
 const pdf = require('pdf-parse');
+const mammoth = require('mammoth');
 
 
 const router = express.Router();
@@ -53,7 +54,7 @@ const pythonConnect = (res, python, scriptPath) => {
                 };
                 const resultToReact = path.join(__dirname, "../pythonInput/first_comic.md");
 
-                res.json(resultToReact);
+                // res.json(resultToReact);
                 resolve(response);
             }
             else {
@@ -109,6 +110,7 @@ router.post("/transfer", upload.single("file"), async (req, res) => {
 
 
 });
+// upload.single("file"),
 
 router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
     const error = []
@@ -118,8 +120,10 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
     const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar");
     const filePath = req.file.path;
+    // const filePath = path.join(__dirname, "../uploads/resume_format.docx");
 
     const ext = path.extname(req.file.originalname).toLowerCase();
+    // const ext = '.docx';
 
     try {
         if (ext === '.pdf') {
@@ -140,6 +144,11 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
             const data = fs.readFileSync(filePath, "utf-8");
             fs.writeFileSync(pythonst2nar, data);
         }
+        else if (ext === '.docx') {
+            const { value: text } = await mammoth.extractRawText({ path: filePath });
+            console.log("text wala line run ho gaya h");
+            fs.writeFileSync(pythonst2nar, text);
+        }
         else {
             error.push({ msg: "Unsupported file type" });
             return res.json({ success: false, msg: "Only PDF and TXT files allowed", error });
@@ -154,9 +163,13 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
     const scriptPath = path.join(__dirname, '../genai_models/st2nar.py');
 
     try {
-        const response = await pythonConnect(res, scriptPath, pythonst2nar);
+        console.log("pythonConect se pahle");
+        const response = await pythonConnect(res, pythonst2nar, scriptPath);
+        console.log("pythonConnect ke baad");
+        console.log("Response of the python script is ", response);
         if (response) {
-            return res.json({ sucess: true, msg: "Data is ready" })
+            console.log("Response k andar aa gaya");
+            return res.json({ sucess: true, msg: "Data is ready", result: response });
         }
 
     } catch (err) {
