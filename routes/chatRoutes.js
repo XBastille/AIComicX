@@ -15,10 +15,11 @@ const pythonConnect = (res, python, scriptPath) => {
         // const filePath = path.join(__dirname, "../uploads/test.pdf");
 
         //   const outputFilePath = path.join(__dirname, "../response/output.pdf");
-
-
         const pythonProcess = spawn('python', [scriptPath, python]);
         console.log("hii");
+        console.log("scriptPath", scriptPath);
+        console.log("python", python);
+        // console.log("pythonProcess", pythonProcess);
 
         let response;
         pythonProcess.stdout.on("data", async (data) => {
@@ -112,7 +113,7 @@ router.post("/transfer", upload.single("file"), async (req, res) => {
 });
 // upload.single("file"),
 
-router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
+router.post("/transferSt2nar", async (req, res) => {
     const error = []
     if (!req.file) {
         error.push({ msg: "Nothing has been uploaded" })
@@ -120,16 +121,14 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
     const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar");
     const filePath = req.file.path;
-    // const filePath = path.join(__dirname, "../uploads/resume_format.docx");
+    // const filePath = path.join(__dirname, "../uploads/resume.txt");
 
     const ext = path.extname(req.file.originalname).toLowerCase();
-    // const ext = '.docx';
+    // const ext = '.txt';
 
     try {
         if (ext === '.pdf') {
             let dataBuffer = fs.readFileSync(filePath);
-
-
             pdf(dataBuffer).then(function (data) {
                 try {
                     fs.writeFileSync(pythonst2nar, data.text);
@@ -140,19 +139,24 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
             });
         }
+
         else if (ext === '.txt') {
+            console.log("inside txt");
             const data = fs.readFileSync(filePath, "utf-8");
             fs.writeFileSync(pythonst2nar, data);
         }
+
         else if (ext === '.docx') {
             const { value: text } = await mammoth.extractRawText({ path: filePath });
             console.log("text wala line run ho gaya h");
             fs.writeFileSync(pythonst2nar, text);
         }
+
         else {
             error.push({ msg: "Unsupported file type" });
             return res.json({ success: false, msg: "Only PDF and TXT files allowed", error });
         }
+
     } catch (error) {
         console.log(error);
     }
@@ -164,6 +168,8 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
     try {
         console.log("pythonConect se pahle");
+        console.log("pythonst2nar", pythonst2nar);
+        console.log("scriptPath", scriptPath);
         const response = await pythonConnect(res, pythonst2nar, scriptPath);
         console.log("pythonConnect ke baad");
         console.log("Response of the python script is ", response);
