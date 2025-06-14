@@ -1,0 +1,235 @@
+
+.footer {
+    background-color: #0c0812;
+    color: #f5e7d3;
+    padding: 40px 20px;
+    font-family: 'Arial', sans-serif;
+  }
+  
+ 
+  .footer-container {
+    width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  /* Logo Styling */
+  .footer-logo {
+    flex: 6; /* Takes left side */
+    
+  }
+  
+  .logo-image {
+    width: 450px;
+    height: auto;
+  }
+
+  
+  .footer-links {
+    flex: 3; 
+    display: flex;
+    justify-content: space-between;
+    gap: 50px;
+    font-size: 38px;
+    font-weight: bolder;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  
+  .footer-links div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left; 
+  }
+  
+  /* Divider */
+  .footer-divider {
+    margin: 20px auto;
+    width: 100%;
+    max-width: 600px;
+    height: 1px;
+    background-color: gray;
+  }
+
+  #Home{
+    position: relative;
+    transition: color 0.3s ease-in-out;
+    cursor: pointer;
+    display: inline-block;
+    
+  }
+
+
+  #Home::after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 42%;
+    width: 80%;
+    height: 3px;
+    background: linear-gradient(to right , red , orange , yellow);
+    transform: scaleX(0);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #Home:hover::after{
+    transform: scaleX(1);
+  }
+
+  #Team{
+    position: relative;
+    transition: color 0.3s ease-in-out;
+    cursor: pointer;
+    display: inline-block;
+    
+  }
+
+
+  #Team::after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 42%;
+    width: 80%;
+    height: 3px;
+    background: linear-gradient(to right , red , orange , yellow);
+    transform: scaleX(0);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #Team:hover::after{
+    transform: scaleX(1);
+  }
+
+
+
+  #Socials{
+    position: relative;
+    transition: color 0.3s ease-in-out;
+    cursor: pointer;
+    display: inline-block;
+    
+  }
+
+
+  #Socials::after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 42%;
+    width: 95%;
+    height: 3px;
+    background: linear-gradient(to right , red , orange , yellow);
+    transform: scaleX(0);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #Socials:hover::after{
+    transform: scaleX(1);
+  }
+
+
+  #FAQ{
+    position: relative;
+    transition: color 0.3s ease-in-out;
+    cursor: pointer;
+    display: inline-block;
+    
+  }
+
+
+  #FAQ::after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 42%;
+    width: 45%;
+    height: 3px;
+    background: linear-gradient(to right , red , orange , yellow);
+    transform: scaleX(0);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #FAQ:hover::after{
+    transform: scaleX(1);
+  }
+
+
+
+  #Donate{
+    position: relative;
+    transition: color 0.3s ease-in-out;
+    cursor: pointer;
+    display: inline-block;
+    
+  }
+
+
+  #Donate::after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 42%;
+    width: 60%;
+    height: 3px;
+    background: linear-gradient(to right , red , orange , yellow);
+    transform: scaleX(0);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #Donate:hover::after{
+    transform: scaleX(1);
+  }
+
+
+
+  #Contact{
+    position: relative;
+    transition: color 0.3s ease-in-out;
+    cursor: pointer;
+    display: inline-block;
+    
+  }
+
+
+  #Contact::after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 42%;
+    width: 94%;
+    height: 3px;
+    background: linear-gradient(to right , red , orange , yellow);
+    transform: scaleX(0);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #Contact:hover::after{
+    transform: scaleX(1);
+  }
+  
+  /* Copyright Text */
+ /* .footer-copyright {
+    text-align: center;
+    font-size: 14px;
+    color: #b3a8a0;
+  }
+  
+  .privacy-link {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  .privacy-link:hover {
+    color: #ffffff;
+  }*/
+  
