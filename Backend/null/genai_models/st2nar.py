@@ -9,7 +9,7 @@ def convert_story_to_comic(story_text):
     """Convert prose story to comic book format."""
     client = ChatCompletionsClient(
         endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential(os.environ["GITHUB_TOKEN"])
+        credential=AzureKeyCredential("api key")
     )
     
     system_prompt = """

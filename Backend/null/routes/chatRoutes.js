@@ -119,8 +119,8 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
         error.push({ msg: "Nothing has been uploaded" })
     }
 
-    const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar");
-    const filePath = path.join(__dirname, `../uploads/userFile.txt`);
+    const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar.txt");
+    const filePath = path.join(__dirname, `../uploads/userFile.pdf`);
     // const filePath = ;
 
     const ext = path.extname(req.file.originalname).toLowerCase();
@@ -128,6 +128,7 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
     try {
         if (ext === '.pdf') {
+            console.log("hello")
             let dataBuffer = fs.readFileSync(filePath);
             pdf(dataBuffer).then(function (data) {
                 try {
@@ -154,7 +155,7 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
         else {
             error.push({ msg: "Unsupported file type" });
-            return res.json({ success: false, msg: "Only PDF and TXT files allowed", error });
+            return res.json({ success: false, msg: "Only PDF , TXT and DOCX files allowed", error });
         }
 
     } catch (error) {

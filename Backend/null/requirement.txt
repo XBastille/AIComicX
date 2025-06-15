@@ -7,3 +7,5 @@ pillow==11.1.0
 requests==2.32.3
 torch==2.6.0
 torchvision==0.22.0
+onnxruntime==1.21.1
+

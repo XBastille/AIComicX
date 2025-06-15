@@ -11,7 +11,7 @@ HISTORY_FILE = Path("chat_hist.json")
 def initialize_sam():
     client = ChatCompletionsClient(
         endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential(os.environ["GITHUB_TOKEN"]),
+        credential=AzureKeyCredential("api key"),
     )
     return client
 

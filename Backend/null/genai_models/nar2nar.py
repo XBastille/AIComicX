@@ -16,7 +16,7 @@ def convert_formatted_to_comic(formatted_text):
     """
     client = ChatCompletionsClient(
         endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential(os.environ["GITHUB_TOKEN"]),
+        credential=AzureKeyCredential("api key"),
     )
 
     prompt = f"""
