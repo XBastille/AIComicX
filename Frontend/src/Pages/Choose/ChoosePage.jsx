@@ -550,12 +550,18 @@ function ChoosePage() {
         file.append('file', uploadedFile)
 
         try {
-            const response = await axios.post('http://localhost:3000/chat/transfer', file, {
+            const response = await axios.post('http://localhost:3000/chat/transferNar2nar', file, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             })
             console.log(response.data);
+            if (response.data.sucess === true) {
+                navigate('/Generate_Story')
+            }
+            else if (response.data.sucess === false) {
+                setErrors(response.data.error[0].msg)
+            }
 
         } catch (error) {
             console.log("Cannot send file to backend " + error)

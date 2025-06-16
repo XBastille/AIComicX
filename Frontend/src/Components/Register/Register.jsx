@@ -93,7 +93,7 @@ function Register() {
                             {errors && (
                                 <p className="error" style={{
                                     ...styles.error,
-                                    marginTop: errors ? "40px" : "20px",
+                                    marginTop: errors ? "10px" : "20px",
 
                                 }} {...timingout()} > {errors} </p>
                             )}
@@ -244,7 +244,7 @@ const styles = {
     },
     error: {
         position: 'absolute',
-        top: '410px',
+        top: '395px',
         left: '280px',
         backgroundColor: 'rgba(255, 0, 0, 0.8)',
         color: 'white',
