@@ -16,7 +16,7 @@ def convert_formatted_to_comic(formatted_text):
     """
     client = ChatCompletionsClient(
         endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential(os.environ["GITHUB_TOKEN"]),
+        credential=AzureKeyCredential("apikey"),
     )
 
     prompt = f"""
@@ -97,6 +97,6 @@ def process_formatted_file(file_path):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit(1)
-    input_file = "test_2.txt"
-    
+    input_file = sys.argv[1]  
+    output_file = "Nar2Nar_comic.md"
     result = process_formatted_file(input_file)
