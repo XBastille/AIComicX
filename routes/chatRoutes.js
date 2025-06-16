@@ -158,7 +158,7 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
     }
 
     const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar.txt");
-    const filePath = path.join(__dirname, `../uploads/userFile.pdf`);
+    const filePath = req.file.path;
     // const filePath = ;
 
     const ext = path.extname(req.file.originalname).toLowerCase();

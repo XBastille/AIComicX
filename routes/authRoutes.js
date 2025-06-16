@@ -74,6 +74,7 @@ router.post('/login', async (req, res) => {
     let error = [];
     try {
         const { email, password } = req.body;
+        console.log(password)
         if (!email || !password) {
             error.push({ msg: "Fill the form properly" })
         }
