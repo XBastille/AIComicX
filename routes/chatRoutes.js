@@ -70,40 +70,78 @@ const pythonConnect = (res, python, scriptPath) => {
 const storage = multer.diskStorage({
     destination: "./uploads/",
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
+        cb(null, "userFile" + path.extname(file.originalname));
     },
 });
 const upload = multer({ storage });
 
-
-router.post("/transfer", upload.single("file"), async (req, res) => {
+// upload.single("file"),
+router.post("/transferNar2nar", upload.single("file"), async (req, res) => {
+    const error = []
     if (!req.file) {
-        return res.status(400).json({
-            success: false,
-            message: "Nothing is uploaded buddy"
-        });
+        error.push({ msg: "Nothing has been uploaded" })
     }
+
     const pythonnar2nar = path.join(__dirname, "../pythonInput/nar2nar");
     const filePath = req.file.path;
+    // const filePath = path.join(__dirname, `../uploads/userFile.txt`);
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    // const ext = '.txt';
 
-    let dataBuffer = fs.readFileSync(filePath);
+    try {
+        if (ext === '.pdf') {
+            console.log("hello")
+            let dataBuffer = fs.readFileSync(filePath);
+            pdf(dataBuffer).then(function (data) {
+                try {
+                    fs.writeFileSync(pythonnar2nar, data.text);
 
+                } catch (error) {
+                    console.log('Error in writing the file', error);
+                }
 
-    pdf(dataBuffer).then(function (data) {
-        try {
-            fs.writeFileSync(pythonnar2nar, data.text);
-
-        } catch (error) {
-            console.log('Error in writing the file', error);
+            });
         }
 
-    });
+        else if (ext === '.txt') {
+            console.log("inside txt");
+            const data = fs.readFileSync(filePath, "utf-8");
+            fs.writeFileSync(pythonnar2nar, data);
+        }
+
+        else if (ext === '.docx') {
+            const { value: text } = await mammoth.extractRawText({ path: filePath });
+            console.log("text wala line run ho gaya h");
+            fs.writeFileSync(pythonnar2nar, text);
+        }
+
+        else {
+            error.push({ msg: "Unsupported file type" });
+            return res.json({ success: false, msg: "Only PDF , TXT and DOCX files allowed", error });
+        }
+
+    } catch (error) {
+        console.log(error);
+    }
+
+    if (error.length > 0) {
+        return res.json({ sucess: false, msg: "re render the choose page", error })
+    }
 
 
     const scriptPath = path.join(__dirname, '../genai_models/nar2nar.py');
 
     try {
-        await pythonConnect(res, pythonnar2nar, scriptPath);
+        console.log("pythonConect se pahle");
+        console.log("pythonnar2nar", pythonnar2nar);
+        console.log("scriptPath", scriptPath);
+        const response = await pythonConnect(res, pythonnar2nar, scriptPath);
+        console.log("pythonConnect ke baad");
+        console.log("Response of the python script is ", response);
+        if (response) {
+            console.log("Response k andar aa gaya");
+            return res.json({ sucess: true, msg: "Data is ready", result: response });
+        }
 
     } catch (err) {
         console.error("Python execution failed:", err);
@@ -113,21 +151,22 @@ router.post("/transfer", upload.single("file"), async (req, res) => {
 });
 // upload.single("file"),
 
-router.post("/transferSt2nar", async (req, res) => {
+router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
     const error = []
     if (!req.file) {
         error.push({ msg: "Nothing has been uploaded" })
     }
 
-    const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar");
-    const filePath = req.file.path;
-    // const filePath = path.join(__dirname, "../uploads/resume.txt");
+    const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar.txt");
+    const filePath = path.join(__dirname, `../uploads/userFile.pdf`);
+    // const filePath = ;
 
     const ext = path.extname(req.file.originalname).toLowerCase();
     // const ext = '.txt';
 
     try {
         if (ext === '.pdf') {
+            console.log("hello")
             let dataBuffer = fs.readFileSync(filePath);
             pdf(dataBuffer).then(function (data) {
                 try {
@@ -154,7 +193,7 @@ router.post("/transferSt2nar", async (req, res) => {
 
         else {
             error.push({ msg: "Unsupported file type" });
-            return res.json({ success: false, msg: "Only PDF and TXT files allowed", error });
+            return res.json({ success: false, msg: "Only PDF , TXT and DOCX files allowed", error });
         }
 
     } catch (error) {
