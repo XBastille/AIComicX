@@ -3,13 +3,16 @@ import "./PromptPage.css";
 import Sam from "../../Picture/sam_2.png";
 import Sent from "../../Picture/sent-icon.png";
 import Head from "../../Picture/sam's Head.png"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import axios from 'axios';
 import ReactMarkdown from "react-markdown";
+import { faShare } from '@fortawesome/free-solid-svg-icons';
 
 function PromptPage() {
     const [showLogo, setShowLogo] = useState(true);
     const [message, setMessage] = useState("");
     const [chatHistory, setChatHistory] = useState([]);
+    const [color,setcolor]=useState('grey');
 
     const handleSend = async () => {
         if (message.trim() !== "") {
@@ -19,10 +22,19 @@ function PromptPage() {
             try {
                 const res = await axios.post("http://localhost:3000/chat/transferSam", { message })
                 console.log(res.data);
+                if(res.data.length>50){
+                    setcolor('green')
+                }
+                else{
+                    setcolor('grey')
+                }
                 setChatHistory([...chatHistory, { text: message, sender: "user" }, { text: `${res.data}` || "Sorry ,error has been occured", sender: "bot" }]);
 
             } catch (error) {
                 console.log(error)
+                if(message.length<50){
+                    setcolor('grey')
+                }
                 setChatHistory([...chatHistory, { text: message, sender: "user" }, { text: "Sorry ,error has been occured.Please try again later", sender: "bot" }]);
             }
 
@@ -61,7 +73,11 @@ function PromptPage() {
                         )}
                         <div className={`chat-bubble ${msg.sender === "user" ? "user" : "bot"}`}>
                             {msg.sender === "bot" ? (
-                                <ReactMarkdown>{msg.text}</ReactMarkdown>) : (
+                                <div className="displayname">
+                                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                                    <FontAwesomeIcon color={color} className="share" icon={faShare} />
+                                </div>
+                            ) : (
                                 msg.text
                             )
 

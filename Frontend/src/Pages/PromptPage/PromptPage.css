@@ -206,3 +206,13 @@ body {
     margin-top: 10px;
     margin-left: 20px;
 }
+
+.displayname{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.share{
+  font-size: 22px;
+}

@@ -28,6 +28,7 @@ function App() {
 
             <Route path="/SelectPage" element={<ChoosePage />} />
             <Route path="/Generate_Story" element={<Conssole />} />
+            <Route path="/PromptPage" element={<PromptPage />} />
          </Routes>
       </Router>
       // <div>
