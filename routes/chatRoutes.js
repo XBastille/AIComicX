@@ -159,7 +159,7 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
     const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar.txt");
     const filePath = req.file.path;
-    // const filePath = ;
+    // const filePath = path.join(__dirname, `../uploads/userFile.txt`);
 
     const ext = path.extname(req.file.originalname).toLowerCase();
     // const ext = '.txt';
@@ -244,6 +244,57 @@ router.post('/transferSam', async (req, res) => {
         console.log(`Process exited with code ${code}`);
     });
 });
+
+router.post('/ayush', upload.single("file"), async (req, res) => {
+    const error = []
+    if (!req.file) {
+        error.push({ msg: "Nothing has been uploaded" })
+    }
+
+    const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar.txt");
+    const filePath = req.file.path;
+    // const filePath = path.join(__dirname, `../uploads/userFile.txt`);
+
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    // const ext = '.txt';
+
+    try {
+
+        if (ext === '.txt') {
+            console.log("inside txt");
+            const data = fs.readFileSync(filePath, "utf-8");
+            fs.writeFileSync(pythonst2nar, data);
+        }
+        else {
+            error.push({ msg: "Unsupported file type" });
+            return res.json({ success: false, msg: "Only PDF , TXT and DOCX files allowed", error });
+        }
+
+    } catch (error) {
+        console.log(error);
+    }
+
+    if (error.length > 0) {
+        return res.json({ sucess: false, msg: "re render the choose page", error })
+    }
+    const scriptPath = path.join(__dirname, '../genai_models/st2nar.py');
+    try {
+        console.log("pythonConect se pahle");
+        console.log("pythonst2nar", pythonst2nar);
+        console.log("scriptPath", scriptPath);
+        const response = await pythonConnect(res, pythonst2nar, scriptPath);
+        console.log("pythonConnect ke baad");
+        console.log("Response of the python script is ", response);
+        if (response) {
+            console.log("Response k andar aa gaya");
+            return res.json({ sucess: true, msg: "Data is ready", result: response });
+        }
+
+    } catch (err) {
+
+        console.error("Python execution failed:", err);
+    }
+})
 
 
 module.exports = router;
