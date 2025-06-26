@@ -10,10 +10,20 @@ import Conssole from './Pages/Conssole/Conssole'
 import ConssoleNav from './Components/Nav/ConssoleNav'
 import One from './Components/Grid/panel1/One';
 import PromptPage from './Pages/PromptPage/PromptPage'
+import LoadingAnimation from './Components/LoadingAnimation/LoadingAnimation'
 
 import './App.css'
 
 function App() {
+   const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+   const handleLoadingComplete = () => {
+      setIsInitialLoading(false);
+   };
+
+   if (isInitialLoading) {
+      return <LoadingAnimation onComplete={handleLoadingComplete} />;
+   }
    return (
       <Router>
          <Routes>
@@ -31,9 +41,6 @@ function App() {
             <Route path="/PromptPage" element={<PromptPage />} />
          </Routes>
       </Router>
-      // <div>
-      //    <Body />
-      // </div>
    )
 }
 
