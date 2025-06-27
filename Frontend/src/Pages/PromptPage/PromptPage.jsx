@@ -7,32 +7,37 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import axios from 'axios';
 import ReactMarkdown from "react-markdown";
 import { faShare } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from "react-router-dom";
 
 function PromptPage() {
     const [showLogo, setShowLogo] = useState(true);
     const [message, setMessage] = useState("");
     const [chatHistory, setChatHistory] = useState([]);
-    const [color,setcolor]=useState('grey');
+    const [color, setcolor] = useState('grey');
+    const [text, setresponse] = useState("");
+    const navigate = useNavigate();
 
     const handleSend = async () => {
         if (message.trim() !== "") {
             if (showLogo) setShowLogo(false);
             setChatHistory([...chatHistory, { text: message, sender: "user" }]);
             setMessage("");
+            console.log(message)
             try {
                 const res = await axios.post("http://localhost:3000/chat/transferSam", { message })
-                console.log(res.data);
-                if(res.data.length>50){
+                console.log(res.data.data);
+                setresponse(res.data.data);
+                if (res.data.data.length > 1000) {
                     setcolor('green')
                 }
-                else{
+                else {
                     setcolor('grey')
                 }
-                setChatHistory([...chatHistory, { text: message, sender: "user" }, { text: `${res.data}` || "Sorry ,error has been occured", sender: "bot" }]);
+                setChatHistory([...chatHistory, { text: message, sender: "user" }, { text: `${res.data.data}` || "Sorry ,error has been occured", sender: "bot" }]);
 
             } catch (error) {
                 console.log(error)
-                if(message.length<50){
+                if (message.length < 1000) {
                     setcolor('grey')
                 }
                 setChatHistory([...chatHistory, { text: message, sender: "user" }, { text: "Sorry ,error has been occured.Please try again later", sender: "bot" }]);
@@ -40,6 +45,22 @@ function PromptPage() {
 
         }
     };
+
+    const sendtoNar2Nar = async () => {
+        if (color === 'green') {
+            console.log(text)
+            try {
+                const res = await axios.post("http://localhost:3000/chat/ayush", { text })
+                console.log(res.data.sucess)
+                if (res.data.sucess === true) {
+                    console.log("hello")
+                    navigate('/Generate_Story');
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    }
 
     return (
         <div className="container">
@@ -74,9 +95,14 @@ function PromptPage() {
                         <div className={`chat-bubble ${msg.sender === "user" ? "user" : "bot"}`}>
                             {msg.sender === "bot" ? (
                                 <div className="displayname">
-                                    <ReactMarkdown>{msg.text}</ReactMarkdown>
-                                    <FontAwesomeIcon color={color} className="share" icon={faShare} />
+                                    <div className="textmsg">
+                                        <ReactMarkdown>{msg.text}</ReactMarkdown>
+                                    </div>
+                                    <div >
+                                        <FontAwesomeIcon color={color} onClick={sendtoNar2Nar} className="share" icon={faShare} />
+                                    </div>
                                 </div>
+
                             ) : (
                                 msg.text
                             )

@@ -75,7 +75,7 @@ body {
  /* background: linear-gradient(135deg, rgb(223, 30, 114), rgb(230, 110, 41));*/
   color: white;
  /* padding: 10px;*/
- border-radius: 10px;
+  border-radius: 10px;
   align-self: flex-start;
   font-size: 16px;
  /* word-wrap: break-word;*/
@@ -85,7 +85,7 @@ body {
 
 .chat-bubble.user {
   position: relative;
-  max-width: 10%;
+  max-width: 50%;
   align-self: flex-end;
   padding: 10px;
   overflow: hidden;
@@ -94,7 +94,7 @@ body {
   text-align: right;
   word-wrap: break-word;
   display: inline-block;
-  margin-left: 690px;
+  float: right;
   margin-top: 50px;
 }
 
@@ -150,7 +150,6 @@ body {
 }
 
 .input {
-  flex-grow: 1;
   background: transparent;
   border: none;
   color: white;
@@ -159,6 +158,7 @@ body {
   font-size: 16px;
   position: relative;
   z-index: 1;
+  width:100%
 }
 
 .search-bar:focus-within::before {
@@ -215,4 +215,8 @@ body {
 
 .share{
   font-size: 22px;
+}
+
+.textmsg{
+  line-height: 25px;
 }
