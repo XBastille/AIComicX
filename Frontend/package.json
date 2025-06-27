@@ -16,6 +16,11 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@gsap/react": "^2.1.2",
+    "@react-three/drei": "^9.78.0",
+    "@react-three/fiber": "^8.13.0",
+    "@splinetool/loader": "^1.10.15",
+    "@splinetool/r3f-spline": "^1.0.2",
+    "@splinetool/react-spline": "^4.0.0",
     "axios": "^1.9.0",
     "framer-motion": "^12.4.7",
     "gsap": "^3.12.7",
@@ -26,7 +31,8 @@
     "react-markdown": "^10.1.0",
     "react-resizable": "^3.0.5",
     "react-router-dom": "^7.6.0",
-    "split-text-js": "^1.0.3"
+    "split-text-js": "^1.0.3",
+    "three": "^0.150.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

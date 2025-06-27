@@ -11,6 +11,7 @@ import ConssoleNav from './Components/Nav/ConssoleNav'
 import One from './Components/Grid/panel1/One';
 import PromptPage from './Pages/PromptPage/PromptPage'
 import LoadingAnimation from './Components/LoadingAnimation/LoadingAnimation'
+// import LoadingAnimation2 from './Components/LoadingAnimation/LoadingAnimation2'
 
 import './App.css'
 
@@ -24,6 +25,11 @@ function App() {
    if (isInitialLoading) {
       return <LoadingAnimation onComplete={handleLoadingComplete} />;
    }
+
+   // if (isInitialLoading) {
+   //    return <LoadingAnimation2 />;
+   // }
+
    return (
       <Router>
          <Routes>
@@ -33,9 +39,7 @@ function App() {
             <Route path='/user/Register' element={<Register />} />
             <Route path='/user/Login' element={<Login />} />
 
-
             {/*Main Pages routing */}
-
             <Route path="/SelectPage" element={<ChoosePage />} />
             <Route path="/Generate_Story" element={<Conssole />} />
             <Route path="/PromptPage" element={<PromptPage />} />
