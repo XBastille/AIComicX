@@ -159,7 +159,7 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
     const pythonst2nar = path.join(__dirname, "../pythonInput/st2nar.txt");
     const filePath = req.file.path;
-    // const filePath = ;
+    // const filePath = path.join(__dirname, `../uploads/userFile.txt`);
 
     const ext = path.extname(req.file.originalname).toLowerCase();
     // const ext = '.txt';
@@ -224,26 +224,79 @@ router.post("/transferSt2nar", upload.single("file"), async (req, res) => {
 
 
 router.post('/transferSam', async (req, res) => {
-    const { text } = req.body
-    console.log(text);
+    const { message } = req.body;
+    console.log(message)
     const scriptPath = path.join(__dirname, '../genai_models/sam.py');
-    const pythonProcess = spawn('python', [scriptPath, text]);
-    console.log("hii");
+
+    const pythonProcess = spawn('python', [scriptPath, message]);
+
+    let output = '';
+    let errorOutput = '';
 
     pythonProcess.stdout.on('data', (data) => {
-        console.log(data.toString());
-        return res.json(data.toString());
+        output += data.toString();
+        console.log(output)
     });
 
     pythonProcess.stderr.on('data', (data) => {
-        console.log(data.toString());
-        return res.json(data.toString());
+        errorOutput += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        console.log(`Python process exited with code ${code}`);
+
+        if (code !== 0 || errorOutput.includes("tokens_limit_reached")) {
+            console.error('Python script error or token limit:', errorOutput);
+            return res.status(400).json({
+                success: false,
+                error: "Message too long or internal error occurred.",
+                details: errorOutput
+            });
+        }
+
+        return res.json({
+            success: true,
+            data: output
+        });
+    });
+});
+
+
+
+router.post('/ayush', async (req, res) => {
+    const scriptPath = path.join(__dirname, '../genai_models/nar2nar.py');
+    const { text } = req.body;
+
+    const pythonProcess = spawn('python', [scriptPath, text]);
+
+    let output = '';
+    let errorOutput = '';
+
+    pythonProcess.stdout.on('data', (data) => {
+        output += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        errorOutput += data.toString();
     });
 
     pythonProcess.on('close', (code) => {
         console.log(`Process exited with code ${code}`);
+
+        if (code !== 0 || errorOutput) {
+            console.error(errorOutput);
+            return res.status(500).json({ error: errorOutput || 'Python script error' });
+        }
+        console.log(output)
+        fs.writeFileSync("./SamtoGen/Story", output, 'utf8', (err) => {
+            if (err) {
+                console.log(err);
+            }
+        })
+        res.json({ result: output, sucess: true });
     });
 });
+
 
 
 module.exports = router;

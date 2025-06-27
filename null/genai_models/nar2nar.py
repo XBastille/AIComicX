@@ -15,7 +15,7 @@ def convert_formatted_to_comic(formatted_text):
     Character B: dialogue
     """
     client = ChatCompletionsClient(
-        endpoint="https://models.inference.ai.azure.com",
+        endpoint="https://models.github.ai/inference",
         credential=AzureKeyCredential("apikey"),
     )
 
@@ -62,10 +62,10 @@ def convert_formatted_to_comic(formatted_text):
             SystemMessage("You are a comic book creation assistant that formats pre-structured narration and dialogue into comic book layouts with pages and panels."),
             UserMessage(prompt)
         ],
-        model="gpt-4o",
-        temperature=0.7,
-        max_tokens=4096,
-        top_p=1
+        model="mistral-ai/Mistral-Large-2411",
+        temperature=0.8,
+        max_tokens=2048,
+        top_p=0.1
     )
 
     return response.choices[0].message.content

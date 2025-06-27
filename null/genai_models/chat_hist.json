@@ -1,0 +1,10 @@
+[
+  {
+    "role": "user",
+    "content": "hello"
+  },
+  {
+    "role": "assistant",
+    "content": "Hello there! I'm Sam, your comic story writer. To get started, could you please tell me what genre or theme you're interested in? Also, provide some details about the main character, the setting, and any plot ideas you have in mind. Once I have these details, I can craft an engaging comic story for you."
+  }
+]

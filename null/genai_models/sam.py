@@ -10,8 +10,8 @@ HISTORY_FILE = Path("chat_hist.json")
 
 def initialize_sam():
     client = ChatCompletionsClient(
-        endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential("api key"),
+        endpoint="https://models.github.ai/inference",
+        credential=AzureKeyCredential("apikey"),
     )
     return client
 
@@ -89,10 +89,10 @@ def process_message(user_message):
     
     response = client.complete(
         messages=messages,
-        model="gpt-4o",
-        temperature=0.7,
-        max_tokens=4096,
-        top_p=1
+        model="mistral-ai/Mistral-Large-2411",
+        temperature=0.8,
+        max_tokens=2048,
+        top_p=0.1
     )
     
     assistant_response = response.choices[0].message.content
