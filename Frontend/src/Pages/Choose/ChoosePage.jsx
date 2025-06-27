@@ -209,6 +209,7 @@ function ChoosePage() {
                 repeat: 1,
                 onComplete: () => setIsTransitioning(false)
             });
+            navigate('/PromptPage')
             return;
         }
 
