@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import './Conssole.css'
 import aicomicx2 from "../../Picture/aicomic2.jpg"
 import SideNav from '../../Components/SideNav/SideNav';
+import upArrow from '../../Picture/up.png'
+import downArrow from '../../Picture/down.png'
+
 
 
 function Conssole(){
@@ -21,15 +24,25 @@ function Conssole(){
             </select>
 
         <select className="grid-box">
-            <option  value="Grid">Grid </option>
-            <option value="Grid 1">Grid 1</option>
-            <option value="Grid 2">Grid 2</option>
-            <option value="Grid 3">Grid 3</option>
+            <option  value="Grid">Grid 1</option>
+            <option value="Grid 1">Grid 2</option>
+            <option value="Grid 2">Grid 3</option>
+            <option value="Grid 3">Grid 4</option>
+        </select>
+
+        <select classNmae="panel-box">
+          <option value="Panel">Panel 1</option> 
         </select>
 
         <div className='logocomic'>
         <img src={aicomicx2} className='Logo'></img>
         </div>
+           
+
+         <select className="Font-box">
+            <option  value="Font1">ANIME</option>
+            <option value="Font2">MANGA</option>
+        </select>
 
         <select className='comic-theme'>
             <option value="theme1">Default</option>
@@ -42,7 +55,10 @@ function Conssole(){
         <button className='generate-button'>Generate Comic</button>
 
          </div>
-
+        
+        <img src={upArrow} className='upLogo'></img>
+        <img src={downArrow} className='downLogo'></img>
+        
 
          <div className="bottom-bar">
         <button className="about-btn"  onClick={() => setShowAbout(true)}>About</button>

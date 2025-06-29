@@ -7,7 +7,7 @@ body{
 
 .nav-bar{
     display: flex;
-    gap: 180px;
+    gap: 88px;
     align-items: center;
     height: 110px;
 }
@@ -43,6 +43,38 @@ select{
     width: 190px;
     object-fit: contain;
   }
+
+  .upLogo{
+    position : absolute;
+    height: 50px;
+    width: 50px;
+    top: 320px;
+    right: 170px;
+    cursor: pointer;
+  }
+
+  .upLogo:hover{
+    border : 3px solid red; 
+    border-radius: 50%;  
+    transform: scaleY(1);
+  }
+
+    .downLogo{
+    position : absolute;
+    margin-top: 80px;
+    height: 50px;
+    width: 50px;
+    top: 320px;
+    right: 170px;
+    cursor: pointer;
+  }
+
+    .downLogo:hover{
+    border : 3px solid red; 
+    border-radius: 50%;  
+    transform: scaleY(1);
+  }
+
 
   .generate-button{
     border: 2px solid #d72b59;
