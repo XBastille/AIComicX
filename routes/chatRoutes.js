@@ -288,7 +288,7 @@ router.post('/ayush', async (req, res) => {
             return res.status(500).json({ error: errorOutput || 'Python script error' });
         }
         console.log(output)
-        fs.writeFile("./SamtoGen/Story", output, (err) => {
+        fs.writeFile("./SamtoGen/Story.md", output, (err) => {
             if (err) {
                 console.log(err);
             }
