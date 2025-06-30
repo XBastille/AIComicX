@@ -296,6 +296,19 @@ router.post('/ayush', async (req, res) => {
         return res.json({ result: output, sucess: true });
     });
 });
+router.get('/mdToFront', async (req, res) => {
+    try {
+        const filePath = path.join(__dirname, '../SamtoGen/Story');
+        console.log("before read file sync of md to front");
+        const data = fs.readFileSync(filePath, 'utf8');
+        console.log(data);
+        return res.send(data);
+    } catch (error) {
+        console.log(error);
+        res.json(error);
+
+    }
+})
 
 
 

@@ -3,7 +3,7 @@ const schema = require('../model/schema');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const passport = require('passport');
-require('../passport');
+// require('../passport');
 
 const router = express.Router();
 
