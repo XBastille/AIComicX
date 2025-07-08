@@ -8,11 +8,11 @@
 .btn {
     border: 2px solid rgb(173, 167, 167);
     border-radius: 30px;
-    padding: 10px;
+    padding: 15px;
     width: 30%;
-    margin-top: 15px;
+    margin-top: 20px;
     background-color: rgb(24, 18, 28);
-    font-size: 16px;
+    font-size: 18px;
     background: transparent;
     color: white;
     font-weight: 900;
@@ -20,7 +20,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     transition: all 0.3s ease-in-out;
 }
 
@@ -39,102 +39,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px;
+    gap: 18px;
 }
 
 .icons{
-    font-size: 18px;
-}
-
-@font-face {
-  font-family: 'AnimeAce';
-  src: url('../../animeace2bb_tt/animeace2_reg.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'AnimeAce';
-  src: url('../../animeace2bb_tt/animeace2_bld.ttf') format('truetype');
-  font-weight: bold;
-  font-style: normal;
-}
-
-.speech-bubble {
-  position: absolute;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.speech-bubble-content {
-  background: #fff;
-  color: #000;
-  padding: 15px 18px;
-  border-radius: 300px;
-  font-family: 'AnimeAce', Arial, sans-serif;
-  font-size: 12px;
-  font-weight: bold;
-  text-align: center;
-  white-space: normal;
-  word-wrap: break-word;
-  box-shadow: 
-    0 4px 15px rgba(0, 0, 0, 0.3),
-    0 0 0 3px rgba(0, 0, 0, 0.1);
-  border: 2px solid #000;
-  width: 120px;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.speech-bubble-tail-down {
-  position: absolute;
-  bottom: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 15px solid #ffffff;
-  z-index: 1;
-}
-
-.speech-bubble-tail-down::before {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: -12px;
-  width: 0;
-  height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 17px solid #000;
-}
-
-.speech-bubble-tail-up {
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 15px solid #ffffff;
-  z-index: 1;
-}
-
-.speech-bubble-tail-up::before {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: -12px;
-  width: 0;
-  height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-bottom: 17px solid #000;
+    font-size: 20px;
 }
