@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import './Conssole.css'
 import aicomicx2 from "../../Picture/aicomic2.jpg"
@@ -15,6 +14,7 @@ import Grid from '../../Components/Grid/panel4/Grid'
 import Grid1 from '../../Components/Grid/panel4/Grid1'
 import Grid2 from '../../Components/Grid/panel4/Grid2'
 import Grid3 from '../../Components/Grid/panel4/Grid3';
+import axios from 'axios'
 
 const PanelGridCount = {
     Panel1: 1,
@@ -28,6 +28,20 @@ function Conssole() {
     const [showAbout, setShowAbout] = useState(false);
     const [activePanel, SetactivePanel] = useState('')
     const [panel, setpanel] = useState('Panel3');
+    const [sideNav, SetsideNav] = useState('');
+
+    useEffect(() => {
+        async function calling() {
+            try {
+                const res = await axios.get('http://localhost:3000/chat/mdToFront')
+                console.log(res.data);
+                SetsideNav(res.data)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        calling();
+    }, [])
 
     const defaults = (panel) => {
         if (panel === 'Panel1') {
@@ -82,7 +96,7 @@ function Conssole() {
 
     return (
         <div className="Comic-container">
-            <SideNav />
+            <SideNav content={sideNav} />
             <div className="nav-bar">
                 <select className='art-options'>
                     <option value="American" >American(1950)</option>
