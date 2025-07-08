@@ -2,16 +2,14 @@ import sys
 import os
 import json
 from pathlib import Path
-from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessage
-from azure.core.credentials import AzureKeyCredential
+from google import genai
+from google.genai import types
 
 HISTORY_FILE = Path("chat_hist.json")
 
 def initialize_sam():
-    client = ChatCompletionsClient(
-        endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential(os.environ["GITHUB_TOKEN"]),
+    client = genai.Client(
+        api_key=os.environ["GEMINI_KEY"],
     )
     return client
 
@@ -54,9 +52,15 @@ def load_conversation_history():
                 conversation_history = []
                 for msg in history_data:
                     if msg["role"] == "user":
-                        conversation_history.append(UserMessage(msg["content"]))
-                    elif msg["role"] == "assistant":
-                        conversation_history.append(AssistantMessage(msg["content"]))
+                        conversation_history.append(types.Content(
+                            role="user",
+                            parts=[types.Part.from_text(text=msg["content"])]
+                        ))
+                    elif msg["role"] == "model":
+                        conversation_history.append(types.Content(
+                            role="model",
+                            parts=[types.Part.from_text(text=msg["content"])]
+                        ))
                 return conversation_history
             except json.JSONDecodeError:
                 return []
@@ -66,10 +70,10 @@ def save_conversation_history(conversation_history):
     """Save the global conversation history"""
     serializable_history = []
     for msg in conversation_history:
-        if isinstance(msg, UserMessage):
-            serializable_history.append({"role": "user", "content": msg.content})
-        elif isinstance(msg, AssistantMessage):
-            serializable_history.append({"role": "assistant", "content": msg.content})
+        if msg.role == "user":
+            serializable_history.append({"role": "user", "content": msg.parts[0].text})
+        elif msg.role == "model":
+            serializable_history.append({"role": "model", "content": msg.parts[0].text})
     
     if len(serializable_history) > 20:
         serializable_history = serializable_history[-10:]
@@ -83,21 +87,41 @@ def process_message(user_message):
     
     conversation_history = load_conversation_history()
     
-    conversation_history.append(UserMessage(user_message))
+    if not conversation_history:
+        conversation_history.append(types.Content(
+            role="user",
+            parts=[types.Part.from_text(text=get_sam_system_prompt())]
+        ))
+        conversation_history.append(types.Content(
+            role="model",
+            parts=[types.Part.from_text(text="I understand. I am Sam, your comic story writer assistant. I'm here to help you create engaging comic stories in narration-dialogue format. What kind of story would you like me to create for you?")]
+        ))
     
-    messages = [SystemMessage(get_sam_system_prompt())] + conversation_history
+    conversation_history.append(types.Content(
+        role="user",
+        parts=[types.Part.from_text(text=user_message)]
+    ))
     
-    response = client.complete(
-        messages=messages,
-        model="gpt-4o",
+    model = "gemini-2.5-pro"
+    generate_content_config = types.GenerateContentConfig(
+        response_mime_type="text/plain",
         temperature=0.7,
-        max_tokens=4096,
+        max_output_tokens=65536,
         top_p=1
     )
     
-    assistant_response = response.choices[0].message.content
+    response = client.models.generate_content(
+        model=model,
+        contents=conversation_history,
+        config=generate_content_config,
+    )
     
-    conversation_history.append(AssistantMessage(assistant_response))
+    assistant_response = response.text
+    
+    conversation_history.append(types.Content(
+        role="model",
+        parts=[types.Part.from_text(text=assistant_response)]
+    ))
     
     save_conversation_history(conversation_history)
     
