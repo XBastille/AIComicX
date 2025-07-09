@@ -210,6 +210,11 @@ lib-cov
 local_settings.py
 logs
 MANIFEST
+chat_hist.json
+pythonInput/
+SamtoGen/
+uploads/
+response/
 node_modules/
 nosetests.xml
 npm-debug.log*
