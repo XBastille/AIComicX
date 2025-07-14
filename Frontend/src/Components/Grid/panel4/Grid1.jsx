@@ -2,7 +2,7 @@ import React from "react";
 import "./Grid.css"
 import { useState } from "react";
 
-function Grid1() {
+function Grid1({ onPanelClick }) {
 
     const [zoom, setzoom] = useState(1);
     const gap = "6px"
@@ -18,11 +18,10 @@ function Grid1() {
                         maxHeight: "90vh",
                         overflow: "scroll",
 
-                    }} className="giids">
-                        <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }}>1</div>
-                        <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }}>2</div>
-                        <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }}>3</div>
-                        <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }}>4</div>
+                    }} className="giids">                        <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(1)}>1</div>
+                        <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(2)}>2</div>
+                        <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(3)}>3</div>
+                        <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(4)}>4</div>
                     </div>
                 </div>
             </div>
@@ -54,8 +53,7 @@ const styles = {
         height: "100vh",
         width: "100vw",
         color: "white",
-    },
-    box1: {
+    },    box1: {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -64,6 +62,8 @@ const styles = {
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
+        cursor: "pointer",
+        transition: "background-color 0.3s ease",
         //  width: "300px",
         height: "200px",
     },
@@ -78,6 +78,8 @@ const styles = {
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
+        cursor: "pointer",
+        transition: "background-color 0.3s ease",
         gridRow: "span 2",  // Spans two rows
     },
     inner: {

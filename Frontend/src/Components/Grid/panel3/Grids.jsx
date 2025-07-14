@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../panel4/Grid.css"
 
-function Grids() {
+function Grids({ onPanelClick }) {
 
     const [zoom, setzoom] = useState(1);
     const gap = 7;
@@ -15,11 +15,10 @@ function Grids() {
                     <div style={{
                         ...styles.grid, width: `${zoom * 630}px`, gap: `${gap}px`, gridTemplateColumns: `repeat(1, ${zoom * 630}px)`, gridTemplateRows: `repeat(3, ${zoom*boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
-                        overflow: "scroll",
-                    }} className="grids">
-                        <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }}>1</div>
-                        <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }}>2</div>
-                        <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }}>3</div>
+                        overflow: "scroll",                    }} className="grids">
+                        <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }} onClick={() => onPanelClick?.(1)}>1</div>
+                        <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }} onClick={() => onPanelClick?.(2)}>2</div>
+                        <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }} onClick={() => onPanelClick?.(3)}>3</div>
                     </div>
                 </div>
             </div>
@@ -51,8 +50,7 @@ const styles = {
         height: "100vh",
         width: "100vw",
         color: "white",
-    },
-    box: {
+    },    box: {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -63,6 +61,8 @@ const styles = {
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
+        cursor: "pointer",
+        transition: "background-color 0.3s ease",
     },
     inner: {
         backgroundColor: "rgb(31, 31, 31)",

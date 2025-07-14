@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../panel4/Grid.css"
-function Gridss1() {
+function Gridss1({ onPanelClick }) {
     const [zoom, setzoom] = useState(1)
     const gap = 6;
     const boxWidth = zoom * 380
@@ -13,9 +13,8 @@ function Gridss1() {
                         ...styles.grid, gap: `${gap}px`, gridTemplateColumns: `repeat(2, ${boxWidth}px)`, gridTemplateRows: `repeat(1, ${boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
                         overflow: "scroll",
-                    }} className="giiids">
-                        <div style={{ ...styles.box, width: `${zoom * 380}px`, height: `${zoom *450}` }}>1</div>
-                        <div style={{ ...styles.box, width: `${zoom * 380}px`, height: `${zoom *450}` }}>2</div>
+                    }} className="giiids">                        <div style={{ ...styles.box, width: `${zoom * 380}px`, height: `${zoom *450}` }} onClick={() => onPanelClick?.(1)}>1</div>
+                        <div style={{ ...styles.box, width: `${zoom * 380}px`, height: `${zoom *450}` }} onClick={() => onPanelClick?.(2)}>2</div>
                     </div>
                 </div>
             </div>
@@ -60,6 +59,8 @@ const styles = {
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
+        cursor: "pointer",
+        transition: "background-color 0.3s ease",
     },
     inner: {
         backgroundColor: "rgb(31, 31, 31)",

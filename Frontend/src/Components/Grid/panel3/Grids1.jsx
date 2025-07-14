@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../panel4/Grid.css"
-function Grids1() {
+function Grids1({ onPanelClick }) {
 
     const [zoom, setzoom] = useState(1)
     const gap = 6
@@ -15,10 +15,9 @@ function Grids1() {
                         ...styles.grid, width: `${zoom * 706}px`, gap: `${gap}px`, gridTemplateColumns: `repeat(2, ${zoom*boxWidth}px)`, gridTemplateRows: `repeat(2, ${zoom*boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
                         overflow: "scroll",
-                    }} className="grids2">
-                        <div style={{ ...styles.box, width: `${zoom * 350}px`, height: `${zoom * 645}px` }}>1</div>
-                        <div style={{ ...styles.box1, width: `${zoom * 350}px`, height: `${zoom * 320}px` }}>2</div>
-                        <div style={{ ...styles.box1, width: `${zoom * 350}px`, height: `${zoom * 320}px` }}>3</div>
+                    }} className="grids2">                        <div style={{ ...styles.box, width: `${zoom * 350}px`, height: `${zoom * 645}px` }} onClick={() => onPanelClick?.(1)}>1</div>
+                        <div style={{ ...styles.box1, width: `${zoom * 350}px`, height: `${zoom * 320}px` }} onClick={() => onPanelClick?.(2)}>2</div>
+                        <div style={{ ...styles.box1, width: `${zoom * 350}px`, height: `${zoom * 320}px` }} onClick={() => onPanelClick?.(3)}>3</div>
                     </div>
                 </div>
             </div>

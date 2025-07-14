@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../panel4/Grid.css"
-function Gridss() {
+function Gridss({ onPanelClick }) {
 
     const [zoom, setzoom] = useState(1)
     const gap = 6
@@ -14,9 +14,8 @@ function Gridss() {
                         ...styles.grid, gap: `${gap}px`, gridTemplateColumns: `repeat(1, ${boxWidth}px)`, gridTemplateRows: `repeat(2, ${boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
                         overflow: "scroll",
-                    }} className="gidds">
-                        <div style={{ ...styles.box, width: `${zoom * 470}px`, height: `${zoom * 300}` }}>1</div>
-                        <div style={{ ...styles.box, width: `${zoom * 470}px`, height: `${zoom * 300}` }}>2</div>
+                    }} className="gidds">                        <div style={{ ...styles.box, width: `${zoom * 470}px`, height: `${zoom * 300}` }} onClick={() => onPanelClick?.(1)}>1</div>
+                        <div style={{ ...styles.box, width: `${zoom * 470}px`, height: `${zoom * 300}` }} onClick={() => onPanelClick?.(2)}>2</div>
                     </div>
                 </div>
             </div>
@@ -60,6 +59,8 @@ const styles = {
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
+        cursor: "pointer",
+        transition: "background-color 0.3s ease",
     },
     inner: {
         backgroundColor: "rgb(31, 31, 31)",

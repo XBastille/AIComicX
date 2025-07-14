@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import './Conssole.css'
 import aicomicx2 from "../../Picture/aicomic2.jpg"
 import SideNav from '../../Components/SideNav/SideNav';
-// import upArrow from '../../Picture/up.png'
-// import downArrow from '../../Picture/down.png'
 import One from '../../Components/Grid/panel1/One'
 import Gridss from '../../Components/Grid/panel2/Gridss'
 import Gridss1 from '../../Components/Grid/panel2/Gridss1'
@@ -15,6 +13,8 @@ import Grid1 from '../../Components/Grid/panel4/Grid1'
 import Grid2 from '../../Components/Grid/panel4/Grid2'
 import Grid3 from '../../Components/Grid/panel4/Grid3';
 import axios from 'axios'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEdit, faRotateRight, faTimes, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 const PanelGridCount = {
     Panel1: 1,
@@ -23,12 +23,17 @@ const PanelGridCount = {
     Panel4: 4
 }
 
-function Conssole() {
-
-    const [showAbout, setShowAbout] = useState(false);
+function Conssole() {    const [showAbout, setShowAbout] = useState(false);
     const [activePanel, SetactivePanel] = useState('')
-    const [panel, setpanel] = useState('Panel3');
+    const [panel, setpanel] = useState('Panel4');
     const [sideNav, SetsideNav] = useState('');
+    const [showPanelEditor, setShowPanelEditor] = useState(false);
+    const [selectedPanel, setSelectedPanel] = useState(null);
+    const [showEditControls, setShowEditControls] = useState(false);
+    const [inferenceSteps, setInferenceSteps] = useState(20);
+    const [guidanceScale, setGuidanceScale] = useState(7.5);    const [seed, setSeed] = useState(42);
+    const [prompt, setPrompt] = useState("A dynamic comic book scene featuring a superhero in action, flying through a futuristic cityscape with neon lights and towering skyscrapers, detailed art style, vibrant colors, dramatic lighting");
+    const [showCopyNotification, setShowCopyNotification] = useState(false);
 
     useEffect(() => {
         async function calling() {
@@ -57,28 +62,59 @@ function Conssole() {
             SetactivePanel('Panel4_Grid1')
         }
     }
+
+    const handlePanelClick = (panelIndex) => {
+        setSelectedPanel(panelIndex);
+        setShowPanelEditor(true);
+        setShowEditControls(false);
+    }
+
+    const handleEditClick = () => {
+        setShowEditControls(true);
+    }
+
+    const handleRegenerate = () => {
+        console.log('Regenerating with:', {
+            inferenceSteps,
+            guidanceScale,
+            seed,
+            prompt
+        });        
+        // setShowEditControls(false);
+    }
+
+    const handleCopyPrompt = async () => {
+        try {
+            await navigator.clipboard.writeText(prompt);
+            setShowCopyNotification(true);
+            setTimeout(() => setShowCopyNotification(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy prompt: ', err);
+        }
+    }
+
     const renderGrid = () => {
         switch (activePanel) {
             case 'Panel1_Grid1':
-                return <One />
+                return <One onPanelClick={handlePanelClick} />
             case 'Panel2_Grid1':
-                return <Gridss />
+                return <Gridss onPanelClick={handlePanelClick} />
             case 'Panel2_Grid2':
-                return <Gridss1 />
+                return <Gridss1 onPanelClick={handlePanelClick} />
             case 'Panel3_Grid1':
-                return <Grids />
+                return <Grids onPanelClick={handlePanelClick} />
             case 'Panel3_Grid2':
-                return <Grids1 />
+                return <Grids1 onPanelClick={handlePanelClick} />
             case 'Panel3_Grid3':
-                return <Grids2 />
+                return <Grids2 onPanelClick={handlePanelClick} />
             case 'Panel4_Grid1':
-                return <Grid />
+                return <Grid onPanelClick={handlePanelClick} />
             case 'Panel4_Grid2':
-                return <Grid1 />
+                return <Grid1 onPanelClick={handlePanelClick} />
             case 'Panel4_Grid3':
-                return <Grid2 />
+                return <Grid2 onPanelClick={handlePanelClick} />
             case 'Panel4_Grid4':
-                return <Grid3 />
+                return <Grid3 onPanelClick={handlePanelClick} />
             default:
                 defaults(panel)
         }
@@ -94,9 +130,15 @@ function Conssole() {
     }
 
 
-    return (
-        <div className="Comic-container">
+    return (        <div className="Comic-container">
             <SideNav content={sideNav} />
+            {showCopyNotification && (
+                <div className="copy-notification">
+                    <FontAwesomeIcon icon={faCheck} className="check-icon" />
+                    Prompt copied to clipboard!
+                </div>
+            )}
+            
             <div className="nav-bar">
                 <select className='art-options'>
                     <option value="American" >American(1950)</option>
@@ -138,12 +180,8 @@ function Conssole() {
                 </select>
 
 
-                <button className='generate-button'>Generate Comic</button>
+                <button className='generate-button'>Generate Comic</button>            </div>
 
-            </div>
-
-            {/* <img src={upArrow} className='upLogo'></img>
-            <img src={downArrow} className='downLogo'></img> */}
             <div className="grid-container">
                 {renderGrid()}
             </div>
@@ -154,8 +192,7 @@ function Conssole() {
                     <button className="settings-btn">Settings</button>
                     <button className="pdf-btn">Get PDF</button>
                 </div>
-            </div>
-            {showAbout && (
+            </div>            {showAbout && (
                 <>
                     <div className="modal-overlay" onClick={() => setShowAbout(false)} />
                     <div className="about-modal">
@@ -169,6 +206,100 @@ function Conssole() {
                                 See the <a href="https://github.com/XBastille/AIComicX" target="_blank" rel="noopener noreferrer">GitHub repo</a> for more info.
                             </p>
                             <p>📧 Reach us at <a href="mailto:eziopuhan825@gmail.com">eziopuhan825@gmail.com</a>.</p>
+                        </div>
+                    </div>
+                </>
+            )}            {showPanelEditor && (
+                <>
+                    <div className="modal-overlay" onClick={() => setShowPanelEditor(false)} />
+                    <div className="panel-editor-modal">
+                        <button className="close-btn" onClick={() => setShowPanelEditor(false)}>
+                            <FontAwesomeIcon icon={faTimes} />
+                        </button>                        <div className="panel-editor-content">
+                            <div className="panel-preview">
+                            </div>
+                            <div className="panel-controls">
+                                <h3 className="panel-title">Panel {selectedPanel}</h3>
+                                
+                                <div className="parameter-info">                                    <div className="control-group">
+                                        <div className="prompt-header">
+                                            <label>Prompt:</label>
+                                            <button 
+                                                className="copy-btn" 
+                                                onClick={handleCopyPrompt}
+                                                title="Copy prompt"
+                                            >
+                                                <FontAwesomeIcon icon={faCopy} />
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            value={prompt}
+                                            onChange={(e) => setPrompt(e.target.value)}
+                                            className={`prompt-input ${!showEditControls ? 'readonly' : ''}`}
+                                            readOnly={!showEditControls}
+                                            rows={4}
+                                            placeholder="Enter your comic panel prompt here..."
+                                        />
+                                    </div>
+                                    
+                                    <div className="control-group">
+                                        <label>Inference Steps: {inferenceSteps}</label>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="50"
+                                            value={inferenceSteps}
+                                            onChange={(e) => setInferenceSteps(parseInt(e.target.value))}
+                                            className="slider"
+                                            disabled={!showEditControls}
+                                        />
+                                    </div>                                      <div className="control-group">
+                                        <label>Guidance Scale:</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="10"
+                                            step="0.1"
+                                            value={guidanceScale}                                            onChange={(e) => {
+                                                let value = parseFloat(e.target.value);
+                                                if (isNaN(value)) {
+                                                    value = 0;
+                                                }
+                                                value = Math.max(0, Math.min(10, value));
+                                                setGuidanceScale(value);
+                                            }}
+                                            className="number-input"
+                                            readOnly={!showEditControls}
+                                        />
+                                    </div>
+                                      <div className="control-group">
+                                        <label>Seed:</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100000000"
+                                            value={seed}                                            onChange={(e) => {
+                                                let value = parseInt(e.target.value);
+                                                if (isNaN(value)) {
+                                                    value = 0;
+                                                }
+                                                value = Math.max(0, Math.min(100000000, value));
+                                                setSeed(value);
+                                            }}
+                                            className="number-input"
+                                            readOnly={!showEditControls}
+                                        />
+                                    </div>
+                                </div>                                  {showEditControls ? (
+                                    <button className="regenerate-btn" onClick={handleRegenerate}>
+                                        <FontAwesomeIcon icon={faRotateRight} /> Regenerate
+                                    </button>
+                                ) : (
+                                    <button className="edit-btn" onClick={handleEditClick}>
+                                        <FontAwesomeIcon icon={faEdit} /> Edit
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </>

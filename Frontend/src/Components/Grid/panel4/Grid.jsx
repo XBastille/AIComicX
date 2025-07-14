@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./Grid.css";
 
-function Grid() {
+function Grid({ onPanelClick }) {
     const [zoom, setzoom] = useState(1);
     const gap = 6
     const boxWidth = zoom * 260;
@@ -14,11 +14,10 @@ function Grid() {
                         ...styles.grid, width: `${zoom * 528}px`, gap: `${gap}px`, gridTemplateColumns: `repeat(2, ${boxWidth}px)`, gridTemplateRows: `repeat(2, ${boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
                         overflow: "scroll",
-                    }} className="gids">
-                        <div style={{ ...styles.box, width: `${zoom * 260}px`, height: `${zoom * 320}` }}>1</div>
-                        <div style={{ ...styles.box, width: `${zoom * 260}px`, height: `${zoom * 320}` }}>2</div>
-                        <div style={{ ...styles.box, width: `${zoom * 260}px`, height: `${zoom * 320}` }}>3</div>
-                        <div style={{ ...styles.box, width: `${zoom * 260}px`, height: `${zoom * 320}` }}>4</div>
+                    }} className="gids">                        <div style={{ ...styles.box, width: `${zoom * 260}px`, height: `${zoom * 320}` }} onClick={() => onPanelClick?.(1)}>1</div>
+                        <div style={{ ...styles.box, width: `${zoom * 260}px`, height: `${zoom * 320}` }} onClick={() => onPanelClick?.(2)}>2</div>
+                        <div style={{ ...styles.box, width: `${zoom * 260}px`, height: `${zoom * 320}` }} onClick={() => onPanelClick?.(3)}>3</div>
+                        <div style={{ ...styles.box, width: `${zoom * 260}px`, height: `${zoom * 320}` }} onClick={() => onPanelClick?.(4)}>4</div>
                     </div>
                 </div>
             </div>
@@ -51,8 +50,7 @@ const styles = {
         width: "100vw",
         color: "white",
         overflow: "hidden",
-    },
-    box: {
+    },    box: {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -63,6 +61,8 @@ const styles = {
         fontSize: "20px",
         fontWeight: "bold",
         border: "1px solid white",
+        cursor: "pointer",
+        transition: "background-color 0.3s ease",
         overflow: "auto"
     },
     inner: {
