@@ -5,18 +5,29 @@ body{
 }
 
 .nav-bar{
+  position: relative;
     display: flex;
     gap: 88px;
     align-items: center;
     height: 110px;
 }
 
+.page-indicator {
+    position: absolute;
+    top: 110px;
+    left: 89rem;
+    font-size: 1.3rem;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.2rem 0.5rem;
+    border-radius: 30%;
+     border: 2px solid #d72b59;
+}
+
 .art-options{
     margin-left: 20px;
 }
 
-.grid-box{
-}
 
 select{
     height: 40px;
@@ -247,7 +258,6 @@ select{
   justify-content: center;
   align-items: center;
   background: transparent;
-  border-right: 2px solid #d72b59;
   position: relative;
   min-height: 400px;
   padding: 200px;
@@ -259,6 +269,8 @@ select{
   background: rgb(31, 22, 35);
   display: flex;
   flex-direction: column;
+  border-left: 2px solid #d72b59;
+  margin-left: 790px;
   gap: 12px;
   overflow-y: auto;
   flex-shrink: 0; 
@@ -437,6 +449,108 @@ select{
   right: 20px; 
   width: 75%; 
 }
+
+.setting-field {
+  margin-bottom: 1rem;
+}
+
+.setting-field label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #f0f0f0;
+}
+
+.setting-field input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 0, 68 , 0.8), rgb(251, 231, 81 , 0.8));
+  border-radius: 5px;
+  outline: none;
+  margin: 0;
+  padding: 0;
+}
+
+.setting-field input[type="range"]::-webkit-slider-thumb {
+  position: relative;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #d72b59;
+  border-radius: 50%;
+  cursor: pointer;
+
+ 
+}
+
+/*.setting-field input[type="range"]::-webkit-slider-thumb:hover {
+  background: rgba(255, 0, 0, 0.1);
+}*/
+
+
+.setting-field input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: 2px solid red;
+  margin-top: -6px;
+  border-radius: 20%;
+  cursor: pointer;
+  
+}
+
+.setting-field input[type="range"]::-moz-range-track {
+  background: linear-gradient(90deg, #ff0055, #ffcc00);
+  height: 10px;
+  border-radius: 5px;
+}
+
+.setting-field input[type="number"] {
+  width: 100%;
+  padding: 0.25rem;
+  background: #222;
+  border: 1px solid #555;
+  color: #fff;
+  border-radius: 4px;
+}
+
+.settings-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.default-btn {
+  background: transparent;
+  border: 2px solid #d72b59;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.apply-btn{
+    border: 2px solid #d72b59;
+    background: transparent;
+    color: white;
+    padding: 10px 40px;
+    border-radius: 43px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 20px;
+    cursor: pointer;
+    transition: border 0.3s ease;
+}
+
+.apply-btn:hover{
+   background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
+}
+
+
 
 
 
