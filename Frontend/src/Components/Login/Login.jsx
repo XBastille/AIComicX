@@ -5,6 +5,7 @@ import { windowlistner } from "../WindowListener/WindowListener"
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
 import "../Register/Register.css"
+import Carousel from '../Carousel/Carousel';
 
 function Login() {
 
@@ -61,49 +62,55 @@ function Login() {
                 transform: `translate(${position.x}px, ${position.y}px)`
             }}></div>
 
-            <motion.div style={styles.innerLogin}>
-                <motion.div>
-
-                    <h1 style={styles.artist}>WELCOME BACK, STORYTELLER!</h1>
-                    <p style={styles.stories}>YOUR STORIES AWAIT—STEP BACK INTO YOUR WORLD OF CREATIVITY AND IMAGINATION, WHERE EVERY IDEA TAKES SHAPE AND EVERY CHARACTER COMES TO LIFE.</p>
-                </motion.div>
-                <motion.div style={styles.centerss}>
-                    <motion.div >
-                        <p style={styles.heading}>LOGIN</p>
-                        <p style={styles.subheading}>Continue your journey and pick up right where you left off.</p>
-                    </motion.div>
+            <motion.div style={styles.container}>
+                <motion.div style={styles.innerLogin}>
                     <motion.div>
-                        <motion.div style={styles.emailContainer}>
-                            <label htmlFor="email" style={styles.label}>Email :</label>
-                            <input style={styles.input} type="email" id="email" name="email" value={email} placeholder="example@gmail.com" onChange={(event) => { setemail(event.target.value) }} required></input>
+                        <h1 style={styles.artist}>WELCOME BACK, STORYTELLER!</h1>
+                        <p style={styles.stories}>YOUR STORIES AWAIT—STEP BACK INTO YOUR WORLD OF CREATIVITY AND IMAGINATION, WHERE EVERY IDEA TAKES SHAPE AND EVERY CHARACTER COMES TO LIFE.</p>
+                    </motion.div>
+                    <motion.div style={styles.centerss}>
+                        <motion.div >
+                            <p style={styles.heading}>LOGIN</p>
+                            <p style={styles.subheading}>Continue your journey and pick up right where you left off.</p>
                         </motion.div>
-                        <motion.div style={styles.emailContainer}>
-                            <label htmlFor="password" style={styles.labelss}>Password :</label>
-                            <input style={styles.input} type="password" id="password" name="password" value={password} onChange={(event) => { setpassword(event.target.value) }}></input>
-                        </motion.div>
-                        <motion.div style={styles.emailContainer}>
-                            <label htmlFor="confirm_password" style={styles.labels}>Confirm_Password :</label>
-                            <input style={styles.input} type="password" id="confirm_password" value={confirm} name="confirm_password" onChange={(event) => setconfirm(event.target.value)}></input>
-                        </motion.div>
-                        <motion.button style={styles.button}
-                            whileHover={{
-                                scale: 1.04,
-                                color: 'rgb(196, 195, 195)',
-                                background: "linear-gradient(to right,rgb(244, 29, 122),rgb(255, 191, 0))",
-                            }}
-                            whileTap={{
-                                scale: 1.01,
-                            }}
-                            type="submit" onClick={submitss}>LOGIN</motion.button>
-                        <motion.div className="Account" style={styles.accountText} >
-                            No account yet?{" "}
-                            <motion.button title="No account" style={styles.links_button} onClick={no_account}>
-                                Create your account now
-                            </motion.button>
+                        <motion.div>
+                            <motion.div style={styles.emailContainer}>
+                                <label htmlFor="email" style={styles.label}>Email :</label>
+                                <input style={styles.input} type="email" id="email" name="email" value={email} placeholder="example@gmail.com" onChange={(event) => { setemail(event.target.value) }} required></input>
+                            </motion.div>
+                            <motion.div style={styles.emailContainer}>
+                                <label htmlFor="password" style={styles.labelss}>Password :</label>
+                                <input style={styles.input} type="password" id="password" name="password" value={password} onChange={(event) => { setpassword(event.target.value) }}></input>
+                            </motion.div>
+                            <motion.div style={styles.emailContainer}>
+                                <label htmlFor="confirm_password" style={styles.labels}>Confirm_Password :</label>
+                                <input style={styles.input} type="password" id="confirm_password" value={confirm} name="confirm_password" onChange={(event) => setconfirm(event.target.value)}></input>
+                            </motion.div>
+                            <motion.button style={styles.button}
+                                whileHover={{
+                                    scale: 1.04,
+                                    color: 'rgb(196, 195, 195)',
+                                    background: "linear-gradient(to right,rgb(244, 29, 122),rgb(255, 191, 0))",
+                                }}
+                                whileTap={{
+                                    scale: 1.01,
+                                }}
+                                type="submit" onClick={submitss}>LOGIN</motion.button>
+                            <motion.div className="Account" style={styles.accountText} >
+                                No account yet?{" "}
+                                <motion.button title="No account" style={styles.links_button} onClick={no_account}>
+                                    Create your account now
+                                </motion.button>
+                            </motion.div>
                         </motion.div>
                     </motion.div>
+                </motion.div>
+                
+                <motion.div style={styles.carouselSection}>
+                    <Carousel />
                 </motion.div>
             </motion.div>
+            
             <motion.div>
                 {errors && (
                     <p className="error" style={{
@@ -121,61 +128,69 @@ const styles = {
     login: {
         backgroundColor: 'rgb(31, 22, 35)',
         color: '#e0dfdd',
-        minHeight: '100vh',
+        height: '100vh',
         fontFamily: 'Arial, sans-serif',
-        // textAlign: 'center',
-        // display: 'flex',
-        // alignItems: 'center',
-        // justifyContent: 'center',
-
+        overflow: 'hidden',
+    },
+    container: {
+        height: '100%',
+        display: 'flex',
+        width: '100%',
     },
     innerLogin: {
         height: '100%',
         width: '50%',
-        padding: '30px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+    },
+    carouselSection: {
+        height: '100%',
+        width: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     heading: {
         color: 'white',
-        fontSize: '38px',
+        fontSize: '32px',
         fontWeight: '900',
         marginBottom: '5px',
-        marginTop: "10%",
-
+        marginTop: "5%",
     },
     subheading: {
-        fontSize: '18px',
-        marginBottom: '5%',
-
+        fontSize: '16px',
+        marginBottom: '4%',
     },
     inputGroup: {
-        marginBottom: '20px',
+        marginBottom: '15px',
     },
     label: {
         display: 'block',
         marginRight: '460px',
-        fontSize: '20px',
-        marginBottom: "10px",
-
+        fontSize: '18px',
+        marginBottom: "8px",
     },
     labelss: {
         display: 'block',
         marginRight: '420px',
-        fontSize: '20px',
-        marginBottom: "10px"
+        fontSize: '18px',
+        marginBottom: "8px"
     },
     labels: {
         display: 'block',
         marginRight: '340px',
-        fontSize: '20px',
-        marginBottom: "10px"
+        fontSize: '18px',
+        marginBottom: "8px"
     },
     input: {
         border: 'none',
         width: '50%',
-        padding: '15px',
+        padding: '12px',
         backgroundColor: 'rgb(31, 22, 35)',
         color: 'white',
-        marginBottom: '30px',
+        marginBottom: '25px',
         borderBottom: "2px solid rgb(173, 167, 167)",
     },
     link: {
@@ -184,23 +199,22 @@ const styles = {
         marginLeft: '270px',
     },
     accountText: {
-        marginTop: '20px',
-        fontSize: '16px',
+        marginTop: '15px',
+        fontSize: '14px',
     },
     button: {
         border: '2px solid rgb(173, 167, 167)',
         borderRadius: '30px',
-        padding: '15px',
+        padding: '12px',
         width: '60%',
-        marginTop: '20px',
+        marginTop: '15px',
         backgroundColor: 'rgb(24, 18, 28)',
-        fontSize: "18px",
+        fontSize: "16px",
         color: 'white',
         fontWeight: "900"
     },
     links: {
         borderBottom: '2px solid rgb(173, 167, 167)',
-
     },
     cursor: {
         transition: "transform 0.18s ease",
@@ -221,16 +235,16 @@ const styles = {
         left: '260px',
         backgroundColor: 'rgba(255, 0, 0, 0.8)',
         color: 'white',
-        padding: '13px 35px',
+        padding: '10px 30px',
         borderRadius: '7px',
-        fontSize: '16px',
+        fontSize: '14px',
         fontWeight: 'bold',
         textAlign: 'center',
-        marginTop: "40px",
-        marginBottom: "20px"
+        marginTop: "30px",
+        marginBottom: "15px"
     },
     artist: {
-        fontSize: '38px',
+        fontSize: '30px',
         fontWeight: "900",
         fontFamily: "'Michroma', sans-serif",
         background: "linear-gradient(to right,rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0))",
@@ -238,22 +252,23 @@ const styles = {
         backgroundClip: "text",
         display: "inline-block",
         fontStyle: "normal",
-        fontDisplay: "swap"
+        fontDisplay: "swap",
+        marginBottom: '10px'
     },
     stories: {
-        fontSize: "16px",
+        fontSize: "14px",
         fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
-        color: "#e0dfdd"
+        color: "#e0dfdd",
+        marginBottom: '15px'
     },
     centerss: {
-        // display:'flex',
         textAlign: 'center'
     },
     links_button: {
         background: "transparent",
         color: "white",
         border: "none",
-        fontSize: "15px",
+        fontSize: "14px",
         borderBottom: "1px solid white"
     }
 }
