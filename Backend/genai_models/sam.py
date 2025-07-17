@@ -21,7 +21,6 @@ def clean_unicode_text(text):
         '\u00A0': ' ',   # Non-breaking space
     }
 
-    print("helllo world")
     
     for unicode_char, replacement in replacements.items():
         text = text.replace(unicode_char, replacement)
