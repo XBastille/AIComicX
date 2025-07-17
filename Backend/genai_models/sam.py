@@ -26,6 +26,8 @@ def clean_unicode_text(text):
         text = text.replace(unicode_char, replacement)
     
     text = re.sub(r'[^\x00-\x7F]+', '', text)
+
+    print("nice")
     
     return text
 
