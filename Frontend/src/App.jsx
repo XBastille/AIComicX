@@ -9,8 +9,7 @@ import Footer from './Components/Footer/Footer'
 import Conssole from './Pages/Conssole/Conssole'
 import ConssoleNav from './Components/Nav/ConssoleNav'
 import PromptPage from './Pages/PromptPage/PromptPage'
-console.log();
-import './App.css
+import './App.css'
 
 function App() {
    return (
