@@ -7,6 +7,7 @@ import Nav_2 from "../../Components/Nav_2/Nav_2";
 import axios from 'axios'
 import { gsap } from "gsap";
 import { useNavigate } from "react-router-dom";
+import Appsss from "../../Components/LoadingAnimation/LoadingAnimation2";
 
 function ChoosePage() {
     const [selectedType, setSelectedType] = useState(null);
@@ -28,6 +29,7 @@ function ChoosePage() {
     const selectionPulseRef = useRef(null);
     const digitalParticlesRef = useRef(null);
     const navigate = useNavigate();
+    const [Loading, setLoading] = useState(false);
 
 
     useEffect(() => {
@@ -546,10 +548,9 @@ function ChoosePage() {
 
     const conti = async (e) => {
         console.log(uploadedFile)
-
         const file = new FormData()
         file.append('file', uploadedFile)
-
+        setLoading(true)
         try {
             const response = await axios.post('http://localhost:3000/chat/transferNar2nar', file, {
                 headers: {
@@ -567,6 +568,7 @@ function ChoosePage() {
         } catch (error) {
             console.log("Cannot send file to backend " + error)
         }
+        setLoading(false)
         gsap.to(".file-preview", {
             y: 20,
             opacity: 0,
@@ -607,7 +609,7 @@ function ChoosePage() {
 
         const file = new FormData()
         file.append('file', uploadedFile)
-
+        setLoading(true)
         try {
             const response = await axios.post('http://localhost:3000/chat/transferSt2nar', file, {
                 headers: {
@@ -625,6 +627,7 @@ function ChoosePage() {
         } catch (error) {
             console.log("Cannot send file to backend " + error)
         }
+        setLoading(false);
         gsap.to(".file-preview", {
             y: 20,
             opacity: 0,
@@ -865,6 +868,7 @@ function ChoosePage() {
 
     return (
         <>
+            {Loading && <Appsss />}
             <Nav_2 showBack={selectedType !== null} onBackClick={handleBack} />
 
             <div className="Story-Container">

@@ -8,6 +8,8 @@ import axios from 'axios';
 import ReactMarkdown from "react-markdown";
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from "react-router-dom";
+import LoadingSpinner from "../../Components/LoadingAnimation/Simple";
+import Appsss from "../../Components/LoadingAnimation/LoadingAnimation2";
 
 function PromptPage() {
     const [showLogo, setShowLogo] = useState(true);
@@ -15,6 +17,8 @@ function PromptPage() {
     const [chatHistory, setChatHistory] = useState([]);
     const [color, setcolor] = useState('grey');
     const [text, setresponse] = useState("");
+    const [Loading, SetLoading] = useState(false);
+    const [ loading, setloading ] = useState(false);
     const navigate = useNavigate();
 
     const handleSend = async () => {
@@ -22,6 +26,7 @@ function PromptPage() {
             if (showLogo) setShowLogo(false);
             setChatHistory([...chatHistory, { text: message, sender: "user" }]);
             setMessage("");
+            SetLoading(true);
             console.log(message)
             try {
                 const res = await axios.post("http://localhost:3000/chat/transferSam", { message })
@@ -42,13 +47,14 @@ function PromptPage() {
                 }
                 setChatHistory([...chatHistory, { text: message, sender: "user" }, { text: "Sorry ,error has been occured.Please try again later", sender: "bot" }]);
             }
-
+            SetLoading(false);
         }
     };
 
     const sendtoNar2Nar = async () => {
         if (color === 'green') {
             console.log(text)
+            setloading(true);
             try {
                 const res = await axios.post("http://localhost:3000/chat/ayush", { text })
                 console.log(res.data.sucess)
@@ -59,6 +65,7 @@ function PromptPage() {
             } catch (error) {
                 console.log(error);
             }
+            setloading(false);
         }
     }
 
@@ -71,7 +78,8 @@ function PromptPage() {
                     <img src={Sam} className="mascot-logo" alt="Sam Mascot" />
                 </div>
             )}
-
+            {Loading && <LoadingSpinner />}
+              {loading && <Appsss />}
 
             {/* <div className="chat-container">
             {chatHistory.map((msg, index) => (

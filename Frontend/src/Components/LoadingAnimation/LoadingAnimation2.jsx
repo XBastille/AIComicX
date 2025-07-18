@@ -2,24 +2,25 @@ import Spline from '@splinetool/react-spline';
 import epochPresents from '../../Picture/aicomic2.jpg';
 import './LoadingAnimation2.css';
 
-export default function App() {
+export default function Appsss() {
   return (
     <div className="spline-container" style={{
-      position: 'relative',
-      width: '100%',
+      position: 'fixed',
+      width: '100vw',
       height: '100vh',
       backgroundColor: 'black',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      zIndex: 9999,
     }}>
       <div className="animation-wrapper">
         <Spline scene="https://prod.spline.design/dilviIxFoBiODtyE/scene.splinecode" />
       </div>
-      <img 
-        src={epochPresents} 
-        alt="AI Comic X" 
+      <img
+        src={epochPresents}
+        alt="AI Comic X"
         style={{
           position: 'absolute',
           top: '47%',

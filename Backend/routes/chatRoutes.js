@@ -268,7 +268,7 @@ router.post('/ayush', async (req, res) => {
     const { text } = req.body;
 
     const tempInputFile = path.join(__dirname, '../pythonInput/temp_story.txt');
-    
+
     try {
         fs.writeFileSync(tempInputFile, text);
     } catch (writeError) {
@@ -297,7 +297,7 @@ router.post('/ayush', async (req, res) => {
             return res.status(500).json({ error: errorOutput || 'Python script error' });
         }
         console.log(output)
-        
+
         const outputPath = path.join(__dirname, "../SamtoGen/story.md");
         fs.writeFile(outputPath, output, (err) => {
             if (err) {
@@ -312,13 +312,13 @@ router.post('/ayush', async (req, res) => {
 router.get('/mdToFront', async (req, res) => {
     try {
         const storyPath = path.join(__dirname, "../SamtoGen/story.md");
-        
+
         if (!fs.existsSync(storyPath)) {
             return res.status(404).json({ error: 'Story not found' });
         }
-        
+
         const storyContent = fs.readFileSync(storyPath, 'utf-8');
-        
+
         return res.json(storyContent);
     } catch (error) {
         console.error('Error reading story file:', error);
