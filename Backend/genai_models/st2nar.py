@@ -400,6 +400,6 @@ if __name__ == "__main__":
     output_file = sys.argv[2]
     style = "Anime"
     
-    generate_reference_images = True
+    generate_reference_images = False
     
     process_story_to_comic(input_file, output_file, style, generate_reference_images)
