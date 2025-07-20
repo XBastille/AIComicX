@@ -34,7 +34,7 @@ class SpeechBubbleGenerator:
         self.character_descriptions = {}
         
     def detect_character(self, description):
-        """Detect a specific character using the agentic-object-detection API."""
+        """Detect a specific character or object using the agentic-object-detection API."""
         url = "https://api.va.landing.ai/v1/tools/agentic-object-detection"
         
         try:
@@ -72,7 +72,7 @@ class SpeechBubbleGenerator:
             return None
             
         except Exception as e:
-            print(f"Error in character detection for '{description}': {e}")
+            print(f"Error in character/object detection for '{description}': {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -597,8 +597,25 @@ class SpeechBubbleGenerator:
         self.image = self.original_image.copy()
         self.draw = ImageDraw.Draw(self.image)
         
-        self.all_head_boxes = self.detect_all_heads()
-        print(f"Detected {len(self.all_head_boxes)} generic heads in the image")
+        has_character_dialogues = any(
+            dialogue.get('character_description') and 
+            not dialogue.get('is_off_panel', False) 
+            for dialogue in dialogues
+        )
+        
+        has_human_speakers = any(
+            dialogue.get('character_description') and 
+            not dialogue.get('is_off_panel', False) and
+            'head' in dialogue.get('character_description', '').lower()
+            for dialogue in dialogues
+        )
+        
+        if has_human_speakers:
+            self.all_head_boxes = self.detect_all_heads()
+            print(f"Detected {len(self.all_head_boxes)} generic heads in the image")
+        else:
+            self.all_head_boxes = []
+            print("No human speakers found - skipping head detection for optimization")
         
         dialogues = dialogues[:5]
         print(f"Processing {len(dialogues)} dialogues")
@@ -620,7 +637,7 @@ class SpeechBubbleGenerator:
                     all_detected_boxes.append(char_box)
                     on_panel_dialogues.append(dialogue)
                 else:
-                    print(f"Character '{dialogue['character_description']}' not detected. Making dialogue off-panel.")
+                    print(f"Character/object '{dialogue['character_description']}' not detected. Making dialogue off-panel.")
                     off_panel_dialogues.append(dialogue)
             else:
                 off_panel_dialogues.append(dialogue)
@@ -649,7 +666,7 @@ class SpeechBubbleGenerator:
                     continue
                     
                 char_desc = dialogue.get('character_description', 'Unknown')
-                print(f"Generating on-panel bubble {i+1} for character '{char_desc}': '{text[:20]}...'")
+                print(f"Generating on-panel bubble {i+1} for character/object '{char_desc}': '{text[:20]}...'")
                 
                 pos, arrow_pos, lines, font_size = self.find_optimal_bubble_position(
                     char_box, text, used_areas
@@ -659,6 +676,7 @@ class SpeechBubbleGenerator:
                     print(f"Placed on-panel bubble {i+1} at position {pos}")
                     used_areas.append([pos[0], pos[1], pos[0] + pos[2], pos[1] + pos[3]])
                     
+                    is_device = not ('head' in char_desc.lower())
                     self.draw_speech_bubble(pos, arrow_pos, lines, font_size, draw_arrow=True)
                 else:
                     print(f"Failed to place on-panel bubble {i+1}")

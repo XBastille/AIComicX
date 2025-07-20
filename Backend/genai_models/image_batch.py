@@ -7,10 +7,9 @@ from diffusers import StableDiffusion3Pipeline
 import shutil
 import markdown
 import bs4
-from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage
-from azure.ai.inference.models import UserMessage
-from azure.core.credentials import AzureKeyCredential
+from google import genai
+from google.genai import types
+import time
 
 def extract_panel_content(markdown_file, target_page=None):
     """Extract pages and panels content from markdown file"""
@@ -88,103 +87,16 @@ def extract_json_from_response(response_text):
     return response_text
 
 def generate_character_descriptions(comic_structure, style):
-    """Generate concise character descriptions from the complete story"""
-    client = ChatCompletionsClient(
-        endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential(os.environ.get("GITHUB_TOKEN")),
-    )
-
-    story_context = ""
-    character_names = set()
+    """Load character descriptions from st2nar/nar2nar output instead of generating new ones"""
+    char_desc_path = os.path.join('output', 'character_descriptions.json')
     
-    for page in comic_structure:
-        for panel in page['panels']:
-            for dialogue in panel['dialogues']:
-                character_names.add(dialogue['character'])
-            
-            scene_text = panel['narration'] + " " + panel.get('italic_text', '')
-            
-            story_context += f"Page {page['page_number']}, Panel {panel['panel_number']}:\n"
-            if panel.get('italic_text', ''):
-                story_context += f"Scene description: {panel['italic_text']}\n"
-            if panel['narration']:
-                story_context += f"Narration: {panel['narration']}\n"
-            for dialogue in panel['dialogues']:
-                story_context += f"{dialogue['character']}: {dialogue['text']}\n"
-    
-    for char_name in character_names:
-        story_context += f"\nCharacter explicitly in story: {char_name}\n"
-    
-    llm_prompt = f"""
-    Create VERY SHORT visual descriptions of each character in this comic book story.
-    
-    FULL STORY CONTEXT:
-    {story_context}
-
-    STYLE REQUESTED:
-    {style} style
-
-    For EACH named character that appears or is mentioned in the story, create a CONCISE ONE-SENTENCE visual description that includes:
-    1. Most essential facial features (eye color, hair color/style)
-    2. Most essential physical attributes (age, build)
-    3. Most essential clothing/outfit
-
-    VERY IMPORTANT don't include the "narration" as character, it's not a character, it is interering with the image generation
-    Your descriptions must be EXTREMELY CONCISE - ONE SENTENCE MAXIMUM (15-20 words) - while including the key visual details.
-    Note any outfit changes that happen during the story.
-
-    OUTPUT FORMAT:
-    Return a JSON object where keys are character names and values have "base" description and optional "variations":
-
-    Example format:
-    {{
-      "Character1": {{
-        "base": "30-year-old man with green eyes, short black hair, wearing a navy suit and red tie",
-        "variations": {{
-          "page_2_panel_3": "same man but wearing a torn suit with visible wounds"
-        }}
-      }},
-      "Character2": {{
-        "base": "young woman with long blonde hair, blue eyes, slender, wearing a white dress"
-      }}
-    }}
-    """
-    
-    response = client.complete(
-        messages=[
-            SystemMessage("You create extremely concise one-sentence character descriptions for comics. Focus only on the essential visual details needed for consistency. IMPORTANT: Always respond with valid JSON."),
-            UserMessage(llm_prompt)
-        ],
-        model="Ministral-3B",
-        temperature=0.5,
-        max_tokens=2000,
-        top_p=1
-    )
-    
-    response_content = response.choices[0].message.content
-    
-    try:
-        json_content = extract_json_from_response(response_content)
-        character_descriptions = json.loads(json_content)
-        
-        print(f"Generated descriptions for {len(character_descriptions)} characters")
-        for char, desc in character_descriptions.items():
-            base_desc = desc.get("base", "No description")
-            print(f"- {char}: {base_desc[:50]}...")
+    if os.path.exists(char_desc_path):
+        with open(char_desc_path, 'r', encoding='utf-8') as f:
+            character_descriptions = json.load(f)
+        print(f"Loaded existing character descriptions for {len(character_descriptions)} characters")
         return character_descriptions
-    except json.JSONDecodeError as e:
-        print(f"Error parsing character descriptions JSON: {e}")
-        print(f"Full response content: \n{response_content}")
-        try:
-            if response_content.find('{') >= 0 and response_content.rfind('}') > response_content.find('{'):
-                start_idx = response_content.find('{')
-                end_idx = response_content.rfind('}') + 1
-                json_content = response_content[start_idx:end_idx]
-                character_descriptions = json.loads(json_content)
-                print("Recovered JSON content successfully")
-                return character_descriptions
-        except:
-            pass
+    else:
+        print("No character descriptions found. Please run st2nar.py or nar2nar.py first.")
         return {}
 
 def get_character_description(character_descriptions, character_name, page_num, panel_num):
@@ -206,14 +118,19 @@ def get_character_description(character_descriptions, character_name, page_num, 
     
     return base_description
 
-def generate_panel_prompts(comic_structure, character_descriptions, style):
-    """Generate prompts for each panel using the pre-generated character descriptions"""
-    client = ChatCompletionsClient(
-        endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential(os.environ.get("GITHUB_TOKEN")),
+def generate_panel_prompts(comic_structure, character_descriptions, style, full_story_text=""):
+    """Generate detailed prompts for each panel with enhanced character focus and increased token limit"""
+    client = genai.Client(
+        api_key=os.environ["GEMINI_KEY"],
     )
     
     all_prompts = {}
+    request_count = 0
+    start_time = time.time()
+    
+    total_panels = sum(len(page['panels']) for page in comic_structure)
+    print(f"Total panels to process: {total_panels}")
+    print(f"Estimated time with rate limiting: {(total_panels // 8) * 65} seconds")
     
     for page in comic_structure:
         page_num = page['page_number']
@@ -224,12 +141,17 @@ def generate_panel_prompts(comic_structure, character_descriptions, style):
             panel_num = panel['panel_number']
             panel_key = f"panel_{panel_num}"
             
+            if request_count > 0 and request_count % 8 == 0:
+                elapsed = time.time() - start_time
+                if elapsed < 60:
+                    wait_time = 65 - elapsed
+                    print(f"Rate limiting: Sleeping for {wait_time:.1f} seconds after {request_count} requests...")
+                    time.sleep(wait_time)
+                start_time = time.time()
+            
             characters_from_dialogues = set(dialogue['character'] for dialogue in panel['dialogues'])
-            
             italic_text = panel.get('italic_text', '')
-            
             characters_in_panel = set()
-            
             characters_in_panel.update(characters_from_dialogues)
             
             for char_name in character_descriptions.keys():
@@ -238,9 +160,12 @@ def generate_panel_prompts(comic_structure, character_descriptions, style):
             
             character_desc_text = ""
             for char_name in characters_in_panel:
-                desc = get_character_description(character_descriptions, char_name, page_num, panel_num)
-                if "(no detailed description available)" not in desc:  
-                    character_desc_text += f"{char_name}: {desc}. "
+                if char_name.lower() != "narration":
+                    desc = get_character_description(character_descriptions, char_name, page_num, panel_num)
+                    if "(no detailed description available)" not in desc:  
+                        character_desc_text += f"{char_name}: {desc}. "
+            
+            character_desc_text = character_desc_text.rstrip(". ")
             
             scene_description = italic_text
             if panel['narration']:
@@ -249,41 +174,125 @@ def generate_panel_prompts(comic_structure, character_descriptions, style):
                 else:
                     scene_description = panel['narration']
             
-            llm_prompt = f"""
-            Create an image prompt for a comic panel.
+            if style.lower() == "manga":
+                style_instruction = f"""
+                Create a detailed Stable Diffusion image prompt for generating a Manga comic book panel image.
 
-            SCENE DESCRIPTION:
-            {scene_description}
+                FULL STORY CONTEXT:
+                {full_story_text}
 
-            CHARACTERS IN THIS PANEL:
-            {character_desc_text}
+                CURRENT PANEL SCENE: {scene_description}
 
-            STYLE: {style}, illustration style, not photorealistic
+                CHARACTER DESCRIPTIONS (THESE ARE FIXED AND MUST NEVER CHANGE):
+                {character_desc_text}
 
-            Your task:
-            1. Begin with "{style}, illustration style, not photorealistic"
-            2. Create a concise prompt (max 60 words) that exactly matches the scene description
-            3. INCLUDE THE CHARACTER DESCRIPTIONS provided above VERBATIM - copy and paste them
-            4. Focus on the panel's specific scene, environment, and character positioning
-            5. No text, speech bubbles or dialogue in the image
+                CRITICAL INSTRUCTIONS FOR CHARACTER CONSISTENCY:
+                1. This is an image prompt to generate images for a comic book panel of the above story
+                2. Start with "Manga style, black and white, monochrome, clean line art, high contrast"
+                3. Understand the story's setting, time period, and world from the full context above
+                4. Describe the environment and scene setting consistent with the story's world and era
+                5. REPLACE character names with their EXACT COMPLETE VISUAL DESCRIPTIONS from CHARACTER DESCRIPTIONS
+                6. NEVER use character names in the final prompt - only their physical descriptions
+                7. NEVER MODIFY OR CHANGE any character's physical features from CHARACTER DESCRIPTIONS
+                8. MANDATORY: Copy hair details EXACTLY (style, length, texture) from CHARACTER DESCRIPTIONS
+                9. MANDATORY: Copy outfit details EXACTLY (every piece of clothing, accessories, materials) from CHARACTER DESCRIPTIONS
+                10. You must USE THE EXACT SAME, hair style, and clothing items as written in CHARACTER DESCRIPTIONS
+                11. DO NOT invent outfit pieces - use only what's specified
+                12. If CHARACTER DESCRIPTIONS says "fiery auburn hair" - use "fiery auburn hair", NOT "black hair" or "dark hair"
+                13. If CHARACTER DESCRIPTIONS says "crimson red leather jacket" - use "crimson red leather jacket", NOT "red jacket" or "leather jacket"
+                14. Describe poses, actions, and expressions based on the current panel scene
+                15. Maintain consistency with the story's tone, setting, and visual style throughout
+                16. MAXIMUM 150 tokens total
+                17. NO speech bubbles, text, or dialogue in the image
+                18. Focus on visual composition and dramatic angles appropriate for the story
+
+                EXAMPLE OF CORRECT CHARACTER REPLACEMENT:
+                If scene mentions "Isabella looks angry" and Isabella is described as "woman with long, voluminous fiery auburn hair cascading down her back in loose, dramatic waves, with a sharp, side-swept fringe, wearing a striking, form-fitting crimson red leather motorcycle jacket with silver zippers over a black top, paired with slim-fit black cargo pants", 
+                CORRECT OUTPUT: "woman with long, voluminous fiery auburn hair cascading down her back in loose, dramatic waves, with a sharp, side-swept fringe, wearing a striking, form-fitting crimson red leather motorcycle jacket with silver zippers over a black top, paired with slim-fit black cargo pants looks angry"
+                WRONG OUTPUT: "woman with dark hair wearing red jacket looks angry"
+
+                OUTPUT: Single line image generation prompt only, no explanations or character names.
+                """
+            else:
+                style_instruction = f"""
+                Create a detailed Stable Diffusion image prompt for generating a {style} comic book panel image.
+
+                FULL STORY CONTEXT:
+                {full_story_text}
+
+                CURRENT PANEL SCENE: {scene_description}
+
+                CHARACTER DESCRIPTIONS (THESE ARE FIXED AND MUST NEVER CHANGE):
+                {character_desc_text}
+
+                CRITICAL INSTRUCTIONS FOR CHARACTER CONSISTENCY:
+                1. This is an image prompt to generate images for a comic book panel of the above story
+                2. Start with "{style} style" and describe the art style characteristics in detail
+                3. Understand the story's setting, time period, and world from the full context above
+                4. Describe the environment and scene setting consistent with the story's world and era
+                5. REPLACE character names with their EXACT COMPLETE VISUAL DESCRIPTIONS from CHARACTER DESCRIPTIONS
+                6. NEVER use character names in the final prompt - only their physical descriptions
+                7. NEVER MODIFY OR CHANGE any character's physical features from CHARACTER DESCRIPTIONS
+                8. MANDATORY: Copy hair details EXACTLY (color, style, length, texture) from CHARACTER DESCRIPTIONS
+                9. MANDATORY: Copy outfit details EXACTLY (every piece of clothing, accessories, materials, colors) from CHARACTER DESCRIPTIONS
+                10. You must USE THE EXACT SAME hair color, hair style, outfit colors, and clothing items as written in CHARACTER DESCRIPTIONS
+                11. DO NOT invent new hair colors, clothing colors, or outfit pieces - use only what's specified
+                12. If CHARACTER DESCRIPTIONS says "fiery auburn hair" - use "fiery auburn hair", NOT "black hair" or "dark hair"
+                13. If CHARACTER DESCRIPTIONS says "crimson red leather jacket" - use "crimson red leather jacket", NOT "red jacket" or "leather jacket"
+                14. Describe poses, actions, and expressions based on the current panel scene
+                15. Maintain consistency with the story's tone, setting, and visual style throughout
+                16. MAXIMUM 150 tokens total
+                17. NO speech bubbles, text, or dialogue in the image
+                18. Focus on visual composition and dramatic angles appropriate for the story
+
+                EXAMPLE OF CORRECT CHARACTER REPLACEMENT:
+                If scene mentions "Isabella looks angry" and Isabella is described as "woman with long, voluminous fiery auburn hair cascading down her back in loose, dramatic waves, with a sharp, side-swept fringe, wearing a striking, form-fitting crimson red leather motorcycle jacket with silver zippers over a black top, paired with slim-fit black cargo pants", 
+                CORRECT OUTPUT: "woman with long, voluminous fiery auburn hair cascading down her back in loose, dramatic waves, with a sharp, side-swept fringe, wearing a striking, form-fitting crimson red leather motorcycle jacket with silver zippers over a black top, paired with slim-fit black cargo pants looks angry"
+                WRONG OUTPUT: "woman with dark hair wearing red jacket looks angry"
+
+                OUTPUT: Single line image generation prompt only, no explanations or character names.
+                """
             
-            OUTPUT ONLY THE PROMPT with no explanations.
-            """
+            print(f"Generating detailed prompt for Page {page_num}, Panel {panel_num} (Request #{request_count + 1}/{total_panels})")
             
-            response = client.complete(
-                messages=[
-                    SystemMessage("You create comic panel image prompts, always incorporating the exact character descriptions provided."),
-                    UserMessage(llm_prompt)
-                ],
-                model="Ministral-3B",
-                temperature=0.7,
-                max_tokens=200,
-                top_p=1
+            model = "gemini-2.5-flash"
+            contents = [
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part.from_text(text=style_instruction),
+                    ],
+                ),
+            ]
+            generate_content_config = types.GenerateContentConfig(
+                response_mime_type="text/plain",
+                temperature=0.3,  
+                max_output_tokens=65536,
+                top_p=0.8 
             )
+
+            response_chunks = []
+            for chunk in client.models.generate_content_stream(
+                model=model,
+                contents=contents,
+                config=generate_content_config,
+            ):
+                if chunk.text is not None:
+                    response_chunks.append(chunk.text)
             
-            prompt = response.choices[0].message.content.strip()
+            prompt = "".join(response_chunks).strip()
+            request_count += 1
             
-            max_tokens = 77 
+            prompt = prompt.replace("**", "").strip()
+            
+            if style.lower() == "manga":
+                if not prompt.lower().startswith("manga style, black and white"):
+                    prompt = f"Manga style, black and white, monochrome, clean line art, high contrast, " + prompt
+            else:
+                if not prompt.lower().startswith(style.lower()):
+                    prompt = f"{style} style, " + prompt
+            
+            max_tokens = 150 
             if len(prompt.split()) > max_tokens:
                 words = prompt.split()
                 truncated_prompt = ' '.join(words[:max_tokens])
@@ -292,89 +301,40 @@ def generate_panel_prompts(comic_structure, character_descriptions, style):
             
             all_prompts[page_key][panel_key] = prompt
     
+    print(f"Generated detailed prompts for all panels using {request_count} requests with proper {style} style formatting and enhanced character details")
     return all_prompts
 
-def generate_prompt_with_llm_full_context(comic_structure, style):
+def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file):
     """Generate detailed image prompts for ALL panels with full story context and character consistency"""
     
-    print("Generating detailed character descriptions...")
+    try:
+        with open(markdown_file, 'r', encoding='utf-8') as f:
+            full_story_text = f.read()
+        print(f"Loaded full story context from {markdown_file} ({len(full_story_text)} characters)")
+    except Exception as e:
+        print(f"Error reading story file: {e}")
+        full_story_text = ""
+    
+    print("Loading character descriptions from st2nar/nar2nar output...")
     character_descriptions = generate_character_descriptions(comic_structure, style)
+    
+    if not character_descriptions:
+        print("No character descriptions found. Skipping prompt generation.")
+        return None
     
     character_desc_path = os.path.join('output', f"character_descriptions.json")
     os.makedirs(os.path.dirname(character_desc_path), exist_ok=True)
     with open(character_desc_path, 'w', encoding='utf-8') as f:
         json.dump(character_descriptions, f, indent=2)
-    print(f"Character descriptions saved to {character_desc_path}")
+    print(f"Character descriptions loaded from {character_desc_path}")
     
-    print("Generating panel prompts with character descriptions...")
-    panel_prompts = generate_panel_prompts(comic_structure, character_descriptions, style)
+    print("Generating panel prompts with full story context and character descriptions...")
+    panel_prompts = generate_panel_prompts(comic_structure, character_descriptions, style, full_story_text)
     
     return {
         "character_descriptions": character_descriptions,
         "panel_prompts": panel_prompts
     }
-
-def generate_prompt_with_llm(panel_content, style):
-    """Generate detailed image prompt using LLM based on panel content and chosen style
-    (Used as fallback when full context generation fails)"""
-    client = ChatCompletionsClient(
-        endpoint="https://models.inference.ai.azure.com",
-        credential=AzureKeyCredential(os.environ.get("GITHUB_TOKEN")),
-    )
-    
-    narration = panel_content['narration']
-    
-    character_names = [dialogue['character'] for dialogue in panel_content['dialogues']]
-    characters_text = ", ".join(character_names) if character_names else "No specific characters"
-    
-    llm_prompt = f"""
-    Create a concise and detailed Stable Diffusion 3.5 image generation prompt based on this comic panel.
-    
-    PANEL CONTENT:
-    Narration: {narration}
-    
-    CHARACTERS IN SCENE: {characters_text}
-    
-    STYLE REQUESTED:
-    {style} style - You should generate a detailed description of this style in your prompt.
-    
-    Your task:
-    1. Create a detailed but CONCISE description (MAXIMUM 60 WORDS)
-    2. Start with style descriptors (e.g., "{style}, illustration style, not photorealistic")
-    3. Include detailed character descriptions with specific facial features, clothing, and physical attributes
-    4. For each character, describe their:
-       - Facial features (eye color/shape, hair color/style, face shape)
-       - Clothing and accessories
-       - Body type and physical attributes
-    5. Describe character expressions, poses, and positioning in this specific scene
-    6. Include environment details that reflect the narration
-    7. Do NOT include text, speech bubbles, or dialogue
-    8. Your prompt must be optimized for Stable Diffusion 3.5 which has a 77 token limit
-    
-    OUTPUT ONLY THE PROMPT TEXT with no explanations or meta-commentary.
-    """
-    
-    response = client.complete(
-        messages=[
-            SystemMessage("You are an expert at creating detailed image prompts for comic panels. Your prompts must include specific character visual details to ensure consistency. Never include text, dialogue, or speech bubbles."),
-            UserMessage(llm_prompt)
-        ],
-        model="Ministral-3B",
-        temperature=0.7,
-        max_tokens=150,
-        top_p=1
-    )
-    
-    prompt = response.choices[0].message.content.strip()
-    
-    max_tokens = 70  
-    if len(prompt.split()) > max_tokens:
-        words = prompt.split()
-        truncated_prompt = ' '.join(words[:max_tokens])
-        print(f"WARNING: Prompt truncated from {len(prompt.split())} to {len(truncated_prompt.split())} words")
-        return truncated_prompt
-    
-    return prompt
 
 def get_prompts_json_path(markdown_file):
     """Get the path to the JSON file for story prompts"""
@@ -484,7 +444,7 @@ def generate_comic_images_for_page(settings=None):
         print("Processing page 1: Generating character descriptions and prompts for the entire story...")
         comic_structure = extract_full_comic_structure(markdown_file)
         if comic_structure:
-            prompts_data = generate_prompt_with_llm_full_context(comic_structure, style)
+            prompts_data = generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
             save_prompts_to_json(prompts_data, markdown_file)
     else:
         prompts_data = load_prompts_from_json(markdown_file)
@@ -538,8 +498,9 @@ def generate_comic_images_for_page(settings=None):
                 print(f"No pre-generated prompt found for Page {page_number}, Panel {panel_num}")
         
         if not prompt:
-            print(f"Generating individual prompt for Page {page_number}, Panel {panel_num}")
-            prompt = generate_prompt_with_llm(panel, style)
+            print(f"ERROR: No prompt available for Page {page_number}, Panel {panel_num}")
+            print("Please ensure page 1 has been processed first to generate prompts for the entire story.")
+            continue
 
         print(f"Prompt for Panel {panel_num}: {prompt}")
         print(f"Using dimensions: {width}x{height}")
