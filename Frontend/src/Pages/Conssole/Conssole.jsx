@@ -14,7 +14,7 @@ import Grid2 from '../../Components/Grid/panel4/Grid2';
 import Grid3 from '../../Components/Grid/panel4/Grid3';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faRotateRight, faTimes, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faRotateRight, faTimes, faCopy, faCheck, faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 
 const PanelGridCount = {
     Panel1: 1,
@@ -26,7 +26,7 @@ const PanelGridCount = {
 function Conssole() {
     const [showAbout, setShowAbout] = useState(false);
     const [activePanel, SetactivePanel] = useState('');
-    const [panel, setpanel] = useState('Panel4');
+    const [panel, setpanel] = useState('Panel1');
     const [sideNav, SetsideNav] = useState('');
     const [showPanelEditor, setShowPanelEditor] = useState(false);
     const [selectedPanel, setSelectedPanel] = useState(null);
@@ -40,19 +40,34 @@ function Conssole() {
     const [inferenceSteps2, setInferenceSteps2] = useState(40);
     const [guidanceScale2, setGuidanceScale2] = useState(7.5);
     const [seed2, setSeed2] = useState(9);
+    const [panelInfo, setPanelInfo] = useState([2, 2, 3, 2]);
+    const [pageNo, setPageNo] = useState(0);
 
     useEffect(() => {
-        async function calling() {
-            try {
-                const res = await axios.get('http://localhost:3000/chat/mdToFront');
-                console.log(res.data);
-                SetsideNav(res.data);
-            } catch (error) {
-                console.log(error);
-            }
+        if (panelInfo.length > 0) {
+            const panelCount = panelInfo[pageNo];
+            console.log(panelCount);
+            const prevPanel = panel;
+            setpanel('Panel' + panelCount);
+
+            SetactivePanel(`${panel}_Grid1`);
+
+            console.log(panel);
         }
-        calling();
-    }, []);
+    }, [panelInfo, pageNo, panel]);
+
+    // useEffect(() => {
+    //     async function calling() {
+    //         try {
+    //             const res = await axios.get('http://localhost:3000/chat/mdToFront');
+    //             console.log(res.data);
+    //             SetsideNav(res.data);
+    //         } catch (error) {
+    //             console.log(error);
+    //         }
+    //     }
+    //     calling();
+    // }, []);
 
     const defaults = (panel) => {
         if (panel === 'Panel1') {
@@ -182,15 +197,29 @@ function Conssole() {
 
                 <button className='generate-button'>Generate Comic</button>
 
-                 <div className="page-indicator">
-                    1 / 7
+                <div className="page-indicator">
+                    {pageNo + 1} / {panelInfo.length}
                 </div>
             </div>
 
-            
+
 
             <div className="grid-container">
                 {renderGrid()}
+            </div>
+
+            <div className="navigation-page-btn-box">
+                <button className='navigate-page-btn'
+                    onClick={() => pageNo != 0 ? setPageNo(pageNo - 1) : 0}
+                    disabled={pageNo === 0}
+                >
+                    <FontAwesomeIcon icon={faArrowUp} />                </button>
+
+                <button className='navigate-page-btn'
+                    onClick={() => pageNo != panelInfo.length - 1 ? setPageNo(pageNo + 1) : panelInfo.length - 1}
+                    disabled={pageNo === panelInfo.length - 1}
+                >
+                    <FontAwesomeIcon icon={faArrowDown} />                </button>
             </div>
 
             <div className="bottom-bar">
