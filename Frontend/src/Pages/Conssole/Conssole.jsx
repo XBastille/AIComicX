@@ -56,18 +56,18 @@ function Conssole() {
         }
     }, [panelInfo, pageNo, panel]);
 
-    // useEffect(() => {
-    //     async function calling() {
-    //         try {
-    //             const res = await axios.get('http://localhost:3000/chat/mdToFront');
-    //             console.log(res.data);
-    //             SetsideNav(res.data);
-    //         } catch (error) {
-    //             console.log(error);
-    //         }
-    //     }
-    //     calling();
-    // }, []);
+    useEffect(() => {
+        async function calling() {
+            try {
+                const res = await axios.get('http://localhost:3000/chat/mdToFront');
+                console.log(res.data);
+                SetsideNav(res.data);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        calling();
+    }, []);
 
     const defaults = (panel) => {
         if (panel === 'Panel1') {
