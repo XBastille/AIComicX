@@ -142,7 +142,6 @@ def process_message(user_message):
     
     assistant_response = response.text
     
-    # Clean the response to avoid encoding issues
     assistant_response = clean_unicode_text(assistant_response)
     
     conversation_history.append(types.Content(
