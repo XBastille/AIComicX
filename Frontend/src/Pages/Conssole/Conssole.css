@@ -1,180 +1,183 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap');
 
-body{
-    background-color: rgb(31, 22, 35);
+body {
+  background-color: rgb(31, 22, 35);
 }
 
-.nav-bar{
+.nav-bar {
   position: relative;
-    display: flex;
-    gap: 88px;
-    align-items: center;
-    height: 110px;
+  display: flex;
+  gap: 88px;
+  align-items: center;
+  height: 110px;
 }
 
 .page-indicator {
-    position: absolute;
-    top: 110px;
-    left: 89rem;
-    font-size: 1.3rem;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 0.2rem 0.5rem;
-    border-radius: 30%;
-     border: 2px solid #d72b59;
+  position: absolute;
+  top: 110px;
+  left: 89rem;
+  font-size: 1.3rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0.2rem 0.5rem;
+  border-radius: 30%;
+  border: 2px solid #d72b59;
 }
 
-.art-options{
-    margin-left: 20px;
+.art-options {
+  margin-left: 20px;
 }
 
 
-select{
-    height: 40px;
-    background-color: #c5c2c2;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-family: monospace;
-    font-size: 14px;
-    color: #333;
-    cursor: pointer;
-    transition: all 0.3s ease;
+select {
+  height: 40px;
+  background-color: #c5c2c2;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
- select:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #b700e0;
-  }
-  .Logo{
-    height: 170px;
-    width: 190px;
-    object-fit: contain;
-  }
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #b700e0;
+}
 
-  .generate-button{
-    border: 2px solid #d72b59;
-    background: transparent;
-    color: white;
-    padding: 10px 40px;
-    border-radius: 43px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: border 0.3s ease;
-  }
+.Logo {
+  height: 170px;
+  width: 190px;
+  object-fit: contain;
+}
 
-  .generate-button:hover{
-    background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
-  }
+.generate-button {
+  border: 2px solid #d72b59;
+  background: transparent;
+  color: white;
+  padding: 10px 40px;
+  border-radius: 43px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: border 0.3s ease;
+}
 
-  .bottom-bar {
-    position: fixed;
-    bottom: 10px;
-    left: 0;
-    width: 100%;
-    padding: 10px 20px;
-    background-color: transparent;
-    display: flex;
-    justify-content: flex-start;
-    gap: 12px;
-    z-index: 100;
-  }
-  
-  .bottom-bar button {
-    border: 2px solid #d72b59;
-    background: transparent;
-    color: white;
-    padding: 10px 40px;
-    border-radius: 43px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: border 0.3s ease;
-  }
-  
-  .bottom-bar button:hover {
-    background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
-  }
+.generate-button:hover {
+  background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
+}
 
-  .buttons-bar2{
-    display: flex;
-    margin-left: 1040px;
-    gap: 20px;
-  }
+.bottom-bar {
+  position: fixed;
+  bottom: 10px;
+  left: 0;
+  width: 100%;
+  padding: 10px 20px;
+  background-color: transparent;
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  z-index: 100;
+}
 
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    backdrop-filter: blur(6px);
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 100;
-  }
-  
- 
-  .about-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgb(31, 22, 35);
-    width: 100%;
-    max-width: 650px;
-    max-height: 90vh;
-    overflow-y:auto;
-    border-radius: 10px;
-    border: 2px solid #d72b59;
-    padding: 40px;
-    z-index: 101;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  }
-  
+.bottom-bar button {
+  border: 2px solid #d72b59;
+  background: transparent;
+  color: white;
+  padding: 10px 40px;
+  border-radius: 43px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: border 0.3s ease;
+}
 
-  .modal-content {
-    font-size: 16px;
-    line-height: 1.6;
-  }
+.bottom-bar button:hover {
+  background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
+}
 
-  .modal-content h2{    background: linear-gradient(to right , rgb(223, 30, 114),rgb(230, 110, 41),rgb(255, 191, 0) );
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-family: 'Orbitron', sans-serif !important ;
-    margin-right: 50px;
-  }
+.buttons-bar2 {
+  display: flex;
+  margin-left: 1040px;
+  gap: 20px;
+}
 
-  .modal-content p{
-    font-size: 28px;
-  }
-  
-  .modal-content a {
-    color: #0066cc;
-    text-decoration: underline;
-  }
-  
-  .close-btn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    background: transparent;
-    border: none;
-    font-size: 18px;
-    color: white;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 4px;
-    transition: color 0.3s ease;
-  }
-  .close-btn:hover {
-    color: #d72b59;
-  }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+
+.about-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgb(31, 22, 35);
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 2px solid #d72b59;
+  padding: 40px;
+  z-index: 101;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+
+.modal-content {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.modal-content h2 {
+  background: linear-gradient(to right, rgb(223, 30, 114), rgb(230, 110, 41), rgb(255, 191, 0));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'Orbitron', sans-serif !important;
+  margin-right: 50px;
+}
+
+.modal-content p {
+  font-size: 28px;
+}
+
+.modal-content a {
+  color: #0066cc;
+  text-decoration: underline;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: white;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: #d72b59;
+}
 
 .copy-notification {
   position: fixed;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgb(31, 22, 35); 
+  background: rgb(31, 22, 35);
   border: 2px solid #d72b59;
   color: white;
   padding: 12px 24px;
@@ -190,7 +193,7 @@ select{
 }
 
 .check-icon {
-  color: #4CAF50; 
+  color: #4CAF50;
   font-size: 16px;
 }
 
@@ -199,6 +202,7 @@ select{
     opacity: 0;
     transform: translateX(-50%) translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
@@ -230,15 +234,15 @@ select{
 
 .panel-editor-modal {
   position: fixed;
-  top: 110px; 
-  right: 20px; 
-  bottom: 70px; 
-  width: 80%; 
-  max-width: 1070px; 
+  top: 110px;
+  right: 20px;
+  bottom: 70px;
+  width: 80%;
+  max-width: 1070px;
   background: rgb(31, 22, 35);
   border-radius: 10px;
   border: 2px solid #d72b59;
-  z-index: 1000; 
+  z-index: 1000;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   display: flex;
@@ -264,7 +268,7 @@ select{
 }
 
 .panel-controls {
-  width: 280px; 
+  width: 280px;
   padding: 20px;
   background: rgb(31, 22, 35);
   display: flex;
@@ -273,7 +277,7 @@ select{
   margin-left: 790px;
   gap: 12px;
   overflow-y: auto;
-  flex-shrink: 0; 
+  flex-shrink: 0;
 }
 
 .edit-btn {
@@ -303,7 +307,7 @@ select{
   gap: 6px;
 }
 
-.control-group .prompt-header + .prompt-input {
+.control-group .prompt-header+.prompt-input {
   margin-top: 0;
 }
 
@@ -317,7 +321,8 @@ select{
   width: 100%;
   height: 6px;
   border-radius: 3px;
-  background: #444;  outline: none;
+  background: #444;
+  outline: none;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
@@ -445,9 +450,9 @@ select{
   cursor: default;
 }
 
-.side-nav.open ~ .Comic-container .panel-editor-modal {
-  right: 20px; 
-  width: 75%; 
+.side-nav.open~.Comic-container .panel-editor-modal {
+  right: 20px;
+  width: 75%;
 }
 
 .setting-field {
@@ -465,7 +470,7 @@ select{
   -webkit-appearance: none;
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(255, 0, 68 , 0.8), rgb(251, 231, 81 , 0.8));
+  background: linear-gradient(90deg, rgba(255, 0, 68, 0.8), rgb(251, 231, 81, 0.8));
   border-radius: 5px;
   outline: none;
   margin: 0;
@@ -482,7 +487,7 @@ select{
   border-radius: 50%;
   cursor: pointer;
 
- 
+
 }
 
 /*.setting-field input[type="range"]::-webkit-slider-thumb:hover {
@@ -498,7 +503,7 @@ select{
   margin-top: -6px;
   border-radius: 20%;
   cursor: pointer;
-  
+
 }
 
 .setting-field input[type="range"]::-moz-range-track {
@@ -533,26 +538,66 @@ select{
   font-size: 0.9rem;
 }
 
-.apply-btn{
-    border: 2px solid #d72b59;
-    background: transparent;
-    color: white;
-    padding: 10px 40px;
-    border-radius: 43px;
-    font-size: 14px;
-    font-weight: bold;
-    margin-top: 20px;
-    cursor: pointer;
-    transition: border 0.3s ease;
+.apply-btn {
+  border: 2px solid #d72b59;
+  background: transparent;
+  color: white;
+  padding: 10px 40px;
+  border-radius: 43px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: border 0.3s ease;
 }
 
-.apply-btn:hover{
-   background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
+.apply-btn:hover {
+  background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
 }
 
+.navigation-page-btn-box {
+  position: absolute;
+  top: 270px;
+  right: 150px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: column;
+  padding: 16px;
+  height: 230px;
+  width: 100px;
+}
 
+.btn {}
 
+.navigate-page-btn {
+  border: 2px solid #d72b59;
+  background: transparent;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 70px;
+  width: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+.navigate-page-btn:hover {
+  background: linear-gradient(90deg, rgba(215, 43, 89, .5), rgba(251, 232, 81, .5));
 
+}
 
+.navigate-page-btn:disabled {
+  color: gray;
+  border: 2px solid #6b152c;
+}
 
+.navigate-page-btn:disabled:hover {
+  background: linear-gradient(90deg, rgba(130, 49, 70, 0.5), rgba(87, 81, 32, 0.5));
+
+}
