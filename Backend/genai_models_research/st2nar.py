@@ -2,12 +2,33 @@ import os
 import sys
 import json
 import torch
-import re
 from google import genai
 from google.genai import types
 from markitdown import MarkItDown
 from diffusers import StableDiffusion3Pipeline
 from gradio_client import Client
+
+def extract_page_panel_info(comic_text):
+    """Extract page and panel information from comic markdown"""
+    import re
+    
+    page_pattern = r'^## Page \d+$'
+    pages = re.findall(page_pattern, comic_text, re.MULTILINE)
+    total_pages = len(pages)
+    
+    page_sections = re.split(r'^## Page \d+$', comic_text, flags=re.MULTILINE)[1:] 
+    
+    panels_per_page = []
+    
+    for page_content in page_sections:
+        panel_pattern = r'^### Panel \d+$'
+        panels = re.findall(panel_pattern, page_content, re.MULTILINE)
+        panels_per_page.append(len(panels))
+    
+    return {
+        "total_pages": total_pages,
+        "panels_per_page": panels_per_page
+    }
 
 def generate_character_descriptions(story_text, style):
     """Generate character descriptions from story text with enhanced focus on outfit and hair details"""
@@ -64,7 +85,7 @@ def generate_character_descriptions(story_text, style):
         generate_content_config = types.GenerateContentConfig(
             response_mime_type="application/json",
             temperature=0.5,
-            max_output_tokens=65536,
+            max_output_tokens=3000,
             top_p=1
         )
 
@@ -338,54 +359,6 @@ IMPORTANT: Do NOT wrap your response in ```markdown code blocks```. Just provide
     except Exception as e:
         return f"Error converting story to comic format: {str(e)}"
 
-def extract_comic_structure(comic_markdown):
-    """
-    Efficiently extract page and panel structure from comic markdown.
-    Returns file_info.json compatible data structure.
-    """
-    try:
-        page_pattern = r'^## Page (\d+)'
-        panel_pattern = r'^### Panel (\d+)'
-        
-        lines = comic_markdown.split('\n')
-        pages_info = {}
-        current_page = None
-        current_page_panels = 0
-        total_pages = 0
-        
-        for line in lines:
-            line = line.strip()
-            
-            page_match = re.match(page_pattern, line)
-            if page_match:
-                if current_page is not None:
-                    pages_info[f"page_{current_page}"] = current_page_panels
-                
-                current_page = int(page_match.group(1))
-                total_pages = max(total_pages, current_page)
-                current_page_panels = 0
-            
-            panel_match = re.match(panel_pattern, line)
-            if panel_match and current_page is not None:
-                current_page_panels += 1
-        
-        if current_page is not None:
-            pages_info[f"page_{current_page}"] = current_page_panels
-        
-        file_info = {
-            "total_pages": total_pages,
-            "pages": pages_info
-        }
-        
-        return file_info
-        
-    except Exception as e:
-        print(f"Error extracting comic structure: {e}")
-        return {
-            "total_pages": 0,
-            "pages": {}
-        }
-
 def write_file(file_path, content):
     """Write content to a file."""
     with open(file_path, 'w', encoding='utf-8') as file:
@@ -405,28 +378,21 @@ def process_story_to_comic(input_file, output_file, style, generate_reference_im
     print(f"Writing comic script to: {output_file}")
     write_file(output_file, comic_markdown)
     
-    print("Extracting comic structure information...")
-    file_info = extract_comic_structure(comic_markdown)
-    
-    os.makedirs('output', exist_ok=True)
-    file_info_path = os.path.join('output', 'file_info.json')
-    with open(file_info_path, 'w', encoding='utf-8') as f:
-        json.dump(file_info, f, indent=2)
-    print(f"Comic structure info saved to {file_info_path}")
-    print(f"Total pages: {file_info['total_pages']}")
-    for page_key, panel_count in file_info['pages'].items():
-        page_num = page_key.replace('page_', '')
-        print(f"  Page {page_num}: {panel_count} panels")
-    
     print("\nGenerating character descriptions...")
     character_descriptions = generate_character_descriptions(story_text, style)
     
+    print("Extracting page and panel information...")
+    page_panel_info = extract_page_panel_info(comic_markdown)
+    
     if character_descriptions:
+        character_descriptions["comic_structure"] = page_panel_info
+        
         os.makedirs('output', exist_ok=True)
         char_desc_path = os.path.join('output', 'character_descriptions.json')
         with open(char_desc_path, 'w', encoding='utf-8') as f:
             json.dump(character_descriptions, f, indent=2)
         print(f"Character descriptions saved to {char_desc_path}")
+        print(f"Comic structure: {page_panel_info['total_pages']} pages with {page_panel_info['panels_per_page']} panels per page")
         
         if generate_reference_images:
             print("\nGenerating character reference images...")
@@ -449,7 +415,6 @@ def process_story_to_comic(input_file, output_file, style, generate_reference_im
         
         print(f"\nComic conversion complete!")
         print(f"Comic script: {output_file}")
-        print(f"File structure info: {file_info_path}")
         print(f"Character descriptions: {char_desc_path}")
         if generate_reference_images:
             print(f"Reference images: character_references/ folder")
