@@ -96,7 +96,7 @@ def generate_character_descriptions(formatted_text, style):
         generate_content_config = types.GenerateContentConfig(
             response_mime_type="application/json",
             temperature=0.5,
-            max_output_tokens=3000,
+            max_output_tokens=65536,
             top_p=1
         )
 
