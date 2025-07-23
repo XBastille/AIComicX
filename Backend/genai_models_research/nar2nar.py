@@ -12,18 +12,15 @@ def extract_page_panel_info(comic_text):
     """Extract page and panel information from comic markdown"""
     import re
     
-    # Find all pages
     page_pattern = r'^## Page \d+$'
     pages = re.findall(page_pattern, comic_text, re.MULTILINE)
     total_pages = len(pages)
     
-    # Split content by pages
-    page_sections = re.split(r'^## Page \d+$', comic_text, flags=re.MULTILINE)[1:]  # Skip empty first split
+    page_sections = re.split(r'^## Page \d+$', comic_text, flags=re.MULTILINE)[1:]  
     
     panels_per_page = []
     
     for page_content in page_sections:
-        # Count panels in each page
         panel_pattern = r'^### Panel \d+$'
         panels = re.findall(panel_pattern, page_content, re.MULTILINE)
         panels_per_page.append(len(panels))
@@ -398,12 +395,10 @@ def process_formatted_file(file_path, style="american comic (modern)", generate_
     print("\nGenerating character descriptions...")
     character_descriptions = generate_character_descriptions(formatted_text, style)
     
-    # Extract page and panel information from the generated comic
     print("Extracting page and panel information...")
     page_panel_info = extract_page_panel_info(comic_text)
     
     if character_descriptions:
-        # Add page/panel info to character descriptions
         character_descriptions["comic_structure"] = page_panel_info
         
         os.makedirs('output', exist_ok=True)
