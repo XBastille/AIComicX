@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { act, useEffect, useState } from 'react';
 import './Conssole.css';
 import aicomicx2 from "../../Picture/aicomic2.jpg";
 import SideNav from '../../Components/SideNav/SideNav';
@@ -40,17 +40,19 @@ function Conssole() {
     const [inferenceSteps2, setInferenceSteps2] = useState(40);
     const [guidanceScale2, setGuidanceScale2] = useState(7.5);
     const [seed2, setSeed2] = useState(9);
-    const [panelInfo, setPanelInfo] = useState([2, 2, 3, 2]);
+    const [panelInfo, setPanelInfo] = useState([[4, 1], [3, 1], [2, 1], [1, 1]]);
     const [pageNo, setPageNo] = useState(0);
 
     useEffect(() => {
         if (panelInfo.length > 0) {
-            const panelCount = panelInfo[pageNo];
+            const panelCount = panelInfo[pageNo][0];
+            const gridCount = panelInfo[pageNo][1];
             console.log(panelCount);
             const prevPanel = panel;
             setpanel('Panel' + panelCount);
+            console.log(activePanel);
 
-            SetactivePanel(`${panel}_Grid1`);
+            SetactivePanel(`${panel}_Grid${gridCount}`);
 
             console.log(panel);
         }
@@ -168,7 +170,15 @@ function Conssole() {
                 <select
                     className="grid-box"
                     value={activePanel}
-                    onChange={e => SetactivePanel(e.target.value)}
+                    onChange={e => {
+                        SetactivePanel(e.target.value);
+                        setPanelInfo(prev => {
+                            const newPanelInfo = [...prev];
+                            newPanelInfo[pageNo] = [PanelGridCount[panel], parseInt(e.target.value.split('_')[1].replace('Grid', ''))];
+                            return newPanelInfo;
+                        });
+
+                    }}
                 >
                     {gridOptions.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
