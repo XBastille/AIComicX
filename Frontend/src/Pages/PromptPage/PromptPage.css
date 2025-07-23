@@ -1,4 +1,3 @@
-
 body {
   background-color: rgb(31, 22, 35);
   color: white;
@@ -8,6 +7,7 @@ body {
   align-items: center;
   height: 100vh;
   margin: 0;
+  /* overflow-y: hidden; */
 }
 
 
@@ -37,6 +37,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: -50px;
   transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
 }
 
@@ -55,53 +56,52 @@ body {
 
 .chat-container {
   width: 800px;
-  max-height: 1400px;
- /* overflow-y: auto;*/
+  /* border: 2px solid white; */
+  height: 510px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 10px;
-  margin-top: 20px;
+  margin-top: -40px;
   border-radius: 10px;
   overflow-y: scroll;
-  padding-bottom: 250px;
+  padding-bottom: 10px;
   scrollbar-width: thin;
   scrollbar-color: rgb(31, 22, 35) transparent;
 }
 
 
+
 .chat-bubble {
-  max-width: 100%;
- /* background: linear-gradient(135deg, rgb(223, 30, 114), rgb(230, 110, 41));*/
+
+  /* background: linear-gradient(135deg, rgb(223, 30, 114), rgb(230, 110, 41));*/
   color: white;
- /* padding: 10px;*/
   border-radius: 10px;
-  align-self: flex-start;
+
   font-size: 16px;
- /* word-wrap: break-word;*/
 }
 
 
 
 .chat-bubble.user {
   position: relative;
-  max-width: 50%;
+  max-width: 60%;
+  width: fit-content;
   align-self: flex-end;
   padding: 10px;
   overflow: hidden;
-  background:  rgb(57, 41, 64);
+  background: rgb(57, 41, 64);
   color: white;
   text-align: right;
   word-wrap: break-word;
-  display: inline-block;
-  float: right;
   margin-top: 50px;
+  /* border: 2px solid white; */
+  margin-left: auto;
 }
 
-.chat-bubble.user::before{
+.chat-bubble.user::before {
   content: "";
   position: absolute;
-  background: linear-gradient(to right ,  rgb(223,30,114) , rgb(230, 110, 41),rgb(255, 191, 0) );;
+  background: linear-gradient(to right, rgb(223, 30, 114), rgb(230, 110, 41), rgb(255, 191, 0));
   inset: -5px;
   z-index: -10;
   border-radius: 10px;
@@ -111,11 +111,11 @@ body {
 
 .chat-bubble.bot {
   align-self: flex-start;
- /* background: linear-gradient(135deg, rgb(223, 30, 114), rgb(230, 110, 41));*/
+  /* background: linear-gradient(135deg, rgb(223, 30, 114), rgb(230, 110, 41));*/
   color: white;
   text-align: left;
   margin-top: 50px;
-  
+  position: relative;
 }
 
 
@@ -127,12 +127,13 @@ body {
   padding: 5px;
   width: 800px;
   margin-top: 20px;
- /* position: relative;*/
- position: fixed;
- z-index: 100;
- bottom: 10px; 
+  /* position: relative;*/
+  position: fixed;
+  z-index: 100;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
+  backdrop-filter: blur(100px);
 }
 
 .search-bar::before {
@@ -158,7 +159,8 @@ body {
   font-size: 16px;
   position: relative;
   z-index: 1;
-  width:100%
+  width: 100%;
+  resize: none;
 }
 
 .search-bar:focus-within::before {
@@ -186,10 +188,10 @@ body {
   display: flex;
   justify-content: flex-start;
   padding-left: 12px;
-  margin-bottom: 2px;
+  margin-top: 100px;
   border-bottom: 2px solid rgb(255, 191, 0);
   padding-bottom: 20px;
-  
+
 }
 
 .bot-logo {
@@ -198,25 +200,52 @@ body {
   border-radius: 50%;
   border: 2px solid #e26e29;
   background-color: white;
-  
+
 }
 
-.bot-logo-container p{
-    display: flex;
-    margin-top: 10px;
-    margin-left: 20px;
-}
-
-.displayname{
+.bot-logo-container p {
   display: flex;
+  margin-top: 10px;
+  margin-left: 20px;
+}
+
+.displayname {
+  display: flex;
+  position: relative;
+  padding-right: 50px;
   align-items: center;
   justify-content: space-between;
 }
 
-.share{
+.share {
   font-size: 22px;
+  cursor: pointer;
 }
 
-.textmsg{
+.textmsg {
   line-height: 25px;
+}
+
+.share-btn-container {
+  position: sticky;
+  top: 40%;
+  right: 0;
+  float: right;
+  margin-left: 10px;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: rgba(31, 22, 35, 0.9);
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.logocomic-promptPage {
+  margin-top: -50px;
+  height: 150px;
+}
+
+.Logo-promptPage {
+  height: 100%;
+
 }
