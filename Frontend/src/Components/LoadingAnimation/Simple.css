@@ -1,11 +1,27 @@
 .loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #3498db;
+    width: 25px;
+    height: 25px;
     border-radius: 50%;
+    background: conic-gradient(rgba(241, 23, 81, 0.8) 0deg,
+            rgba(251, 232, 81, 0.8) 180deg,
+            transparent 180deg,
+            transparent 360deg);
     animation: spin 1s linear infinite;
-    box-sizing: border-box;
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black 0);
+    margin-right: 7px;
+}
+
+.loading-text-animation-dot1 {
+    margin-left: 5px;
+    animation: bounce 1s infinite;
+}
+
+.loading-text-animation-dot2 {
+    animation: bounce 1s infinite 0.2s;
+}
+
+.loading-text-animation-dot3 {
+    animation: bounce 1s infinite 0.4s;
 }
 
 @keyframes spin {
@@ -18,17 +34,31 @@
     }
 }
 
+@keyframes bounce {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-4px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
 
 .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    margin-top: 70px;
     /* background-color: black;*/
     background: transparent;
+
+}
+
+.loading-containers {
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 1000;
+    gap: 7px;
 }
