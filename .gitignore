@@ -213,6 +213,7 @@ MANIFEST
 chat_hist.json
 pythonInput/
 SamtoGen/
+output/
 uploads/
 response/
 node_modules/

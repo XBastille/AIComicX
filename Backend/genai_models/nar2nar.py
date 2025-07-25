@@ -362,9 +362,11 @@ def convert_formatted_to_comic(formatted_text):
             contents=contents,
             config=generate_content_config,
         ):
-            response_chunks.append(chunk.text)
+            if chunk.text:
+                response_chunks.append(chunk.text)
         
-        return "".join(response_chunks)
+        comic_text = "".join(response_chunks)
+        return comic_text
         
     except Exception as e:
         return f"Error converting formatted text to comic format: {str(e)}"
@@ -400,9 +402,10 @@ def process_formatted_file(file_path, style="american comic (modern)", generate_
     
     if character_descriptions:
         character_descriptions["comic_structure"] = page_panel_info
-        
-        os.makedirs('output', exist_ok=True)
-        char_desc_path = os.path.join('output', 'character_descriptions.json')
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        output_dir = os.path.join(script_dir, 'output')
+        os.makedirs(output_dir, exist_ok=True)
+        char_desc_path = os.path.join(output_dir, 'character_descriptions.json')
         with open(char_desc_path, 'w', encoding='utf-8') as f:
             json.dump(character_descriptions, f, indent=2)
         print(f"Character descriptions saved to {char_desc_path}")

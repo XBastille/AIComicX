@@ -296,13 +296,22 @@ router.post('/ayush', async (req, res) => {
         }
         console.log(output)
 
-        const outputPath = path.join(__dirname, "../SamtoGen/story.md");
-        fs.writeFile(outputPath, output, (err) => {
+        const outputPath1 = path.join(__dirname, "../SamtoGen/story.md");
+        const outputPath2 = path.join(__dirname, "../pythonInput/temp_story_comic.md");
+        
+        fs.writeFile(outputPath1, output, (err) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json({ error: 'Failed to write output file' });
             }
-            return res.json({ result: output, sucess: true });
+            
+            fs.writeFile(outputPath2, output, (err2) => {
+                if (err2) {
+                    console.log(err2);
+                    return res.status(500).json({ error: 'Failed to write temp comic file' });
+                }
+                return res.json({ result: output, sucess: true });
+            });
         });
     });
 });
@@ -328,7 +337,7 @@ router.post('/generateComic', async (req, res) => {
     const { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width } = req.body;
     const scriptPath = path.join(__dirname, "../genai_models/inference.py")
     const storyPath = path.join(__dirname, "../pythonInput/temp_story_comic.md");
-    const pythonProcess = spawn('python', [scriptPath, storyPath, page_no, artStyle, height_width, guidanceScale2, inferenceSteps2]);
+    const pythonProcess = spawn('python', [scriptPath, storyPath, page_no, artStyle, JSON.stringify(height_width), guidanceScale2, inferenceSteps2], options);
     console.log(page_no, artStyle, height_width, guidanceScale2, inferenceSteps2)
     console.log("coming inside /generate comics")
     let output = '';
@@ -363,7 +372,7 @@ router.post('/generateComic', async (req, res) => {
 
 router.get('/panel_data', async (req, res) => {
     try {
-        const location = path.join(__dirname, "../output/character_descriptions.json");
+        const location = path.join(__dirname, "../genai_models/output/character_descriptions.json");
         const file = fs.readFileSync(location);
         const file_data = JSON.parse(file);
         return res.json(file_data.comic_structure.panels_per_page)

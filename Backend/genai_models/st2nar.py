@@ -95,7 +95,8 @@ def generate_character_descriptions(story_text, style):
             contents=contents,
             config=generate_content_config,
         ):
-            response_chunks.append(chunk.text)
+            if chunk.text:
+                response_chunks.append(chunk.text)
         
         response_content = "".join(response_chunks)
         
@@ -387,8 +388,10 @@ def process_story_to_comic(input_file, output_file, style, generate_reference_im
     if character_descriptions:
         character_descriptions["comic_structure"] = page_panel_info
         
-        os.makedirs('output', exist_ok=True)
-        char_desc_path = os.path.join('output', 'character_descriptions.json')
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        output_dir = os.path.join(script_dir, 'output')
+        os.makedirs(output_dir, exist_ok=True)
+        char_desc_path = os.path.join(output_dir, 'character_descriptions.json')
         with open(char_desc_path, 'w', encoding='utf-8') as f:
             json.dump(character_descriptions, f, indent=2)
         print(f"Character descriptions saved to {char_desc_path}")

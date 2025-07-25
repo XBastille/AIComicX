@@ -1,9 +1,13 @@
+import ast
 import os
 import json
 import sys
 import shutil
 import traceback
 import re
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, script_dir)
 
 from image_batch import generate_comic_images_for_page, extract_panel_content
 from speech_bubble import SpeechBubbleGenerator
@@ -387,7 +391,9 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         return
     
     base_name = os.path.basename(markdown_file).split('.')[0]
-    char_desc_path = os.path.join('output', "character_descriptions.json")
+    # Look for character descriptions in genai_models/output directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    char_desc_path = os.path.join(script_dir, 'output', "character_descriptions.json")
     
     if (os.path.exists(char_desc_path)):
         with open(char_desc_path, 'r', encoding='utf-8') as f:
@@ -578,18 +584,30 @@ if __name__ == "__main__":
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python nar2nar.py <input_file>")
+    if len(sys.argv) < 7:
+        print("Usage: python inference.py <markdown_file> <page_number> <style> <panel_dimensions> <guidance_scale> <inference_steps>")
+        sys.exit(1)
+
+    try:
+        page_number = int(sys.argv[2])
+        style = sys.argv[3]
+        panel_dimensions_str = sys.argv[4]
+        panel_dimensions_raw = ast.literal_eval(panel_dimensions_str)
+        panel_dimensions = [tuple(map(lambda x: int(x.replace('px', '')), dim)) for dim in panel_dimensions_raw]
+        guidance_scale = float(sys.argv[5])
+        inference_steps = int(sys.argv[6])
+    except (ValueError, SyntaxError) as e:
+        print(f"Error parsing arguments: {e}")
         sys.exit(1)
 
     process_comic_page(
         markdown_file=sys.argv[1], 
-        page_number=sys.argv[2], 
+        page_number=page_number, 
         api_key=api_key,
-        style=sys.argv[3],
-        panel_dimensions= [tuple(i) for i in sys.argv[4]],
-        guidance_scale=sys.argv[5],
-        inference_steps=sys.argv[6],
+        style=style,
+        panel_dimensions=panel_dimensions,
+        guidance_scale=guidance_scale,
+        inference_steps=inference_steps,
         bubble_color=colors["bubble_color"],
         text_color=colors["text_color"],
         narration_bg_color=colors["narration_bg_color"],
