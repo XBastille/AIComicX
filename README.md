@@ -1,1 +1,1 @@
-# Roses are red , Voilets are blue guys add some bug and bugs too
+# Roses are red and Voilets are blue , Guys add some features and bugs too
