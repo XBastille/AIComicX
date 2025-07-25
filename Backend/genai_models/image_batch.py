@@ -121,7 +121,7 @@ def get_character_description(character_descriptions, character_name, page_num, 
 def generate_panel_prompts(comic_structure, character_descriptions, style, full_story_text=""):
     """Generate detailed prompts for each panel with enhanced character focus and increased token limit"""
     client = genai.Client(
-        api_key=os.environ["GEMINI_KEY"],
+        api_key="",
     )
     
     all_prompts = {}

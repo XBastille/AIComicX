@@ -7,8 +7,9 @@ import re
 
 from image_batch import generate_comic_images_for_page, extract_panel_content
 from speech_bubble import SpeechBubbleGenerator
-from google import genai
-from google.genai import types
+from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference.models import SystemMessage, UserMessage
+from azure.core.credentials import AzureKeyCredential
 
 def parse_additional_dialogues(panel_content, panel_num):
     """
@@ -59,7 +60,7 @@ def parse_direct_from_markdown(markdown_file, page_number, panel_number):
         panel_number: Panel number to extract dialogues from
         
     Returns:
-        Tuple: (dialogues_list, scene_description)
+        List of dialogue dictionaries with sequence information
     """
     try:
         with open(markdown_file, 'r', encoding='utf-8') as f:
@@ -73,31 +74,24 @@ def parse_direct_from_markdown(markdown_file, page_number, panel_number):
         
         if not page_match:
             print(f"Could not find Page {page_number} in markdown file")
-            return [], ""
+            return []
             
         page_content = page_match.group(1)
         print(f"Found page {page_number} content (first 100 chars): {page_content[:100]}...")
         
-        panel_pattern = rf"### Panel {panel_number}\s*\n(.*?)(?:(?:### Panel \d+)|(?:---)|(?:\Z))"
+        panel_pattern = rf"### Panel {panel_number}\s*\n(.*?)(?:(?:---|\Z))"
         panel_match = re.search(panel_pattern, page_content, re.DOTALL)
         
         if not panel_match:
             print(f"Could not find Panel {panel_number} in Page {page_number}")
-            return [], ""
+            return []
             
-        panel_content = panel_match.group(1).strip()
+        panel_content = panel_match.group(1)
         print(f"Found panel {panel_number} content: \n{panel_content}")
-        
-        scene_description = ""
-        scene_pattern = r"\[(.*?)\]"
-        scene_matches = re.findall(scene_pattern, panel_content)
-        if scene_matches:
-            scene_description = " ".join(scene_matches)
-            print(f"Extracted scene description: {scene_description}")
         
         result = []
         
-        narration_pattern = r"\*\*Narration\*\*:\s*(.*?)(?=\n\*\*|\n\n|\Z)"
+        narration_pattern = r"\*\*Narration\*\*:[ \t]*(.*?)(?:\n\n|\n\*\*|\Z)"
         for narration_match in re.finditer(narration_pattern, panel_content, re.DOTALL):
             narration_text = narration_match.group(1).strip()
             if narration_text:
@@ -110,14 +104,10 @@ def parse_direct_from_markdown(markdown_file, page_number, panel_number):
                 })
                 print(f"Added narration at position {narration_start}: {narration_text[:30]}...")
         
-        dialogue_pattern = r"\*\*([^*:]+)\*\*:\s*(.*?)(?=\n\*\*|\n\n|\Z)"
+        dialogue_pattern = r"\*\*([^*:]+)\*\*:[ \t]*\"((?:[^\"\\]|\\.)*)\""
         for dialogue_match in re.finditer(dialogue_pattern, panel_content, re.DOTALL):
             char_name = dialogue_match.group(1).strip()
             dialogue_text = dialogue_match.group(2).strip()
-            
-            if dialogue_text.startswith('"') and dialogue_text.endswith('"'):
-                dialogue_text = dialogue_text[1:-1]
-            
             dialogue_start = dialogue_match.start()
             
             if char_name.lower() != "narration":
@@ -130,60 +120,49 @@ def parse_direct_from_markdown(markdown_file, page_number, panel_number):
                 print(f"Added dialogue at position {dialogue_start}: {char_name}: {dialogue_text[:30]}...")
         
         if not result:
-            print("\nAttempting line-by-line dialogue extraction:")
-            lines = panel_content.split('\n')
+            print("\nAttempting manual dialogue extraction:")
+            manual_dialogues = []
             sequence_position = 0
-            
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-                    
+            for line in panel_content.split('\n'):
                 if "**Narration**:" in line:
                     try:
                         narr_text = line.split("**Narration**:")[1].strip()
                         if narr_text:
-                            result.append({
+                            manual_dialogues.append({
                                 'character': 'Narration',
                                 'text': narr_text,
                                 'sequence_position': sequence_position,
                                 'type': 'narration'
                             })
-                            print(f"Line-by-line extracted narration: {narr_text[:30]}...")
+                            print(f"Manually extracted narration: {narr_text[:30]}...")
                     except Exception as e:
                         print(f"Error extracting narration: {e}")
-                
-                elif "**" in line and ":" in line:
+                elif "**" in line and ":" in line and "\"" in line:
                     try:
                         char_start = line.find("**") + 2
                         char_end = line.find("**", char_start)
-                        if char_end == -1:
-                            continue
-                            
                         char_name = line[char_start:char_end].strip()
                         
-                        colon_pos = line.find(":", char_end)
-                        if colon_pos == -1:
-                            continue
+                        quote_start = line.find("\"")
+                        quote_end = line.rfind("\"")
+                        if quote_start != -1 and quote_end != -1 and quote_end > quote_start:
+                            dialogue_text = line[quote_start+1:quote_end].strip()
                             
-                        dialogue_text = line[colon_pos + 1:].strip()
-                        
-                        if dialogue_text.startswith('"') and dialogue_text.endswith('"'):
-                            dialogue_text = dialogue_text[1:-1]
-                        
-                        if char_name.lower() != "narration" and dialogue_text:
-                            result.append({
-                                'character': char_name,
-                                'text': dialogue_text,
-                                'sequence_position': sequence_position,
-                                'type': 'dialogue'
-                            })
-                            print(f"Line-by-line extracted: {char_name}: \"{dialogue_text[:30]}...\"")
+                            if char_name.lower() != "narration":
+                                manual_dialogues.append({
+                                    'character': char_name,
+                                    'text': dialogue_text,
+                                    'sequence_position': sequence_position,
+                                    'type': 'dialogue'
+                                })
+                                print(f"Manually extracted: {char_name}: \"{dialogue_text[:30]}...\"")
                     except Exception as e:
-                        print(f"Error in line-by-line extraction: {e}")
+                        print(f"Error in manual extraction: {e}")
                         continue
-                
-                sequence_position += 10  
+                sequence_position += 1
+            
+            if manual_dialogues:
+                result = manual_dialogues
         
         result.sort(key=lambda x: x.get('sequence_position', 0))
         
@@ -192,120 +171,169 @@ def parse_direct_from_markdown(markdown_file, page_number, panel_number):
             item_type = item.get('type', 'unknown')
             print(f"  {i+1}. [{item_type}] {item['character']}: {item['text'][:30]}...")
         
-        return result, scene_description
+        return result
         
     except Exception as e:
         print(f"Error parsing markdown directly: {e}")
         traceback.print_exc()
-        return [], ""
+        return []
 
-def generate_character_detection_prompts_llm(speaking_characters, scene_description, character_descriptions):
+def generate_character_detection_prompts_llm(character_names, character_descriptions):
     """
-    Use LLM to intelligently generate detection prompts based on who's speaking and who's in the scene.
+    Use LLM to generate distinctive and visually descriptive detection prompts.
     
     Args:
-        speaking_characters: List of character names who are speaking
-        scene_description: Description of the scene to find all characters present
+        character_names: List of character names in the panel
         character_descriptions: Dictionary of character descriptions
     
     Returns:
         Dictionary mapping character names to detection prompts
     """
+    if len(character_names) == 1:
+        return {character_names[0]: "person's head"}
+    
     try:
-        client = genai.Client(
-            api_key="",
+        client = ChatCompletionsClient(
+            endpoint="https://models.inference.ai.azure.com",
+            credential=AzureKeyCredential(os.environ.get("GITHUB_TOKEN")),
         )
         
         char_descriptions = {}
-        for name in speaking_characters:
+        for name in character_names:
             clean_name = name.strip(':')
             description = character_descriptions.get(clean_name, {}).get('base', '')
             if not description:
                 description = character_descriptions.get(name, {}).get('base', '')
             char_descriptions[name] = description
         
-        user_prompt = f"""Analyze this comic panel to generate visual detection prompts for ALL speaking characters/entities.
+        system_prompt = """You are an expert comic artist assistant that creates visual detection prompts for comic panels.
+Your task is to create short, distinctive prompts that help identify different characters in a comic panel by their visual appearance.
+"""
 
-SCENE DESCRIPTION: {scene_description}
+        user_prompt = f"""Create visual detection prompts for {len(character_names)} characters in a comic panel.
 
-SPEAKING CHARACTERS: {speaking_characters}
-
-CHARACTER DESCRIPTIONS:
+CHARACTERS AND DESCRIPTIONS:
 {json.dumps(char_descriptions, indent=2)}
 
-TASK: Generate detection prompts for ALL speaking characters/entities that are physically present in the scene.
+IMPORTANT GUIDELINES:
+1. Each prompt must END with "head" (e.g., "blonde woman's head", "bearded man's head")
+2. Each prompt must be VISUALLY DISTINCTIVE - focus on hair color, facial features, age, or distinctive accessories visible on the head/face
+3. NEVER use character names in prompts
+4. MAXIMUM 4 WORDS per prompt (not including "'s head")
+5. Focus on MOST UNIQUE visual features to distinguish each character
+6. NEVER use "first", "second", or "different" as these are not visual features
+7. For clothing, mention ONLY if it's visible near the head (hat, hood, helmet, etc.)
 
-INSTRUCTIONS:
-1. Analyze the scene description to understand what/who is present and speaking
-2. For HUMAN/LIVING characters: use "head" detection (e.g., "woman's head", "man's head")
-3. For NON-LIVING speakers (radio, computer, AI, device): use object detection (e.g., "radio", "computer screen", "device")
-4. For VOICE-OVER or OFF-SCREEN speakers with no physical presence: return "NOT_VISIBLE"
-5. If multiple people are in scene, make human prompts DISTINCTIVE (hair color, age, gender)
-6. Each prompt should be 1-4 words describing the visual element to detect
-7. NEVER use character names in prompts - only visual descriptions
-8. Consider what's actually visible in the scene based on the description
+RESPONSE FORMAT: Return ONLY a JSON object with character names as keys and prompts as values:
+{{
+  "Character1": "visual prompt head",
+  "Character2": "another visual prompt head"
+}}
+
+VISUAL FEATURES TO PRIORITIZE (in order):
+1. Hair color (blonde, redhead, brunette, gray-haired)
+2. Facial features (bearded, glasses, eyepatch)
+3. Age indicators (young, elderly)
+4. Head accessories (hat, helmet, hood)
+5. Gender + hair length (if distinctive)
 
 EXAMPLES:
-- "Cross leans on Kara" + Cross speaking → "elderly man's head" (distinctive from Kara)
-- "Radio (V.O.)" speaking + "radio rig" in scene → "radio" or "radio device"
-- "Computer AI" speaking + computer visible → "computer screen" or "monitor"
-- "Narrator" speaking but no narrator visible → "NOT_VISIBLE"
-- "Kara at radio" + Radio speaking → "radio equipment"
-
-RESPONSE FORMAT: Return ONLY JSON with speaking character names as keys:
-{{
-  "Character1": "visual detection prompt" OR "NOT_VISIBLE",
-  "Character2": "another detection prompt" OR "NOT_VISIBLE"
-}}
+✓ GOOD: "blonde woman's head", "bearded man's head", "redhead's head", "helmeted warrior's head"
+✗ BAD: "first man's head", "different person's head", "tall character's head"
 """
         
-        model = "gemini-2.5-flash"
-        contents = [
-            types.Content(
-                role="user",
-                parts=[
-                    types.Part.from_text(text=user_prompt),
-                ],
-            ),
-        ]
-        generate_content_config = types.GenerateContentConfig(
-            response_mime_type="application/json",
+        response = client.complete(
+            messages=[
+                SystemMessage(system_prompt),
+                UserMessage(user_prompt)
+            ],
+            model="Ministral-3B", 
             temperature=0.1,
-            max_output_tokens=65536
-        )
-
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
+            max_tokens=500
         )
         
-        response_text = response.candidates[0].content.parts[0].text
+        response_text = response.choices[0].message.content.strip()
         print(f"\nLLM Raw Response for detection prompts: {response_text}")
         
-        detection_prompts = json.loads(response_text)
+        try:
+            detection_prompts = json.loads(response_text)
+            
+            if not all(isinstance(key, str) and isinstance(val, str) for key, val in detection_prompts.items()):
+                raise ValueError("Invalid JSON structure")
+                
+        except Exception as e:
+            print(f"Error parsing LLM response as JSON: {e}")
+            
+            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+            if json_match:
+                try:
+                    detection_prompts = json.loads(json_match.group(1))
+                except:
+                    start = response_text.find('{')
+                    end = response_text.rfind('}') + 1
+                    if start >= 0 and end > start:
+                        try:
+                            detection_prompts = json.loads(response_text[start:end])
+                        except:
+                            print("All JSON extraction attempts failed.")
+                            detection_prompts = {}
+            else:
+                print("No JSON block found in response.")
+                detection_prompts = {}
         
-        visible_prompts = {}
-        for char_name, prompt in detection_prompts.items():
-            if prompt != "NOT_VISIBLE":
-                visible_prompts[char_name] = prompt
+        for name in character_names:
+            if name not in detection_prompts:
+                desc = char_descriptions.get(name, "").lower()
+                if "woman" in desc or "female" in desc or "girl" in desc:
+                    detection_prompts[name] = "woman's head"
+                elif "man" in desc or "male" in desc or "boy" in desc:
+                    detection_prompts[name] = "man's head"
+                else:
+                    detection_prompts[name] = "person's head"
+            
+            if not detection_prompts[name].lower().endswith("head"):
+                detection_prompts[name] = detection_prompts[name] + "'s head"
         
-        print(f"Final LLM-generated detection prompts (visible only): {visible_prompts}")
-        return visible_prompts
+        used_prompts = set()
+        for name in character_names:
+            prompt = detection_prompts[name]
+            if prompt in used_prompts:
+                desc = char_descriptions.get(name, "").lower()
+                if "blonde" in desc or "blond" in desc:
+                    detection_prompts[name] = "blonde's head"
+                elif "red" in desc and "hair" in desc:
+                    detection_prompts[name] = "redhead's head"
+                elif "black" in desc and "hair" in desc:
+                    detection_prompts[name] = "black-haired's head"
+                elif "brown" in desc and "hair" in desc:
+                    detection_prompts[name] = "brown-haired's head"
+                else:
+                    detection_prompts[name] = "another person's head"
+            
+            used_prompts.add(detection_prompts[name])
+        
+        print(f"Final LLM-generated detection prompts: {detection_prompts}")
+        return detection_prompts
         
     except Exception as e:
         print(f"Error generating detection prompts with LLM: {e}")
         traceback.print_exc()
-        return {}
+        
+        prompts = {}
+        for i, name in enumerate(character_names):
+            if i == 0:
+                prompts[name] = "person's head"
+            else:
+                prompts[name] = f"character {i+1}'s head"
+        return prompts
 
-def generate_character_detection_prompts(panel_info, character_descriptions, scene_description=""):
+def generate_character_detection_prompts(panel_info, character_descriptions):
     """
     Generate character detection prompts based on panel content and character descriptions.
     
     Args:
         panel_info: Dictionary with panel content
         character_descriptions: Dictionary with character descriptions
-        scene_description: Scene description from square brackets
         
     Returns:
         Dictionary mapping character names to detection prompts
@@ -316,33 +344,21 @@ def generate_character_detection_prompts(panel_info, character_descriptions, sce
         
     dialogues = panel_info.get('dialogues', [])
     
-    speaking_characters = []
+    character_names = []
     for dialogue in dialogues:
         if dialogue['character'].lower() != "narration":
             char_name = dialogue['character']
             if char_name.endswith(':'):
                 char_name = char_name[:-1]
-            speaking_characters.append(char_name)
+            character_names.append(char_name)
     
-    print(f"\nAnalyzing panel for characters:")
-    print(f"  Speaking characters: {speaking_characters}")
+    print(f"\nFound {len(character_names)} characters in panel: {character_names}")
     
-    characters_in_scene = []
-    for char_name in character_descriptions.keys():
-        if char_name.lower() in scene_description.lower():
-            characters_in_scene.append(char_name)
-    
-    print(f"  Characters in scene description: {characters_in_scene}")
-    
-    all_characters_to_detect = list(set(speaking_characters))
-    print(f"  All characters to detect: {all_characters_to_detect}")
-    print(f"  Scene description: {scene_description[:100]}...")
-    
-    if not speaking_characters:
-        print("No characters found in panel")
+    if not character_names:
+        print("WARNING: No character names found in dialogues!")
         return {}
     
-    return generate_character_detection_prompts_llm(speaking_characters, scene_description, character_descriptions)
+    return generate_character_detection_prompts_llm(character_names, character_descriptions)
 
 def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensions, guidance_scale, inference_steps,
                       bubble_color=(255, 255, 255), text_color=(0, 0, 0),
@@ -421,7 +437,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
             print(f"Warning: No content found for panel {panel_num}")
             continue
         
-        all_content, scene_description = parse_direct_from_markdown(markdown_file, page_number, panel_num)
+        all_content = parse_direct_from_markdown(markdown_file, page_number, panel_num)
         
         if all_content:
             panel_dialogues = []
@@ -439,7 +455,6 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
             print(f"WARNING: No content found through direct parsing for panel {panel_num}!")
             panel_dialogues = panel_content.get('dialogues', [])
             narrations = []
-            scene_description = ""
             
             for dialogue in panel_dialogues:
                 if dialogue['character'].lower() == "narration":
@@ -457,11 +472,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         for i, narration in enumerate(narrations):
             print(f"  {i+1}. {narration['text'][:30]}...")
         
-        detection_prompts = generate_character_detection_prompts(
-            {"dialogues": panel_dialogues}, 
-            character_descriptions, 
-            scene_description
-        )
+        detection_prompts = generate_character_detection_prompts({"dialogues": panel_dialogues}, character_descriptions)
         print(f"Generated detection prompts for panel {panel_num}: {detection_prompts}")
         
         dialogues = []
@@ -474,20 +485,17 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
             
             clean_char_name = char_name.rstrip(':')
             
-            if clean_char_name in detection_prompts:
-                detection_prompt = detection_prompts[clean_char_name]
-                print(f"Adding on-panel dialogue for '{char_name}' ({detection_prompt}): {dialogue.get('text', '')[:30]}...")
+            detection_prompt = detection_prompts.get(clean_char_name, "person's head")
+            if clean_char_name != char_name and clean_char_name not in detection_prompts:
+                detection_prompt = detection_prompts.get(char_name, "person's head")
+            
+            text = dialogue.get('text', '')
+            if text:
+                print(f"Adding dialogue for '{char_name}' ({detection_prompt}): {text[:30]}...")
                 dialogues.append({
                     'character_description': detection_prompt,
-                    'text': dialogue.get('text', ''),
+                    'text': text,
                     'character_name': clean_char_name  
-                })
-            else:
-                print(f"Adding off-panel dialogue for '{char_name}': {dialogue.get('text', '')[:30]}...")
-                dialogues.append({
-                    'text': dialogue.get('text', ''),
-                    'character_name': clean_char_name,
-                    'is_off_panel': True
                 })
         
         top_narration = None
@@ -543,7 +551,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
 
 if __name__ == "__main__":
     
-    api_key = ""
+    api_key = os.environ.get("LANDING_AI_API_KEY")
     
     default_colors = {
         "bubble_color": (255, 255, 255),  # White
@@ -575,21 +583,18 @@ if __name__ == "__main__":
     
     colors = sepia_colors
     
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python nar2nar.py <input_file>")
-        sys.exit(1)
-
     process_comic_page(
-        markdown_file=sys.argv[1], 
-        page_number=sys.argv[2], 
+        markdown_file="test_2_comic.md", 
+        page_number=3, 
         api_key=api_key,
-        style=sys.argv[3],
-        panel_dimensions= [tuple(i) for i in sys.argv[4]],
-        guidance_scale=sys.argv[5],
-        inference_steps=sys.argv[6],
+        style="american comic (modern)",
+        panel_dimensions=[
+            (768, 1024),
+            (768, 1024),
+            (768, 1024)
+        ],
+        guidance_scale=7.5,
+        inference_steps=40,
         bubble_color=colors["bubble_color"],
         text_color=colors["text_color"],
         narration_bg_color=colors["narration_bg_color"],

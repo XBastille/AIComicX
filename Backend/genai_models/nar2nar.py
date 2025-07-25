@@ -8,10 +8,32 @@ from markitdown import MarkItDown
 from diffusers import StableDiffusion3Pipeline
 from gradio_client import Client
 
+def extract_page_panel_info(comic_text):
+    """Extract page and panel information from comic markdown"""
+    import re
+    
+    page_pattern = r'^## Page \d+$'
+    pages = re.findall(page_pattern, comic_text, re.MULTILINE)
+    total_pages = len(pages)
+    
+    page_sections = re.split(r'^## Page \d+$', comic_text, flags=re.MULTILINE)[1:]  
+    
+    panels_per_page = []
+    
+    for page_content in page_sections:
+        panel_pattern = r'^### Panel \d+$'
+        panels = re.findall(panel_pattern, page_content, re.MULTILINE)
+        panels_per_page.append(len(panels))
+    
+    return {
+        "total_pages": total_pages,
+        "panels_per_page": panels_per_page
+    }
+
 def generate_character_descriptions(formatted_text, style):
     """Generate character descriptions from formatted text with enhanced focus on outfit and hair details"""
     client = genai.Client(
-        api_key=os.environ["GEMINI_KEY"],
+        api_key="",
     )
 
     character_names = set()
@@ -74,7 +96,7 @@ def generate_character_descriptions(formatted_text, style):
         generate_content_config = types.GenerateContentConfig(
             response_mime_type="application/json",
             temperature=0.5,
-            max_output_tokens=3000,
+            max_output_tokens=65536,
             top_p=1
         )
 
@@ -99,7 +121,7 @@ def generate_character_descriptions(formatted_text, style):
 def generate_character_reference_prompt(character_name, character_desc, style):
     """Generate intelligent reference image prompt using LLM with increased detail focus"""
     client = genai.Client(
-        api_key=os.environ["GEMINI_KEY"],
+        api_key="",
     )
     
     if style.lower() == "manga":
@@ -276,7 +298,7 @@ def convert_formatted_to_comic(formatted_text):
     Character B: dialogue
     """
     client = genai.Client(
-        api_key=os.environ["GEMINI_KEY"],
+        api_key="",
     )
 
     prompt = f"""
@@ -373,12 +395,18 @@ def process_formatted_file(file_path, style="american comic (modern)", generate_
     print("\nGenerating character descriptions...")
     character_descriptions = generate_character_descriptions(formatted_text, style)
     
+    print("Extracting page and panel information...")
+    page_panel_info = extract_page_panel_info(comic_text)
+    
     if character_descriptions:
+        character_descriptions["comic_structure"] = page_panel_info
+        
         os.makedirs('output', exist_ok=True)
         char_desc_path = os.path.join('output', 'character_descriptions.json')
         with open(char_desc_path, 'w', encoding='utf-8') as f:
             json.dump(character_descriptions, f, indent=2)
         print(f"Character descriptions saved to {char_desc_path}")
+        print(f"Comic structure: {page_panel_info['total_pages']} pages with {page_panel_info['panels_per_page']} panels per page")
         
         if generate_reference_images:
             print("\nGenerating character reference images...")

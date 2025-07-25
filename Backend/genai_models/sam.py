@@ -33,7 +33,7 @@ def clean_unicode_text(text):
 
 def initialize_sam():
     client = genai.Client(
-        api_key=os.environ["GEMINI_KEY"],
+        api_key="",
     )
     return client
 
