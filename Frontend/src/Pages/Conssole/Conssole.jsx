@@ -23,10 +23,144 @@ const PanelGridCount = {
     Panel4: 4
 };
 
+const Height_Width_data = {
+    Panel1: {
+        Grid1: {
+            heigth: {
+                box_heigth_0: '650px',
+            },
+            width: {
+                box_width_0: '500px',
+            }
+        },
+    },
+    Panel2: {
+        Grid1: {
+            heigth: {
+                box_height_0: '300px',
+                box_height_1: '300px',
+            },
+            width: {
+                box_width_0: '470px',
+                box_width_1: '470px',
+            }
+        },
+        Grid2: {
+            heigth: {
+                box_height_0: '450px',
+                box_height_1: '450px',
+            },
+            width: {
+                box_width_0: '380px',
+                box_width_1: '380px',
+            }
+        },
+    },
+    Panel3: {
+        Grid1: {
+            heigth: {
+                box_height_0: '200px',
+                box_height_1: '200px',
+                box_height_2: '200px',
+            },
+            width: {
+                box_width_0: '630px',
+                box_width_1: '630px',
+                box_width_2: '630px',
+            }
+        },
+        Grid2: {
+            heigth: {
+                box_height_0: '645px',
+                box_height_1: '320px',
+                box_height_2: '320px',
+            },
+            width: {
+                box_width_0: '350px',
+                box_width_1: '350px',
+                box_width_2: '350px',
+            }
+        },
+        Grid3: {
+            heigth: {
+                box_height_0: '320px',
+                box_height_1: '320px',
+                box_height_2: '320px',
+            },
+            width: {
+                box_width_0: '320px',
+                box_width_1: '320px',
+                box_width_2: '643px',
+            }
+        },
+    },
+    Panel4: {
+        Grid1: {
+            heigth: {
+                box_height_0: '320px',
+                box_height_1: '320px',
+                box_height_2: '320px',
+                box_height_3: '320px',
+            },
+            width: {
+                box_width_0: '260px',
+                box_width_1: '260px',
+                box_width_2: '260px',
+                box_width_3: '260px',
+            }
+        },
+        Grid2: {
+            heigth: {
+                box_height_0: '200px',
+                box_height_1: '400px',
+                box_height_2: '400px',
+                box_height_3: '200px',
+            },
+            width: {
+                box_width_0: '300px',
+                box_width_1: '300px',
+                box_width_2: '300px',
+                box_width_3: '300px',
+            }
+        },
+        Grid3: {
+            heigth: {
+                box_height_0: '350px',
+                box_height_1: '350px',
+                box_height_2: '703px',
+                box_height_3: '350px',
+            },
+            width: {
+                box_width_0: '200px',
+                box_width_1: '200px',
+                box_width_2: '250px',
+                box_width_3: '405px',
+            }
+        },
+        Grid4: {
+            heigth: {
+                box_height_0: '310px',
+                box_height_1: '310px',
+                box_height_2: '310px',
+                box_height_3: '310px',
+            },
+            width: {
+                box_width_0: '405px',
+                box_width_1: '200px',
+                box_width_2: '200px',
+                box_width_3: '405px',
+            }
+        }
+    }
+};
+
+
+
+
 function Conssole() {
     const [showAbout, setShowAbout] = useState(false);
     const [activePanel, SetactivePanel] = useState('');
-    const [panel, setpanel] = useState('Panel1');
+    const [panel, setpanel] = useState('');
     const [sideNav, SetsideNav] = useState('');
     const [showPanelEditor, setShowPanelEditor] = useState(false);
     const [selectedPanel, setSelectedPanel] = useState(null);
@@ -40,29 +174,16 @@ function Conssole() {
     const [inferenceSteps2, setInferenceSteps2] = useState(40);
     const [guidanceScale2, setGuidanceScale2] = useState(7.5);
     const [seed2, setSeed2] = useState(9);
-    const [panelInfo, setPanelInfo] = useState([[4, 1], [3, 1], [2, 1], [1, 1]]);
+    const [panelInfo, setPanelInfo] = useState([]);
     const [pageNo, setPageNo] = useState(0);
-
-    useEffect(() => {
-        if (panelInfo.length > 0) {
-            const panelCount = panelInfo[pageNo][0];
-            const gridCount = panelInfo[pageNo][1];
-            console.log(panelCount);
-            const prevPanel = panel;
-            setpanel('Panel' + panelCount);
-            console.log(activePanel);
-
-            SetactivePanel(`${panel}_Grid${gridCount}`);
-
-            console.log(panel);
-        }
-    }, [panelInfo, pageNo, panel]);
+    const [artStyle, setArtStyle] = useState('ANIME');
+    const [grid, setgrid] = useState("");
+    const [height_width, setheight_width] = useState([]);
 
     useEffect(() => {
         async function calling() {
             try {
                 const res = await axios.get('http://localhost:3000/chat/mdToFront');
-                console.log(res.data);
                 SetsideNav(res.data);
             } catch (error) {
                 console.log(error);
@@ -143,9 +264,74 @@ function Conssole() {
     };
 
     const handleApplySettings = () => {
-        console.log({ inferenceSteps2, guidanceScale2, seed2 });
+        //    console.log({ inferenceSteps2, guidanceScale2, seed2 });
         setShowSettings(false);
     };
+
+
+    //panel_data from backend
+    useEffect(() => {
+        const get_panel_data = async () => {
+            try {
+                const res = await axios.get("http://localhost:3000/chat/panel_data");
+                const raw_data = (res.data);
+
+                const initialPanelInfo = raw_data.map(panel => [panel, 1]);
+
+                setPanelInfo(initialPanelInfo)
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        get_panel_data();
+    }, []);
+
+
+    useEffect(() => {
+        if (panelInfo.length > 0) {
+            const panelCount = panelInfo[pageNo][0];
+            const gridCount = panelInfo[pageNo][1];
+            const prevPanel = panel;
+
+            const newPanel = `Panel${panelCount}`;
+            const newGrid = `Grid${gridCount}`;
+            const newActivePanel = `${newPanel}_${newGrid}`;
+
+            setpanel(newPanel);
+            setgrid(newGrid);
+            SetactivePanel(newActivePanel);
+        }
+    }, [panelInfo, pageNo]);
+
+    // extracting height, width of all the panel and grid
+    useEffect(() => {
+        if (panel && grid) {
+            const heights = Height_Width_data[panel]?.[grid]?.heigth
+            const widths = Height_Width_data[panel]?.[grid].width
+
+            const result = Object.keys(heights).map((key, index) => {
+                const heightValue = heights[`box_height_${index}`];
+                const widthValue = widths[`box_width_${index}`]
+                return [heightValue, widthValue]
+            })
+            setheight_width(result)
+        }
+
+    }, [panel, grid])
+
+
+    //Calling inference.py and handling images.
+
+    const generateComic = async () => {
+        // console.log(inferenceSteps2, guidanceScale2, seed2, pageNo + 1, artStyle, height_width)
+        const page_no = pageNo + 1;
+        try {
+            const res = await axios.post('http://localhost:3000/chat/generateComic', { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width });
+            console.log(res)
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     return (
         <div className="Comic-container">
@@ -185,6 +371,7 @@ function Conssole() {
                     ))}
                 </select>
 
+
                 <select className="panel-box" value={panel} disabled>
                     <option value={panel}>{panel.replace('Panel', 'Panel ')}</option>
                 </select>
@@ -193,9 +380,9 @@ function Conssole() {
                     <img src={aicomicx2} className='Logo' alt="Logo" />
                 </div>
 
-                <select className="Font-box">
-                    <option value="Font1">ANIME</option>
-                    <option value="Font2">MANGA</option>
+                <select className="Font-box" value={artStyle} onChange={e => setArtStyle(e.target.value)}>
+                    <option value="ANIME">ANIME</option>
+                    <option value="MANGA">MANGA</option>
                 </select>
 
                 <select className='comic-theme'>
@@ -205,7 +392,7 @@ function Conssole() {
                     <option value="theme4">Modern Colors</option>
                 </select>
 
-                <button className='generate-button'>Generate Comic</button>
+                <button className='generate-button' onClick={generateComic}>Generate Comic</button>
 
                 <div className="page-indicator">
                     {pageNo + 1} / {panelInfo.length}
@@ -223,13 +410,15 @@ function Conssole() {
                     onClick={() => pageNo != 0 ? setPageNo(pageNo - 1) : 0}
                     disabled={pageNo === 0}
                 >
-                    <FontAwesomeIcon icon={faArrowUp} />                </button>
+                    <FontAwesomeIcon icon={faArrowUp} />
+                </button>
 
                 <button className='navigate-page-btn'
                     onClick={() => pageNo != panelInfo.length - 1 ? setPageNo(pageNo + 1) : panelInfo.length - 1}
                     disabled={pageNo === panelInfo.length - 1}
                 >
-                    <FontAwesomeIcon icon={faArrowDown} />                </button>
+                    <FontAwesomeIcon icon={faArrowDown} />
+                </button>
             </div>
 
             <div className="bottom-bar">

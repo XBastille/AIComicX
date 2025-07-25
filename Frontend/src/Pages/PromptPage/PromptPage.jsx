@@ -76,7 +76,6 @@ function PromptPage() {
         }
     }
 
-    const response = "Hello there i am a boy my name is arpit mishra what yours In todays rapidly evolving digital landscape, technology plays a pivotal role in shaping how we live, work, and interact with the world. From artificial intelligence and machine learning to blockchain and quantum computing, the pace of innovation is both exciting and overwhelming. These advancements are not only transforming industries but also redefining everyday human experiences. For instance, AI-driven virtual assistants are now capable of handling complex tasks, while autonomous vehicles are being tested to reduce traffic accidents and increase transportation efficiency. Meanwhile, the growing adoption of renewable energy solutions is reshaping our global energy strategy to combat climate change. Despite the benefits, these technologies raise important ethical questions regarding privacy, employment, and equity, which society must address to ensure inclusive progress. Education systems are also adapting, with online learning platforms and virtual classrooms making knowledge more accessible than ever before. As we move further into the 21st century, the challenge lies not only in harnessing the power of these technologies but in doing so responsibly, sustainably, and with a deep understanding of their social implications."
 
     useEffect(() => {
         if (latestResponse.length > 0) {
@@ -88,7 +87,7 @@ function PromptPage() {
                 if (i >= chunks.length) {
                     clearInterval(interval);
                 }
-            }, 50);
+            }, 30);
 
         }
 
