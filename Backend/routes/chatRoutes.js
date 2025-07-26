@@ -274,7 +274,7 @@ router.post('/ayush', async (req, res) => {
         return res.status(500).json({ error: 'Failed to write input file' });
     }
 
-    const pythonProcess = spawn('python', [scriptPath, tempInputFile]);
+    const pythonProcess = spawn('python', [scriptPath, tempInputFile, '--silent']);
 
     let output = '';
     let errorOutput = '';
@@ -294,23 +294,39 @@ router.post('/ayush', async (req, res) => {
             console.error(errorOutput);
             return res.status(500).json({ error: errorOutput || 'Python script error' });
         }
-        console.log(output)
+        
+        let comicContent = "";
+        const startMarker = "COMIC_CONTENT_START";
+        const endMarker = "COMIC_CONTENT_END";
+        
+        const startIndex = output.indexOf(startMarker);
+        const endIndex = output.indexOf(endMarker);
+        
+        if (startIndex !== -1 && endIndex !== -1) {
+            const startPos = output.indexOf('\n', startIndex) + 1;
+            const endPos = output.lastIndexOf('\n', endIndex);
+            comicContent = output.substring(startPos, endPos).trim();
+        } else {
+            comicContent = output;
+        }
+        
+        console.log("Extracted comic content length:", comicContent.length);
 
         const outputPath1 = path.join(__dirname, "../SamtoGen/story.md");
         const outputPath2 = path.join(__dirname, "../pythonInput/temp_story_comic.md");
         
-        fs.writeFile(outputPath1, output, (err) => {
+        fs.writeFile(outputPath1, comicContent, (err) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json({ error: 'Failed to write output file' });
             }
             
-            fs.writeFile(outputPath2, output, (err2) => {
+            fs.writeFile(outputPath2, comicContent, (err2) => {
                 if (err2) {
                     console.log(err2);
                     return res.status(500).json({ error: 'Failed to write temp comic file' });
                 }
-                return res.json({ result: output, sucess: true });
+                return res.json({ result: comicContent, sucess: true });
             });
         });
     });
@@ -337,7 +353,7 @@ router.post('/generateComic', async (req, res) => {
     const { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width } = req.body;
     const scriptPath = path.join(__dirname, "../genai_models/inference.py")
     const storyPath = path.join(__dirname, "../pythonInput/temp_story_comic.md");
-    const pythonProcess = spawn('python', [scriptPath, storyPath, page_no, artStyle, JSON.stringify(height_width), guidanceScale2, inferenceSteps2], options);
+    const pythonProcess = spawn('python', [scriptPath, storyPath, page_no, artStyle, JSON.stringify(height_width), guidanceScale2, inferenceSteps2]);
     console.log(page_no, artStyle, height_width, guidanceScale2, inferenceSteps2)
     console.log("coming inside /generate comics")
     let output = '';

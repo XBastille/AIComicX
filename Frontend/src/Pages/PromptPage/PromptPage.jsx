@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../Components/LoadingAnimation/Simple";
 import Appsss from "../../Components/LoadingAnimation/LoadingAnimation2";
 import aicomicx2 from "../../Picture/aicomic2.jpg";
+import { API_ENDPOINTS } from "../../config/api";
 
 function PromptPage() {
     const [showLogo, setShowLogo] = useState(true);
@@ -35,7 +36,7 @@ function PromptPage() {
             SetLoadingIdx(chatHistory.length);
             console.log(message);
             try {
-                const res = await axios.post("http://localhost:3000/chat/transferSam", { message })
+                const res = await axios.post(API_ENDPOINTS.transferSam, { message })
                 console.log(res.data.data);
                 setresponse(res.data.data);
                 setLatestResponse(res.data.data);
@@ -63,7 +64,7 @@ function PromptPage() {
             console.log(text)
             setloading(true);
             try {
-                const res = await axios.post("http://localhost:3000/chat/ayush", { text })
+                const res = await axios.post(API_ENDPOINTS.ayush, { text })
                 console.log(res.data.sucess)
                 if (res.data.sucess === true) {
                     console.log("hello")

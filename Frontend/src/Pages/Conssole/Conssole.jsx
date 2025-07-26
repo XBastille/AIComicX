@@ -14,6 +14,7 @@ import Grid2 from '../../Components/Grid/panel4/Grid2';
 import Grid3 from '../../Components/Grid/panel4/Grid3';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { API_ENDPOINTS } from "../../config/api";
 import { faEdit, faRotateRight, faTimes, faCopy, faCheck, faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 
 const PanelGridCount = {
@@ -183,7 +184,7 @@ function Conssole() {
     useEffect(() => {
         async function calling() {
             try {
-                const res = await axios.get('http://localhost:3000/chat/mdToFront');
+                const res = await axios.get(API_ENDPOINTS.mdToFront);
                 SetsideNav(res.data);
             } catch (error) {
                 console.log(error);
@@ -273,7 +274,7 @@ function Conssole() {
     useEffect(() => {
         const get_panel_data = async () => {
             try {
-                const res = await axios.get("http://localhost:3000/chat/panel_data");
+                const res = await axios.get(API_ENDPOINTS.panelData);
                 const raw_data = (res.data);
 
                 const initialPanelInfo = raw_data.map(panel => [panel, 1]);
@@ -326,7 +327,7 @@ function Conssole() {
         // console.log(inferenceSteps2, guidanceScale2, seed2, pageNo + 1, artStyle, height_width)
         const page_no = pageNo + 1;
         try {
-            const res = await axios.post('http://localhost:3000/chat/generateComic', { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width });
+            const res = await axios.post(API_ENDPOINTS.generateComic, { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width });
             console.log(res)
         } catch (error) {
             console.log(error)

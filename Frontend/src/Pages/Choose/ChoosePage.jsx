@@ -8,6 +8,7 @@ import axios from 'axios'
 import { gsap } from "gsap";
 import { useNavigate } from "react-router-dom";
 import Appsss from "../../Components/LoadingAnimation/LoadingAnimation2";
+import { API_ENDPOINTS } from "../../config/api";
 
 function ChoosePage() {
     const [selectedType, setSelectedType] = useState(null);
@@ -552,7 +553,7 @@ function ChoosePage() {
         file.append('file', uploadedFile)
         setLoading(true)
         try {
-            const response = await axios.post('http://localhost:3000/chat/transferNar2nar', file, {
+            const response = await axios.post(API_ENDPOINTS.transferNar2nar, file, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -611,7 +612,7 @@ function ChoosePage() {
         file.append('file', uploadedFile)
         setLoading(true)
         try {
-            const response = await axios.post('http://localhost:3000/chat/transferSt2nar', file, {
+            const response = await axios.post(API_ENDPOINTS.transferSt2nar, file, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

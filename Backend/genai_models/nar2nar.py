@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import re
 import torch
 from google import genai
 from google.genai import types
@@ -371,7 +372,7 @@ def convert_formatted_to_comic(formatted_text):
     except Exception as e:
         return f"Error converting formatted text to comic format: {str(e)}"
 
-def process_formatted_file(file_path, style="american comic (modern)", generate_reference_images=False):
+def process_formatted_file(file_path, style="american comic (modern)", generate_reference_images=False, silent=False):
     """
     Process a file with pre-formatted narration and dialogue and convert it to comic format
     """
@@ -379,62 +380,76 @@ def process_formatted_file(file_path, style="american comic (modern)", generate_
         with open(file_path, 'r', encoding='utf-8') as file:
             formatted_text = file.read()
     except FileNotFoundError:
-        print(f"Error: File '{file_path}' not found.")
+        if not silent:
+            print(f"Error: File '{file_path}' not found.")
         return None
     except Exception as e:
-        print(f"Error reading file: {e}")
+        if not silent:
+            print(f"Error reading file: {e}")
         return None
     
-    print("Converting formatted text to comic format...")
+    if not silent:
+        print("Converting formatted text to comic format...")
     comic_text = convert_formatted_to_comic(formatted_text)
     
     output_file = os.path.splitext(file_path)[0] + "_comic.md"
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(comic_text)
     
-    print(f"Comic format saved to {output_file}")
+    if not silent:
+        print(f"Comic format saved to {output_file}")
+        print("\nGenerating character descriptions...")
     
-    print("\nGenerating character descriptions...")
     character_descriptions = generate_character_descriptions(formatted_text, style)
     
-    print("Extracting page and panel information...")
+    if not silent:
+        print("Extracting page and panel information...")
     page_panel_info = extract_page_panel_info(comic_text)
     
     if character_descriptions:
         character_descriptions["comic_structure"] = page_panel_info
+        
         script_dir = os.path.dirname(os.path.abspath(__file__))
         output_dir = os.path.join(script_dir, 'output')
         os.makedirs(output_dir, exist_ok=True)
         char_desc_path = os.path.join(output_dir, 'character_descriptions.json')
         with open(char_desc_path, 'w', encoding='utf-8') as f:
             json.dump(character_descriptions, f, indent=2)
-        print(f"Character descriptions saved to {char_desc_path}")
-        print(f"Comic structure: {page_panel_info['total_pages']} pages with {page_panel_info['panels_per_page']} panels per page")
+        
+        if not silent:
+            print(f"Character descriptions saved to {char_desc_path}")
+            print(f"Comic structure: {page_panel_info['total_pages']} pages with {page_panel_info['panels_per_page']} panels per page")
         
         if generate_reference_images:
-            print("\nGenerating character reference images...")
+            if not silent:
+                print("\nGenerating character reference images...")
             os.makedirs('character_references', exist_ok=True)
             
             character_index = 1
             for char_name, char_data in character_descriptions.items():
-                char_desc = char_data.get('base', '')
-                if char_desc:
-                    print(f"\nProcessing character {character_index}: {char_name}")
-                    print(f"Description: {char_desc}")
-                    
-                    image_path = generate_character_reference_image(character_index, char_name, char_desc, style)
-                    print(f"Reference image created: {image_path}")
-                    print(f"Prompt saved: character_references/reference{character_index}_prompt.json")
-                    
-                    character_index += 1
+                if char_name != "comic_structure":  
+                    char_desc = char_data.get('base', '')
+                    if char_desc:
+                        if not silent:
+                            print(f"\nProcessing character {character_index}: {char_name}")
+                            print(f"Description: {char_desc}")
+                        
+                        image_path = generate_character_reference_image(character_index, char_name, char_desc, style)
+                        if not silent:
+                            print(f"Reference image created: {image_path}")
+                            print(f"Prompt saved: character_references/reference{character_index}_prompt.json")
+                        
+                        character_index += 1
         else:
-            print("\nSkipping reference image generation (disabled)")
+            if not silent:
+                print("\nSkipping reference image generation (disabled)")
         
-        print(f"\nComic conversion complete!")
-        print(f"Comic script: {output_file}")
-        print(f"Character descriptions: {char_desc_path}")
-        if generate_reference_images:
-            print(f"Reference images: character_references/ folder")
+        if not silent:
+            print(f"\nComic conversion complete!")
+            print(f"Comic script: {output_file}")
+            print(f"Character descriptions: {char_desc_path}")
+            if generate_reference_images:
+                print(f"Reference images: character_references/ folder")
     
     return comic_text
 
@@ -448,4 +463,21 @@ if __name__ == "__main__":
     
     generate_reference_images = False
     
-    result = process_formatted_file(input_file, style, generate_reference_images)
+    silent_mode = len(sys.argv) > 2 and sys.argv[2] == "--silent"
+    
+    result = process_formatted_file(input_file, style, generate_reference_images, silent=silent_mode)
+    
+    if result:
+        if silent_mode:
+            print("COMIC_CONTENT_START")
+            print(result)
+            print("COMIC_CONTENT_END")
+        else:
+            print("\n" + "="*50)
+            print("COMIC_CONTENT_START")
+            print("="*50)
+            print(result)
+            print("="*50)
+            print("COMIC_CONTENT_END")
+            print("="*50)
+    

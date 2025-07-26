@@ -88,7 +88,8 @@ def extract_json_from_response(response_text):
 
 def generate_character_descriptions(comic_structure, style):
     """Load character descriptions from st2nar/nar2nar output instead of generating new ones"""
-    char_desc_path = os.path.join('output', 'character_descriptions.json')
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    char_desc_path = os.path.join(script_dir, 'output', 'character_descriptions.json')
     
     if os.path.exists(char_desc_path):
         with open(char_desc_path, 'r', encoding='utf-8') as f:
@@ -322,7 +323,8 @@ def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
         print("No character descriptions found. Skipping prompt generation.")
         return None
     
-    character_desc_path = os.path.join('output', f"character_descriptions.json")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    character_desc_path = os.path.join(script_dir, 'output', f"character_descriptions.json")
     os.makedirs(os.path.dirname(character_desc_path), exist_ok=True)
     with open(character_desc_path, 'w', encoding='utf-8') as f:
         json.dump(character_descriptions, f, indent=2)

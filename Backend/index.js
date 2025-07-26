@@ -30,12 +30,24 @@ app.use(session({
     saveUninitialized: false
 }));
 
+const frontendBuildPath = path.join(__dirname, '../Frontend/dist');
+app.use(express.static(frontendBuildPath));
+
 app.use("/user", require('./routes/authRoutes'));
 app.use("/chat", require('./routes/chatRoutes'));
 
-app.get('/', (req, res) => {
-    res.send('home page');
-})
+app.get('/health', (req, res) => {
+    console.log('Health check endpoint hit!');
+    res.json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        message: 'Backend is working!'
+    });
+});
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+});
 
 app.listen(3000, () => {
     console.log("Server is listening to port 3000");
