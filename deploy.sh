@@ -1,7 +1,7 @@
 #!/bin/bash
 # Lightning.ai Deployment Script
 
-echo "🚀 Building React App..."
+echo "Building React App..."
 cd Frontend
 npm install
 npm run build
