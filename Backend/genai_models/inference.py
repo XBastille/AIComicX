@@ -391,7 +391,6 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         return
     
     base_name = os.path.basename(markdown_file).split('.')[0]
-    # Look for character descriptions in genai_models/output directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     char_desc_path = os.path.join(script_dir, 'output', "character_descriptions.json")
     
