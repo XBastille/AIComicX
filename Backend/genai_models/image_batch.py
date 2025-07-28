@@ -341,7 +341,8 @@ def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
 def get_prompts_json_path(markdown_file):
     """Get the path to the JSON file for story prompts"""
     base_name = os.path.basename(markdown_file).split('.')[0]
-    return os.path.join('output', f"{base_name}_prompts.json")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(script_dir,'output', f"{base_name}_prompts.json")
 
 def save_prompts_to_json(prompts_data, markdown_file):
     """Save generated prompts to a JSON file"""

@@ -34,10 +34,8 @@ function PromptPage() {
             setChatHistory([...chatHistory, { text: message, sender: "user" }]);
             setMessage("");
             SetLoadingIdx(chatHistory.length);
-            console.log(message);
             try {
                 const res = await axios.post(API_ENDPOINTS.transferSam, { message })
-                console.log(res.data.data);
                 setresponse(res.data.data);
                 setLatestResponse(res.data.data);
                 if (res.data.data.length > 1000) {
@@ -61,13 +59,11 @@ function PromptPage() {
 
     const sendtoNar2Nar = async () => {
         if (color === 'green') {
-            console.log(text)
             setloading(true);
             try {
                 const res = await axios.post(API_ENDPOINTS.ayush, { text })
                 console.log(res.data.sucess)
                 if (res.data.sucess === true) {
-                    console.log("hello")
                     navigate('/Generate_Story');
                 }
             } catch (error) {

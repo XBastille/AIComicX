@@ -264,7 +264,6 @@ router.post('/transferSam', async (req, res) => {
 router.post('/ayush', async (req, res) => {
     const scriptPath = path.join(__dirname, '../genai_models/nar2nar.py');
     const { text } = req.body;
-
     const tempInputFile = path.join(__dirname, '../pythonInput/temp_story.txt');
 
     try {
@@ -294,14 +293,14 @@ router.post('/ayush', async (req, res) => {
             console.error(errorOutput);
             return res.status(500).json({ error: errorOutput || 'Python script error' });
         }
-        
+
         let comicContent = "";
         const startMarker = "COMIC_CONTENT_START";
         const endMarker = "COMIC_CONTENT_END";
-        
+
         const startIndex = output.indexOf(startMarker);
         const endIndex = output.indexOf(endMarker);
-        
+
         if (startIndex !== -1 && endIndex !== -1) {
             const startPos = output.indexOf('\n', startIndex) + 1;
             const endPos = output.lastIndexOf('\n', endIndex);
@@ -309,18 +308,18 @@ router.post('/ayush', async (req, res) => {
         } else {
             comicContent = output;
         }
-        
+
         console.log("Extracted comic content length:", comicContent.length);
 
         const outputPath1 = path.join(__dirname, "../SamtoGen/story.md");
         const outputPath2 = path.join(__dirname, "../pythonInput/temp_story_comic.md");
-        
+
         fs.writeFile(outputPath1, comicContent, (err) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json({ error: 'Failed to write output file' });
             }
-            
+
             fs.writeFile(outputPath2, comicContent, (err2) => {
                 if (err2) {
                     console.log(err2);

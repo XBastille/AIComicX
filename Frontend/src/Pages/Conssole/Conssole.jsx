@@ -28,58 +28,58 @@ const Height_Width_data = {
     Panel1: {
         Grid1: {
             heigth: {
-                box_heigth_0: '650px',
+                box_heigth_0: '656px',
             },
             width: {
-                box_width_0: '500px',
+                box_width_0: '496px',
             }
         },
     },
     Panel2: {
         Grid1: {
             heigth: {
-                box_height_0: '300px',
-                box_height_1: '300px',
+                box_height_0: '304px',
+                box_height_1: '304px',
             },
             width: {
-                box_width_0: '470px',
-                box_width_1: '470px',
+                box_width_0: '464px',
+                box_width_1: '464px',
             }
         },
         Grid2: {
             heigth: {
-                box_height_0: '450px',
-                box_height_1: '450px',
+                box_height_0: '456px',
+                box_height_1: '456px',
             },
             width: {
-                box_width_0: '380px',
-                box_width_1: '380px',
+                box_width_0: '384px',
+                box_width_1: '384px',
             }
         },
     },
     Panel3: {
         Grid1: {
             heigth: {
-                box_height_0: '200px',
-                box_height_1: '200px',
-                box_height_2: '200px',
+                box_height_0: '208px',
+                box_height_1: '208px',
+                box_height_2: '208px',
             },
             width: {
-                box_width_0: '630px',
-                box_width_1: '630px',
-                box_width_2: '630px',
+                box_width_0: '624px',
+                box_width_1: '624px',
+                box_width_2: '624px',
             }
         },
         Grid2: {
             heigth: {
-                box_height_0: '645px',
+                box_height_0: '640px',
                 box_height_1: '320px',
                 box_height_2: '320px',
             },
             width: {
-                box_width_0: '350px',
-                box_width_1: '350px',
-                box_width_2: '350px',
+                box_width_0: '356px',
+                box_width_1: '356px',
+                box_width_2: '356px',
             }
         },
         Grid3: {
@@ -91,7 +91,7 @@ const Height_Width_data = {
             width: {
                 box_width_0: '320px',
                 box_width_1: '320px',
-                box_width_2: '643px',
+                box_width_2: '640px',
             }
         },
     },
@@ -104,52 +104,52 @@ const Height_Width_data = {
                 box_height_3: '320px',
             },
             width: {
-                box_width_0: '260px',
-                box_width_1: '260px',
-                box_width_2: '260px',
-                box_width_3: '260px',
+                box_width_0: '256px',
+                box_width_1: '256px',
+                box_width_2: '256px',
+                box_width_3: '256px',
             }
         },
         Grid2: {
             heigth: {
-                box_height_0: '200px',
+                box_height_0: '192px',
                 box_height_1: '400px',
                 box_height_2: '400px',
-                box_height_3: '200px',
+                box_height_3: '192px',
             },
             width: {
-                box_width_0: '300px',
-                box_width_1: '300px',
-                box_width_2: '300px',
-                box_width_3: '300px',
+                box_width_0: '304px',
+                box_width_1: '304px',
+                box_width_2: '304px',
+                box_width_3: '304px',
             }
         },
         Grid3: {
             heigth: {
-                box_height_0: '350px',
-                box_height_1: '350px',
-                box_height_2: '703px',
-                box_height_3: '350px',
+                box_height_0: '356px',
+                box_height_1: '356px',
+                box_height_2: '704px',
+                box_height_3: '356px',
             },
             width: {
-                box_width_0: '200px',
-                box_width_1: '200px',
-                box_width_2: '250px',
-                box_width_3: '405px',
+                box_width_0: '192px',
+                box_width_1: '192px',
+                box_width_2: '256px',
+                box_width_3: '400px',
             }
         },
         Grid4: {
             heigth: {
-                box_height_0: '310px',
-                box_height_1: '310px',
-                box_height_2: '310px',
-                box_height_3: '310px',
+                box_height_0: '304px',
+                box_height_1: '304px',
+                box_height_2: '304px',
+                box_height_3: '304px',
             },
             width: {
-                box_width_0: '405px',
-                box_width_1: '200px',
-                box_width_2: '200px',
-                box_width_3: '405px',
+                box_width_0: '400px',
+                box_width_1: '192px',
+                box_width_2: '192px',
+                box_width_3: '400px',
             }
         }
     }
@@ -185,6 +185,7 @@ function Conssole() {
         async function calling() {
             try {
                 const res = await axios.get(API_ENDPOINTS.mdToFront);
+                console.log(res.data)
                 SetsideNav(res.data);
             } catch (error) {
                 console.log(error);
@@ -313,7 +314,7 @@ function Conssole() {
             const result = Object.keys(heights).map((key, index) => {
                 const heightValue = heights[`box_height_${index}`];
                 const widthValue = widths[`box_width_${index}`]
-                return [heightValue, widthValue]
+                return [widthValue, heightValue,]
             })
             setheight_width(result)
         }
