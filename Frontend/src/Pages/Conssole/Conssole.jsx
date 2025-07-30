@@ -181,11 +181,26 @@ function Conssole() {
     const [grid, setgrid] = useState("");
     const [height_width, setheight_width] = useState([]);
 
+    //Image transfer states ,uing as props
+    //panel1
+    const [panel1_grid1, setpanel1_grid1] = useState([]);
+    //panel2
+    const [panel2_grid1, setpanel2_grid1] = useState([]);
+    const [panel2_grid2, setpanel2_grid2] = useState([]);
+    //panel3
+    const [panel3_grid1, setpanel3_grid1] = useState([]);
+    const [panel3_grid2, setpanel3_grid2] = useState([]);
+    const [panel3_grid3, setpanel3_grid3] = useState([]);
+    //panel4
+    const [panel4_grid1, setpanel4_grid1] = useState({});
+    const [panel4_grid2, setpanel4_grid2] = useState({});
+    const [panel4_grid3, setpanel4_grid3] = useState({});
+    const [panel4_grid4, setpanel4_grid4] = useState({});
+
     useEffect(() => {
         async function calling() {
             try {
                 const res = await axios.get(API_ENDPOINTS.mdToFront);
-                console.log(res.data)
                 SetsideNav(res.data);
             } catch (error) {
                 console.log(error);
@@ -235,21 +250,7 @@ function Conssole() {
         }
     };
 
-    const renderGrid = () => {
-        switch (activePanel) {
-            case 'Panel1_Grid1': return <One onPanelClick={handlePanelClick} />;
-            case 'Panel2_Grid1': return <Gridss onPanelClick={handlePanelClick} />;
-            case 'Panel2_Grid2': return <Gridss1 onPanelClick={handlePanelClick} />;
-            case 'Panel3_Grid1': return <Grids onPanelClick={handlePanelClick} />;
-            case 'Panel3_Grid2': return <Grids1 onPanelClick={handlePanelClick} />;
-            case 'Panel3_Grid3': return <Grids2 onPanelClick={handlePanelClick} />;
-            case 'Panel4_Grid1': return <Grid onPanelClick={handlePanelClick} />;
-            case 'Panel4_Grid2': return <Grid1 onPanelClick={handlePanelClick} />;
-            case 'Panel4_Grid3': return <Grid2 onPanelClick={handlePanelClick} />;
-            case 'Panel4_Grid4': return <Grid3 onPanelClick={handlePanelClick} />;
-            default: defaults(panel);
-        }
-    };
+
 
     const gridOptions = [];
     for (let i = 1; i <= (PanelGridCount[panel] || 1); i++) {
@@ -321,15 +322,66 @@ function Conssole() {
 
     }, [panel, grid])
 
+    //rendering and passing images as props
+    const renderGrid = () => {
+        const page_no = pageNo + 1;
+        switch (activePanel) {
+            case 'Panel1_Grid1': return <One images={panel1_grid1[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel2_Grid1': return <Gridss images={panel2_grid1[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel2_Grid2': return <Gridss1 images={panel2_grid2[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel3_Grid1': return <Grids images={panel3_grid1[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel3_Grid2': return <Grids1 images={panel3_grid2[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel3_Grid3': return <Grids2 images={panel3_grid3[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel4_Grid1': return <Grid images={panel4_grid1[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel4_Grid2': return <Grid1 images={panel4_grid2[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel4_Grid3': return <Grid2 images={panel4_grid3[page_no] || []} onPanelClick={handlePanelClick} />;
+            case 'Panel4_Grid4': return <Grid3 images={panel4_grid4[page_no] || []} onPanelClick={handlePanelClick} />;
+            default: defaults(panel);
+        }
+    };
 
     //Calling inference.py and handling images.
-
     const generateComic = async () => {
-        // console.log(inferenceSteps2, guidanceScale2, seed2, pageNo + 1, artStyle, height_width)
         const page_no = pageNo + 1;
         try {
             const res = await axios.post(API_ENDPOINTS.generateComic, { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width });
-            console.log(res)
+            const images = res.data;
+            if (panel === 'Panel4') {
+                if (grid === 'Grid1') {
+                    setpanel4_grid1(prev => ({ ...prev, [page_no]: images }));
+                }
+                else if (grid === 'Grid2') {
+                    setpanel4_grid2(prev => ({ ...prev, [page_no]: images }));
+                }
+                else if (grid === 'Grid3') {
+                    setpanel4_grid3(prev => ({ ...prev, [page_no]: images }));
+                }
+                else {
+                    setpanel4_grid4(prev => ({ ...prev, [page_no]: images }));
+                }
+            }
+            else if (panel === 'Panel3') {
+                if (grid === 'Grid1') {
+                    setpanel3_grid1(prev => ({ ...prev, [page_no]: images }));
+                }
+                else if (grid === 'Grid2') {
+                    setpanel3_grid2(prev => ({ ...prev, [page_no]: images }));
+                }
+                else {
+                    setpanel3_grid3(prev => ({ ...prev, [page_no]: images }));
+                }
+            }
+            else if (panel === 'Panel2') {
+                if (grid === 'Grid1') {
+                    setpanel2_grid1(prev => ({ ...prev, [page_no]: images }));
+                }
+                else {
+                    setpanel2_grid2(prev => ({ ...prev, [page_no]: images }));
+                }
+            }
+            else if (panel === 'Panel1') {
+                setpanel1_grid1(prev => ({ ...prev, [page_no]: images }));
+            }
         } catch (error) {
             console.log(error)
         }

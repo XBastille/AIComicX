@@ -35,11 +35,12 @@ app.use(express.static(frontendBuildPath));
 
 app.use("/user", require('./routes/authRoutes'));
 app.use("/chat", require('./routes/chatRoutes'));
+app.use('/output', express.static(path.join(__dirname, 'output')));
 
 app.get('/health', (req, res) => {
     console.log('Health check endpoint hit!');
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         timestamp: new Date().toISOString(),
         message: 'Backend is working!'
     });
