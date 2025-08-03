@@ -28,128 +28,128 @@ const Height_Width_data = {
     Panel1: {
         Grid1: {
             heigth: {
-                box_heigth_0: '656px',
+                box_height_0: '1216px',  // 2:3
             },
             width: {
-                box_width_0: '496px',
+                box_width_0: '832px',
             }
         },
     },
     Panel2: {
         Grid1: {
             heigth: {
-                box_height_0: '304px',
-                box_height_1: '304px',
+                box_height_0: '896px',   // 5:4
+                box_height_1: '896px',
             },
             width: {
-                box_width_0: '464px',
-                box_width_1: '464px',
+                box_width_0: '1088px',
+                box_width_1: '1088px',
             }
         },
         Grid2: {
             heigth: {
-                box_height_0: '456px',
-                box_height_1: '456px',
+                box_height_0: '1088px',  // 4:5
+                box_height_1: '1088px',
             },
             width: {
-                box_width_0: '384px',
-                box_width_1: '384px',
+                box_width_0: '896px',
+                box_width_1: '896px',
             }
         },
     },
     Panel3: {
         Grid1: {
             heigth: {
-                box_height_0: '208px',
-                box_height_1: '208px',
-                box_height_2: '208px',
+                box_height_0: '640px',   // 21:9
+                box_height_1: '640px',
+                box_height_2: '640px',
             },
             width: {
-                box_width_0: '624px',
-                box_width_1: '624px',
-                box_width_2: '624px',
+                box_width_0: '1536px',   
+                box_width_1: '1536px',
+                box_width_2: '1536px',
             }
         },
         Grid2: {
             heigth: {
-                box_height_0: '640px',
-                box_height_1: '320px',
-                box_height_2: '320px',
+                box_height_0: '1344px',  // 9:16 
+                box_height_1: '1024px',  // 1:1
+                box_height_2: '1024px',
             },
             width: {
-                box_width_0: '356px',
-                box_width_1: '356px',
-                box_width_2: '356px',
+                box_width_0: '768px',
+                box_width_1: '1024px',
+                box_width_2: '1024px',
             }
         },
         Grid3: {
             heigth: {
-                box_height_0: '320px',
-                box_height_1: '320px',
-                box_height_2: '320px',
+                box_height_0: '1024px',  // 1:1 
+                box_height_1: '1024px',
+                box_height_2: '768px',   // 16:9 
             },
             width: {
-                box_width_0: '320px',
-                box_width_1: '320px',
-                box_width_2: '640px',
+                box_width_0: '1024px',
+                box_width_1: '1024px',
+                box_width_2: '1344px',
             }
         },
     },
     Panel4: {
         Grid1: {
             heigth: {
-                box_height_0: '320px',
-                box_height_1: '320px',
-                box_height_2: '320px',
-                box_height_3: '320px',
+                box_height_0: '1088px',  // 4:5
+                box_height_1: '1088px',
+                box_height_2: '1088px',
+                box_height_3: '1088px',
             },
             width: {
-                box_width_0: '256px',
-                box_width_1: '256px',
-                box_width_2: '256px',
-                box_width_3: '256px',
+                box_width_0: '896px',
+                box_width_1: '896px',
+                box_width_2: '896px',
+                box_width_3: '896px',
             }
         },
         Grid2: {
             heigth: {
-                box_height_0: '192px',
-                box_height_1: '400px',
-                box_height_2: '400px',
-                box_height_3: '192px',
+                box_height_0: '768px',   // 16:9 
+                box_height_1: '1088px',  // 4:5 
+                box_height_2: '1088px',
+                box_height_3: '768px',
             },
             width: {
-                box_width_0: '304px',
-                box_width_1: '304px',
-                box_width_2: '304px',
-                box_width_3: '304px',
+                box_width_0: '1344px',
+                box_width_1: '896px',
+                box_width_2: '896px',
+                box_width_3: '1344px',
             }
         },
         Grid3: {
             heigth: {
-                box_height_0: '356px',
-                box_height_1: '356px',
-                box_height_2: '704px',
-                box_height_3: '356px',
+                box_height_0: '1344px',  // 9:16
+                box_height_1: '1344px',
+                box_height_2: '1536px',  // 9:21 
+                box_height_3: '1024px',   // 1:1
             },
             width: {
-                box_width_0: '192px',
-                box_width_1: '192px',
-                box_width_2: '256px',
-                box_width_3: '400px',
+                box_width_0: '768px',
+                box_width_1: '768px',
+                box_width_2: '640px',
+                box_width_3: '1024px',
             }
         },
         Grid4: {
             heigth: {
-                box_height_0: '304px',
-                box_height_1: '304px',
-                box_height_2: '304px',
-                box_height_3: '304px',
+                box_height_0: '832px',   // 3:2 landscape (1216x832)
+                box_height_1: '1344px',  // 9:16 
+                box_height_2: '1344px',
+                box_height_3: '832px',
             },
             width: {
-                box_width_0: '400px',
-                box_width_1: '192px',
-                box_width_2: '192px',
-                box_width_3: '400px',
+                box_width_0: '1216px',
+                box_width_1: '768px',
+                box_width_2: '768px',
+                box_width_3: '1216px',
             }
         }
     }

@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import math
 import random
+import os
 
 class SpeechBubbleGenerator:
     def __init__(self, image_path, api_key, detection_prompt=None, 
@@ -15,7 +16,33 @@ class SpeechBubbleGenerator:
         self.api_key = api_key
         self.bubble_padding = bubble_padding
         self.arrow_size = arrow_size
-        self.font_path = font_path
+        
+        if not os.path.isabs(font_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            self.font_path = os.path.join(script_dir, font_path)
+        else:
+            self.font_path = font_path
+            
+        if not os.path.exists(self.font_path):
+            print(f"Warning: Font file not found at {self.font_path}")
+            print(f"Trying alternative font paths...")
+            
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            alternative_paths = [
+                os.path.join(script_dir, "animeace2bb_tt", "animeace2_bld.ttf"),
+                os.path.join(script_dir, "..", "animeace2bb_tt", "animeace2_bld.ttf"),
+                os.path.join(script_dir, "..", "..", "Frontend", "src", "animeace2bb_tt", "animeace2_bld.ttf")
+            ]
+            
+            for alt_path in alternative_paths:
+                if os.path.exists(alt_path):
+                    self.font_path = alt_path
+                    print(f"Found font at: {self.font_path}")
+                    break
+            else:
+                print(f"ERROR: Could not find font file. Using system default font.")
+                self.font_path = None
+                
         self.bubble_color = bubble_color
         self.text_color = text_color
         self.border_width = border_width
@@ -79,7 +106,15 @@ class SpeechBubbleGenerator:
     
     def calculate_text_size(self, text, font_size=20):
         """Calculate the dimensions needed for the text."""
-        font = ImageFont.truetype(self.font_path, font_size)
+        try:
+            if self.font_path and os.path.exists(self.font_path):
+                font = ImageFont.truetype(self.font_path, font_size)
+            else:
+                print("Using default font for text calculation")
+                font = ImageFont.load_default()
+        except Exception as e:
+            print(f"Error loading font: {e}. Using default font.")
+            font = ImageFont.load_default()
         
         max_width_scale = 0.25  
         max_line_width = int(self.width * max_width_scale)
@@ -105,7 +140,15 @@ class SpeechBubbleGenerator:
     
     def calculate_narration_size(self, text, font_size=20):
         """Calculate the dimensions needed for narration text."""
-        font = ImageFont.truetype(self.font_path, font_size)
+        try:
+            if self.font_path and os.path.exists(self.font_path):
+                font = ImageFont.truetype(self.font_path, font_size)
+            else:
+                print("Using default font for narration calculation")
+                font = ImageFont.load_default()
+        except Exception as e:
+            print(f"Error loading font: {e}. Using default font.")
+            font = ImageFont.load_default()
         
         max_width_scale = 0.9  
         max_line_width = int(self.width * max_width_scale)
@@ -377,7 +420,16 @@ class SpeechBubbleGenerator:
             self.draw.line([arrow_points[0], arrow_points[2]], fill=self.border_color, width=self.border_width)
             self.draw.line([arrow_points[1], arrow_points[2]], fill=self.border_color, width=self.border_width)
         
-        font = ImageFont.truetype(self.font_path, font_size)
+        try:
+            if self.font_path and os.path.exists(self.font_path):
+                font = ImageFont.truetype(self.font_path, font_size)
+            else:
+                print("Using default font for speech bubble drawing")
+                font = ImageFont.load_default()
+        except Exception as e:
+            print(f"Error loading font: {e}. Using default font.")
+            font = ImageFont.load_default()
+            
         text_y = y + self.bubble_padding
         
         for line in lines:
@@ -422,7 +474,15 @@ class SpeechBubbleGenerator:
             narration_y = self.height + self.narration_padding
         
         draw = ImageDraw.Draw(new_img)
-        font = ImageFont.truetype(self.font_path, font_size)
+        try:
+            if self.font_path and os.path.exists(self.font_path):
+                font = ImageFont.truetype(self.font_path, font_size)
+            else:
+                print("Using default font for narration")
+                font = ImageFont.load_default()
+        except Exception as e:
+            print(f"Error loading font: {e}. Using default font.")
+            font = ImageFont.load_default()
         
         for line in lines:
             left, top, right, bottom = font.getbbox(line)
@@ -480,7 +540,15 @@ class SpeechBubbleGenerator:
             new_img.paste(bottom_bg, (0, top_height + self.height))
         
         draw = ImageDraw.Draw(new_img)
-        font = ImageFont.truetype(self.font_path, font_size)
+        try:
+            if self.font_path and os.path.exists(self.font_path):
+                font = ImageFont.truetype(self.font_path, font_size)
+            else:
+                print("Using default font for both narrations")
+                font = ImageFont.load_default()
+        except Exception as e:
+            print(f"Error loading font: {e}. Using default font.")
+            font = ImageFont.load_default()
         
         if top_narration:
             narration_y = self.narration_padding

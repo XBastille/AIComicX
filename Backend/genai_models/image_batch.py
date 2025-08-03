@@ -2,7 +2,6 @@ import os
 import re
 import json
 import torch
-from gradio_client import Client
 from diffusers import StableDiffusion3Pipeline
 import shutil
 import markdown
@@ -10,6 +9,25 @@ import bs4
 from google import genai
 from google.genai import types
 import time
+
+global_pipeline = None
+
+def get_or_create_pipeline():
+    """Get existing pipeline or create new one for reuse across image generations"""
+    global global_pipeline
+    
+    if global_pipeline is None:
+        print("Creating new Stable Diffusion pipeline...")
+        global_pipeline = StableDiffusion3Pipeline.from_pretrained(
+            "stabilityai/stable-diffusion-3.5-large", 
+            torch_dtype=torch.bfloat16
+        )
+        global_pipeline = global_pipeline.to("cuda")
+        print("Pipeline created and moved to CUDA")
+    else:
+        print("Reusing existing pipeline")
+    
+    return global_pipeline
 
 def extract_panel_content(markdown_file, target_page=None):
     """Extract pages and panels content from markdown file"""
@@ -119,191 +137,254 @@ def get_character_description(character_descriptions, character_name, page_num, 
     
     return base_description
 
-def generate_panel_prompts(comic_structure, character_descriptions, style, full_story_text=""):
-    """Generate detailed prompts for each panel with enhanced character focus and increased token limit"""
-    client = genai.Client(
-        api_key="",
-    )
+def extract_key_character_features(description):
+    """Extract key visual features from character description for consistency"""
+    import re
     
-    all_prompts = {}
-    request_count = 0
-    start_time = time.time()
+    hair_patterns = [
+        r'([\w\s]*hair[\w\s]*)',
+        r'([\w\s]*hairstyle[\w\s]*)',
+        r'([\w\s]*haircut[\w\s]*)'
+    ]
+    
+    clothing_patterns = [
+        r'wearing ([\w\s,]+)',
+        r'dressed in ([\w\s,]+)',
+        r'(jacket|shirt|dress|pants|boots|shoes|cloak)[\w\s]*'
+    ]
+    
+    physical_patterns = [
+        r'([\w\s]*eyes?[\w\s]*)',
+        r'([\w\s]*build[\w\s]*)',
+        r'(tall|short|young|old|athletic)[\w\s]*'
+    ]
+    
+    key_features = {
+        "hair": [],
+        "clothing": [],
+        "physical": []
+    }
+    
+    desc_lower = description.lower()
+    
+    for pattern in hair_patterns:
+        matches = re.findall(pattern, desc_lower)
+        key_features["hair"].extend(matches)
+    
+    for pattern in clothing_patterns:
+        matches = re.findall(pattern, desc_lower) 
+        key_features["clothing"].extend(matches)
+    
+    for pattern in physical_patterns:
+        matches = re.findall(pattern, desc_lower)
+        key_features["physical"].extend(matches)
+    
+    return key_features
+
+def generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text=""):
+    """Generate detailed prompts for ALL panels using a single mega-prompt approach"""
+    client = genai.Client(
+        api_key=os.getenv("GEMINI_KEY"),
+    )
     
     total_panels = sum(len(page['panels']) for page in comic_structure)
     print(f"Total panels to process: {total_panels}")
-    print(f"Estimated time with rate limiting: {(total_panels // 8) * 65} seconds")
+    print(f"Using MEGA-PROMPT approach: 1 API call for all {total_panels} panels")
     
+    character_desc_text = ""
+    character_consistency_map = {}
+    
+    for char_name, char_data in character_descriptions.items():
+        if char_name.lower() != "narration" and char_name != "comic_structure":
+            base_desc = char_data.get("base", "")
+            if "(no detailed description available)" not in base_desc and base_desc.strip():
+                character_desc_text += f"[{char_name} - OUTFIT MUST REMAIN IDENTICAL IN ALL PANELS]: {base_desc}. "
+                
+                character_consistency_map[char_name] = {
+                    "full_description": base_desc,
+                    "key_features": extract_key_character_features(base_desc)
+                }
+    
+    character_desc_text = character_desc_text.rstrip(". ")
+    
+    if character_desc_text:
+        character_desc_text += "\n\nCONSISTENCY MANDATE: Every character must appear in their EXACT same outfit, hair, and accessories in ALL panels. DO NOT modify, add, or remove any clothing items or physical features."
+    
+    panels_info = []
     for page in comic_structure:
         page_num = page['page_number']
-        page_key = f"page_{page_num}"
-        all_prompts[page_key] = {}
-        
         for panel in page['panels']:
             panel_num = panel['panel_number']
-            panel_key = f"panel_{panel_num}"
             
-            if request_count > 0 and request_count % 8 == 0:
-                elapsed = time.time() - start_time
-                if elapsed < 60:
-                    wait_time = 65 - elapsed
-                    print(f"Rate limiting: Sleeping for {wait_time:.1f} seconds after {request_count} requests...")
-                    time.sleep(wait_time)
-                start_time = time.time()
-            
-            characters_from_dialogues = set(dialogue['character'] for dialogue in panel['dialogues'])
-            italic_text = panel.get('italic_text', '')
-            characters_in_panel = set()
-            characters_in_panel.update(characters_from_dialogues)
-            
-            for char_name in character_descriptions.keys():
-                if char_name in italic_text or char_name in panel['narration']:
-                    characters_in_panel.add(char_name)
-            
-            character_desc_text = ""
-            for char_name in characters_in_panel:
-                if char_name.lower() != "narration":
-                    desc = get_character_description(character_descriptions, char_name, page_num, panel_num)
-                    if "(no detailed description available)" not in desc:  
-                        character_desc_text += f"{char_name}: {desc}. "
-            
-            character_desc_text = character_desc_text.rstrip(". ")
-            
-            scene_description = italic_text
-            if panel['narration']:
+            scene_description = panel.get('italic_text', '')
+            if panel.get('narration'):
                 if scene_description:
                     scene_description += " " + panel['narration']
                 else:
                     scene_description = panel['narration']
             
-            if style.lower() == "manga":
-                style_instruction = f"""
-                Create a detailed Stable Diffusion image prompt for generating a Manga comic book panel image.
-
-                FULL STORY CONTEXT:
-                {full_story_text}
-
-                CURRENT PANEL SCENE: {scene_description}
-
-                CHARACTER DESCRIPTIONS (THESE ARE FIXED AND MUST NEVER CHANGE):
-                {character_desc_text}
-
-                CRITICAL INSTRUCTIONS FOR CHARACTER CONSISTENCY:
-                1. This is an image prompt to generate images for a comic book panel of the above story
-                2. Start with "Manga style, black and white, monochrome, clean line art, high contrast"
-                3. Understand the story's setting, time period, and world from the full context above
-                4. Describe the environment and scene setting consistent with the story's world and era
-                5. REPLACE character names with their EXACT COMPLETE VISUAL DESCRIPTIONS from CHARACTER DESCRIPTIONS
-                6. NEVER use character names in the final prompt - only their physical descriptions
-                7. NEVER MODIFY OR CHANGE any character's physical features from CHARACTER DESCRIPTIONS
-                8. MANDATORY: Copy hair details EXACTLY (style, length, texture) from CHARACTER DESCRIPTIONS
-                9. MANDATORY: Copy outfit details EXACTLY (every piece of clothing, accessories, materials) from CHARACTER DESCRIPTIONS
-                10. You must USE THE EXACT SAME, hair style, and clothing items as written in CHARACTER DESCRIPTIONS
-                11. DO NOT invent outfit pieces - use only what's specified
-                12. If CHARACTER DESCRIPTIONS says "fiery auburn hair" - use "fiery auburn hair", NOT "black hair" or "dark hair"
-                13. If CHARACTER DESCRIPTIONS says "crimson red leather jacket" - use "crimson red leather jacket", NOT "red jacket" or "leather jacket"
-                14. Describe poses, actions, and expressions based on the current panel scene
-                15. Maintain consistency with the story's tone, setting, and visual style throughout
-                16. MAXIMUM 150 tokens total
-                17. NO speech bubbles, text, or dialogue in the image
-                18. Focus on visual composition and dramatic angles appropriate for the story
-
-                EXAMPLE OF CORRECT CHARACTER REPLACEMENT:
-                If scene mentions "Isabella looks angry" and Isabella is described as "woman with long, voluminous fiery auburn hair cascading down her back in loose, dramatic waves, with a sharp, side-swept fringe, wearing a striking, form-fitting crimson red leather motorcycle jacket with silver zippers over a black top, paired with slim-fit black cargo pants", 
-                CORRECT OUTPUT: "woman with long, voluminous fiery auburn hair cascading down her back in loose, dramatic waves, with a sharp, side-swept fringe, wearing a striking, form-fitting crimson red leather motorcycle jacket with silver zippers over a black top, paired with slim-fit black cargo pants looks angry"
-                WRONG OUTPUT: "woman with dark hair wearing red jacket looks angry"
-
-                OUTPUT: Single line image generation prompt only, no explanations or character names.
-                """
-            else:
-                style_instruction = f"""
-                Create a detailed Stable Diffusion image prompt for generating a {style} comic book panel image.
-
-                FULL STORY CONTEXT:
-                {full_story_text}
-
-                CURRENT PANEL SCENE: {scene_description}
-
-                CHARACTER DESCRIPTIONS (THESE ARE FIXED AND MUST NEVER CHANGE):
-                {character_desc_text}
-
-                CRITICAL INSTRUCTIONS FOR CHARACTER CONSISTENCY:
-                1. This is an image prompt to generate images for a comic book panel of the above story
-                2. Start with "{style} style" and describe the art style characteristics in detail
-                3. Understand the story's setting, time period, and world from the full context above
-                4. Describe the environment and scene setting consistent with the story's world and era
-                5. REPLACE character names with their EXACT COMPLETE VISUAL DESCRIPTIONS from CHARACTER DESCRIPTIONS
-                6. NEVER use character names in the final prompt - only their physical descriptions
-                7. NEVER MODIFY OR CHANGE any character's physical features from CHARACTER DESCRIPTIONS
-                8. MANDATORY: Copy hair details EXACTLY (color, style, length, texture) from CHARACTER DESCRIPTIONS
-                9. MANDATORY: Copy outfit details EXACTLY (every piece of clothing, accessories, materials, colors) from CHARACTER DESCRIPTIONS
-                10. You must USE THE EXACT SAME hair color, hair style, outfit colors, and clothing items as written in CHARACTER DESCRIPTIONS
-                11. DO NOT invent new hair colors, clothing colors, or outfit pieces - use only what's specified
-                12. If CHARACTER DESCRIPTIONS says "fiery auburn hair" - use "fiery auburn hair", NOT "black hair" or "dark hair"
-                13. If CHARACTER DESCRIPTIONS says "crimson red leather jacket" - use "crimson red leather jacket", NOT "red jacket" or "leather jacket"
-                14. Describe poses, actions, and expressions based on the current panel scene
-                15. Maintain consistency with the story's tone, setting, and visual style throughout
-                16. MAXIMUM 150 tokens total
-                17. NO speech bubbles, text, or dialogue in the image
-                18. Focus on visual composition and dramatic angles appropriate for the story
-
-                EXAMPLE OF CORRECT CHARACTER REPLACEMENT:
-                If scene mentions "Isabella looks angry" and Isabella is described as "woman with long, voluminous fiery auburn hair cascading down her back in loose, dramatic waves, with a sharp, side-swept fringe, wearing a striking, form-fitting crimson red leather motorcycle jacket with silver zippers over a black top, paired with slim-fit black cargo pants", 
-                CORRECT OUTPUT: "woman with long, voluminous fiery auburn hair cascading down her back in loose, dramatic waves, with a sharp, side-swept fringe, wearing a striking, form-fitting crimson red leather motorcycle jacket with silver zippers over a black top, paired with slim-fit black cargo pants looks angry"
-                WRONG OUTPUT: "woman with dark hair wearing red jacket looks angry"
-
-                OUTPUT: Single line image generation prompt only, no explanations or character names.
-                """
-            
-            print(f"Generating detailed prompt for Page {page_num}, Panel {panel_num} (Request #{request_count + 1}/{total_panels})")
-            
-            model = "gemini-2.5-flash"
-            contents = [
-                types.Content(
-                    role="user",
-                    parts=[
-                        types.Part.from_text(text=style_instruction),
-                    ],
-                ),
-            ]
-            generate_content_config = types.GenerateContentConfig(
-                response_mime_type="text/plain",
-                temperature=0.3,  
-                max_output_tokens=65536,
-                top_p=0.8 
-            )
-
-            response_chunks = []
-            for chunk in client.models.generate_content_stream(
-                model=model,
-                contents=contents,
-                config=generate_content_config,
-            ):
-                if chunk.text is not None:
-                    response_chunks.append(chunk.text)
-            
-            prompt = "".join(response_chunks).strip()
-            request_count += 1
-            
-            prompt = prompt.replace("**", "").strip()
-            
-            if style.lower() == "manga":
-                if not prompt.lower().startswith("manga style, black and white"):
-                    prompt = f"Manga style, black and white, monochrome, clean line art, high contrast, " + prompt
-            else:
-                if not prompt.lower().startswith(style.lower()):
-                    prompt = f"{style} style, " + prompt
-            
-            max_tokens = 150 
-            if len(prompt.split()) > max_tokens:
-                words = prompt.split()
-                truncated_prompt = ' '.join(words[:max_tokens])
-                print(f"WARNING: Prompt for Page {page_num}, Panel {panel_num} truncated from {len(prompt.split())} to {max_tokens} words")
-                prompt = truncated_prompt
-            
-            all_prompts[page_key][panel_key] = prompt
+            panels_info.append({
+                'page': page_num,
+                'panel': panel_num,
+                'scene': scene_description,
+                'dialogues': panel.get('dialogues', [])
+            })
     
-    print(f"Generated detailed prompts for all panels using {request_count} requests with proper {style} style formatting and enhanced character details")
-    return all_prompts
+    manga_specific_instructions = ""
+    style_guidance = ""
+    if style.lower() == "manga":
+        manga_specific_instructions = """
+MANGA-SPECIFIC REQUIREMENTS (MANDATORY):
+- BLACK AND WHITE ONLY: Completely monochrome art, no colors mentioned for hair, clothes, or environments
+- HIGH CONTRAST: Strong blacks and whites with dramatic lighting and shadows
+- CLEAN LINE ART: Crisp, precise linework typical of manga illustration
+- SCREEN TONES: Mention halftone patterns, gradients, and manga-style shading techniques
+- MANGA COMPOSITION: Dynamic panel compositions with speed lines, impact effects, and manga-style visual storytelling
+- NO COLOR DESCRIPTIONS: Never mention any colors (red, blue, silver, etc.) - describe items by material, texture, and shape only
+"""
+        style_guidance = f"MANDATORY: Start every prompt with 'Manga style, black and white, monochrome,' and NEVER mention colors - use material and texture instead"
+    else:
+        style_guidance = f"MANDATORY: Start every prompt with '{style},' and consistently maintain this artistic style throughout. NEVER use terms like 'photorealistic', 'realistic', 'hyper-detailed', or 'hyper-realistic' as these conflict with the target style."
+
+    mega_prompt = f"""You are an expert comic book panel image prompt generator. Generate Stable Diffusion 3.5 prompts that perfectly balance character consistency, rich artistic style, and dynamic scene composition.
+
+FULL STORY CONTEXT:
+{full_story_text}
+
+CHARACTER VISUAL REFERENCE (MEMORIZE AND COPY EXACTLY):
+{character_desc_text}
+
+ARTISTIC STYLE REQUIREMENT:
+{style_guidance}
+
+{manga_specific_instructions}
+
+PANELS TO GENERATE PROMPTS FOR:
+"""
+    
+    for i, panel_info in enumerate(panels_info, 1):
+        mega_prompt += f"""
+Panel {i} (Page {panel_info['page']}, Panel {panel_info['panel']}):
+Scene: {panel_info['scene']}
+Characters speaking: {[d.get('character', '') for d in panel_info['dialogues']]}
+"""
+    
+    mega_prompt += f"""
+
+CRITICAL REQUIREMENTS:
+
+1. ARTISTIC STYLE STRUCTURE (MANDATORY):
+   - Start with: "{style}," 
+   - Follow immediately with rich artistic descriptions that enhance the {style} aesthetic
+   - Examples of rich style descriptions:
+     * "with luminous cel-shaded coloring and ethereal atmospheric lighting"
+     * "featuring dramatic depth of field and vibrant color gradients"
+     * "rendered with precise line art and vibrant saturated colors"
+
+2. CHARACTER CONSISTENCY (MANDATORY):
+   - NEVER use character names in prompts - replace with exact physical descriptions
+   - Copy character descriptions EXACTLY from CHARACTER VISUAL REFERENCE
+   - NEVER change hair color, style, or clothing from the reference
+   - If reference says "fiery auburn hair" use "fiery auburn hair" NOT "red hair"
+   - If reference says "crimson leather jacket" use "crimson leather jacket" NOT "red jacket"
+
+3. SCENE INTEGRATION:
+   - Describe the environment and setting based on the scene description
+   - Include character poses, actions, and expressions from the scene
+   - NO speech bubbles, text, or dialogue in the image
+
+4. OUTPUT FORMAT:
+   Return ONLY a JSON object with this structure:
+   {{
+     "panel_1": "full prompt for panel 1",
+     "panel_2": "full prompt for panel 2",
+     ...
+   }}
+
+5. TOKEN LIMITS:
+   - Keep each prompt under 150 tokens
+   - Prioritize style, character consistency, and scene elements
+   - Be concise but descriptive
+
+Generate prompts for all {total_panels} panels now:"""
+
+    print("Sending mega-prompt to generate all panel prompts...")
+    
+    model = "gemini-2.5-flash"
+    contents = [
+        types.Content(
+            role="user",
+            parts=[
+                types.Part.from_text(text=mega_prompt),
+            ],
+        ),
+    ]
+    generate_content_config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        temperature=0.3,
+        max_output_tokens=65536,
+        top_p=0.8 
+    )
+
+    response = client.models.generate_content(
+        model=model,
+        contents=contents,
+        config=generate_content_config,
+    )
+    
+    response_text = response.candidates[0].content.parts[0].text
+    print(f"Received mega-prompt response: {len(response_text)} characters")
+    
+    try:
+        mega_prompts = json.loads(response_text)
+        print(f"Successfully parsed {len(mega_prompts)} panel prompts")
+        
+        all_prompts = {}
+        panel_index = 1
+        
+        for page in comic_structure:
+            page_num = page['page_number']
+            page_key = f"page_{page_num}"
+            all_prompts[page_key] = {}
+            
+            for panel in page['panels']:
+                panel_num = panel['panel_number']
+                panel_key = f"panel_{panel_num}"
+                
+                mega_key = f"panel_{panel_index}"
+                if mega_key in mega_prompts:
+                    prompt = mega_prompts[mega_key].strip()
+                    
+                    prompt = prompt.replace("**", "").strip()
+                    
+                    if style.lower() == "manga":
+                        if not prompt.lower().startswith("manga style, black and white"):
+                            prompt = f"Manga style, black and white, monochrome, " + prompt
+                    else:
+                        if not prompt.lower().startswith(style.lower()):
+                            prompt = f"{style}, " + prompt
+                    
+                    max_tokens = 150 
+                    if len(prompt.split()) > max_tokens:
+                        words = prompt.split()
+                        prompt = ' '.join(words[:max_tokens])
+                        print(f"Truncated prompt for Page {page_num}, Panel {panel_num} to {max_tokens} words")
+                    
+                    all_prompts[page_key][panel_key] = prompt
+                    print(f"Generated mega-prompt for Page {page_num}, Panel {panel_num}: {len(prompt.split())} words")
+                else:
+                    print(f"Warning: No prompt found for panel_{panel_index}")
+                    all_prompts[page_key][panel_key] = f"{style}, comic book panel art"
+                
+                panel_index += 1
+        
+        print(f"Generated detailed prompts for all {total_panels} panels using MEGA-PROMPT approach with enhanced {style} style formatting")
+        return all_prompts
+        
+    except json.JSONDecodeError as e:
+        print(f"Error parsing mega-prompt response: {e}")
+        print(f"Raw response: {response_text[:500]}...")
+        return None
 
 def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file):
     """Generate detailed image prompts for ALL panels with full story context and character consistency"""
@@ -331,7 +412,7 @@ def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
     print(f"Character descriptions loaded from {character_desc_path}")
     
     print("Generating panel prompts with full story context and character descriptions...")
-    panel_prompts = generate_panel_prompts(comic_structure, character_descriptions, style, full_story_text)
+    panel_prompts = generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text)
     
     return {
         "character_descriptions": character_descriptions,
@@ -366,11 +447,7 @@ def load_prompts_from_json(markdown_file):
         return json.load(f)
 
 def generate_with_diffusers(prompt, negative_prompt, seed, randomize_seed, width, height, guidance_scale, num_inference_steps):
-    pipe = StableDiffusion3Pipeline.from_pretrained(
-        "stabilityai/stable-diffusion-3.5-large", 
-        torch_dtype=torch.bfloat16
-    )
-    pipe = pipe.to("cuda")
+    pipe = get_or_create_pipeline()
     
     if not randomize_seed and seed is not None:
         generator = torch.Generator("cuda").manual_seed(seed)
@@ -391,44 +468,24 @@ def generate_with_diffusers(prompt, negative_prompt, seed, randomize_seed, width
     return image
 
 def generate_image(prompt, negative_prompt, seed, randomize_seed, width, height, guidance_scale, num_inference_steps):
-    """Generate a single image using either client or local pipeline"""
-    try:
-        client = Client("stabilityai/stable-diffusion-3.5-large")
-        result = client.predict(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            seed=seed if not randomize_seed else None,
-            randomize_seed=randomize_seed,
-            width=width,
-            height=height,
-            guidance_scale=guidance_scale,
-            num_inference_steps=num_inference_steps,
-            api_name="/infer"
-        )
-        return result[0] 
-        
-    except Exception as e:
-        print(f"Error with client: {e}")
-        print("Falling back to local Diffusers pipeline...")
-        try:
-            image = generate_with_diffusers(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                seed=seed,
-                randomize_seed=randomize_seed,
-                width=width,
-                height=height,
-                guidance_scale=guidance_scale,
-                num_inference_steps=num_inference_steps
-            )
-            
-            temp_path = os.path.join('output', 'temp_image.png')
-            os.makedirs('output', exist_ok=True)
-            image.save(temp_path)
-            return temp_path
-        except Exception as e2:
-            print(f"Error with local pipeline: {e2}")
-            raise e2
+    """Generate a single image using local Diffusers pipeline"""
+    print("Using local Diffusers pipeline...")
+    
+    image = generate_with_diffusers(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        seed=seed,
+        randomize_seed=randomize_seed,
+        width=width,
+        height=height,
+        guidance_scale=guidance_scale,
+        num_inference_steps=num_inference_steps
+    )
+    
+    temp_path = os.path.join('output', 'temp_image.png')
+    os.makedirs('output', exist_ok=True)
+    image.save(temp_path)
+    return temp_path
 
 def generate_comic_images_for_page(settings=None):
     """Generate images for a single page in the comic using provided settings or defaults"""

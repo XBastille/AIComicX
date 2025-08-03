@@ -217,7 +217,7 @@ def generate_character_detection_prompts_llm(speaking_characters, scene_descript
     """
     try:
         client = genai.Client(
-            api_key="",
+            api_key=os.getenv("GEMINI_KEY"),
         )
         
         char_descriptions = {}
@@ -375,7 +375,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         "page_number": page_number,
         "style": style,
         "negative_prompt": "photorealistic, realistic, photo, 3d render, photography, photographic, hyperrealistic, low quality, bad anatomy, worst quality, low resolution, text, words, speech, dialogue, speech bubble, bubble",
-        "seed": 9,
+        "seed": 10,
         "randomize_seed": False,
         "width": 768,
         "height": 1024,
@@ -548,7 +548,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
 
 if __name__ == "__main__":
     
-    api_key = ""
+    api_key = os.getenv("LANDING_API_KEY")
     
     default_colors = {
         "bubble_color": (255, 255, 255),  # White
@@ -579,10 +579,7 @@ if __name__ == "__main__":
     }
     
     colors = sepia_colors
-    
 
-
-if __name__ == "__main__":
     if len(sys.argv) < 7:
         print("Usage: python inference.py <markdown_file> <page_number> <style> <panel_dimensions> <guidance_scale> <inference_steps>")
         sys.exit(1)
