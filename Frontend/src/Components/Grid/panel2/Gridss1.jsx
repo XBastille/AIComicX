@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../panel4/Grid.css"
-function Gridss1({ onPanelClick }) {
+function Gridss1({ onPanelClick, images }) {
     const [zoom, setzoom] = useState(1)
     const gap = 6;
     const boxWidth = zoom * 380
@@ -13,8 +13,13 @@ function Gridss1({ onPanelClick }) {
                         ...styles.grid, gap: `${gap}px`, gridTemplateColumns: `repeat(2, ${boxWidth}px)`, gridTemplateRows: `repeat(1, ${boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
                         overflow: "scroll",
-                    }} className="giiids">                        <div style={{ ...styles.box, width: `${zoom * 380}px`, height: `${zoom *450}` }} onClick={() => onPanelClick?.(1)}>1</div>
-                        <div style={{ ...styles.box, width: `${zoom * 380}px`, height: `${zoom *450}` }} onClick={() => onPanelClick?.(2)}>2</div>
+                    }} className="giiids">
+                        <div style={{ ...styles.box, width: `${zoom * 380}px`, height: `${zoom * 450}` }} onClick={() => onPanelClick?.(1)}>
+                            <img src={images[0]} alt="Comic_Space_1" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        </div>
+                        <div style={{ ...styles.box, width: `${zoom * 380}px`, height: `${zoom * 450}` }} onClick={() => onPanelClick?.(2)}>
+                            <img src={images[1]} alt="Comic_Space_2" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        </div>
                     </div>
                 </div>
             </div>

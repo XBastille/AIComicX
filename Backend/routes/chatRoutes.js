@@ -353,48 +353,70 @@ router.post('/generateComic', async (req, res) => {
     const { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width } = req.body;
     const scriptPath = path.join(__dirname, "../genai_models/inference.py")
     const storyPath = path.join(__dirname, "../pythonInput/temp_story_comic.md");
-    // const pythonProcess = await spawn('python', [scriptPath, storyPath, page_no, artStyle, JSON.stringify(height_width), guidanceScale2, inferenceSteps2]);
-    // console.log(page_no, artStyle, height_width, guidanceScale2, inferenceSteps2)
-    // console.log("coming inside /generate comics")
-    // let output = '';
-    // let errorOutput = '';
 
-    // pythonProcess.stdout.on('data', (data) => {
-    //     output += data.toString();
-    //     console.log(output)
-    // });
+    // async function python_genrating_image() {
+    //     return new Promise((resolve, reject) => {
+    //         const pythonProcess = spawn('python', [scriptPath, storyPath, page_no, artStyle, JSON.stringify(height_width), guidanceScale2, inferenceSteps2]);
+    //         console.log(page_no, artStyle, height_width, guidanceScale2, inferenceSteps2)
+    //         console.log("coming inside /generate comics")
+    //         let output = '';
+    //         let errorOutput = '';
 
-    // pythonProcess.stderr.on('data', (data) => {
-    //     errorOutput += data.toString();
-    // });
-
-    // pythonProcess.on('close', (code) => {
-    //     console.log(`Python process exited with code ${code}`);
-
-    //     if (code !== 0 || errorOutput.includes("tokens_limit_reached")) {
-    //         console.error('Python script error or token limit:', errorOutput);
-    //         return res.status(400).json({
-    //             success: false,
-    //             error: "Message too long or internal error occurred.",
-    //             details: errorOutput
+    //         pythonProcess.stdout.on('data', (data) => {
+    //             output += data.toString();
+    //             console.log(output)
     //         });
-    //     }
-    // });
 
-    const Comic_Image_Path = path.join(__dirname, `../output/temp_story_comic_page_${page_no}_with_bubbles`);
-    const BASE_URL = "https://3000-01jtxam73atjx6847zgzf8tzjk.cloudspaces.litng.ai";
-    try {
-        fs.readdir(Comic_Image_Path, (err, files) => {
-            if (err) {
-                console.log(err);
+    //         pythonProcess.stderr.on('data', (data) => {
+    //             errorOutput += data.toString();
+    //         });
+
+    //         pythonProcess.on('close', (code) => {
+    //             console.log(`Python process exited with code ${code}`);
+
+    //             if (code !== 0 || errorOutput.includes("tokens_limit_reached")) {
+    //                 console.error('Python script error or token limit:', errorOutput);
+    //                 return res.status(400).json({
+    //                     success: false,
+    //                     error: "Message too long or internal error occurred.",
+    //                     details: errorOutput
+    //                 });
+    //             }
+    //             resolve();
+    //         });
+    //     })
+    // }
+
+    async function generating_images() {
+        return new Promise((resolve, reject) => {
+            const Comic_Image_Path = path.join(__dirname, `../output/temp_story_comic_page_${page_no}_with_bubbles`);
+            const BASE_URL = "https://3000-01jtxam73atjx6847zgzf8tzjk.cloudspaces.litng.ai";
+            try {
+                fs.readdir(Comic_Image_Path, (err, files) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                    const urls = files.map(file => `${Comic_Image_Path}/${file}`)
+                    const bubble_files = files.filter(urls => urls.endsWith("with_bubbles.png"))
+                    const send_bubble_files = bubble_files.map(files => `${BASE_URL}/output/temp_story_comic_page_${page_no}_with_bubbles/${files}`);
+                    resolve(send_bubble_files);
+                })
+            } catch (error) {
+                console.log("No Folder exists: " + error);
             }
-            const urls = files.map(file => `${Comic_Image_Path}/${file}`)
-            const bubble_files = files.filter(urls => urls.endsWith("with_bubbles.png"))
-            const send_bubble_files = bubble_files.map(files => `${BASE_URL}/output/temp_story_comic_page_${page_no}_with_bubbles/${files}`);
-            return res.status(200).send(send_bubble_files)
         })
+    }
+
+    try {
+       // await python_genrating_image();
+        const send_bubble_files = await generating_images();
+        return res.status(200).send(send_bubble_files)
     } catch (error) {
-        console.log("No Folder exists: " + error);
+        console.log(error)
+        res.status(500).json({
+            message: "Failed to generate comic.",
+            error: error.details || error
+        });
     }
 })
 

@@ -1,24 +1,28 @@
 import React, { useState } from "react";
 import "../panel4/Grid.css"
-function One({ onPanelClick }) {
-   
-    const[zoom,setzoom]=useState(1)
-    const gap=6;
-    const boxWidth=zoom*500
-    const boxHeight=zoom*650
+function One({ onPanelClick, images }) {
+
+    const [zoom, setzoom] = useState(1)
+    const gap = 6;
+    const boxWidth = zoom * 500
+    const boxHeight = zoom * 650
 
     return (
         <div style={styles.flex}>
             <div style={styles.container}>
                 <div style={styles.inner}>
-                    <div style={{...styles.grid,gap: `${gap}px`, gridTemplateColumns: `repeat(1, ${boxWidth}px)`, gridTemplateRows: `repeat(1, ${boxHeight}px)`, maxWidth: "90vw",
+                    <div style={{
+                        ...styles.grid, gap: `${gap}px`, gridTemplateColumns: `repeat(1, ${boxWidth}px)`, gridTemplateRows: `repeat(1, ${boxHeight}px)`, maxWidth: "90vw",
                         maxHeight: "90vh",
-                        overflow: "scroll",}} className="giiids">
-                        <div style={{...styles.box,width:`${boxWidth}`,height:`${boxHeight}px`}} onClick={() => onPanelClick?.(1)}>1</div>
+                        overflow: "scroll",
+                    }} className="giiids">
+                        <div style={{ ...styles.box, width: `${boxWidth}`, height: `${boxHeight}px` }} onClick={() => onPanelClick?.(1)}>
+                            <img src={images[0]} alt="Comic_Space_1" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        </div>
                     </div>
                 </div>
             </div>
-           <div className="controller" style={styles.controller}>
+            <div className="controller" style={styles.controller}>
                 <input type="range"
                     min="1"
                     max="2"
@@ -46,7 +50,7 @@ const styles = {
         height: "100vh",
         width: "100vw",
         color: "white",
-    },    box: {
+    }, box: {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
