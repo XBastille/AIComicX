@@ -610,11 +610,9 @@ if __name__ == "__main__":
         panel_dimensions = [tuple(map(lambda x: int(x.replace('px', '')), dim)) for dim in panel_dimensions_raw]
         guidance_scale = float(sys.argv[5])
         inference_steps = int(sys.argv[6])
-        theme = sys.argv[7].lower()
-        font_style = sys.argv[8].lower()
+        colors = theme_mapping.get(sys.argv[7].lower())
+        font_path = font_mapping.get(sys.argv[8].lower())
         seed = int(sys.argv[9])
-        colors = theme_mapping.get(theme, sepia_colors)
-        font_path = font_mapping.get(font_style, "fonts/font1reg.ttf")
         
     except (ValueError, SyntaxError) as e:
         print(f"Error parsing arguments: {e}")
