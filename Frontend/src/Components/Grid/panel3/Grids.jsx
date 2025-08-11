@@ -18,10 +18,14 @@ function Grids({ onPanelClick, images }) {
                         overflow: "scroll",
                     }} className="grids">
                         <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }} onClick={() => onPanelClick?.(1)}>
-                            <img src={images[0]} alt="Comic_Space_1" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                            <img src={images[0]} alt="Comic_Space_1" style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "fill",
+                            }} />
                         </div>
-                        <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }} onClick={() => onPanelClick?.(2)}>
-                            <img src={images[1]} alt="Comic_Space_2" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        <div style={{ ...styles.box, width: `${zoom * 420}px`, height: `${zoom * 200}px` }} onClick={() => onPanelClick?.(2)}>
+                            <img src={images[1]} alt="Comic_Space_2" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                         </div>
                         <div style={{ ...styles.box, width: `${zoom * 630}px`, height: `${zoom * 200}px` }} onClick={() => onPanelClick?.(3)}>
                             <img src={images[2]} alt="Comic_Space_3" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />

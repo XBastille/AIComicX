@@ -2,16 +2,16 @@ import React, { act, useEffect, useState } from 'react';
 import './Conssole.css';
 import aicomicx2 from "../../Picture/aicomic2.jpg";
 import SideNav from '../../Components/SideNav/SideNav';
-import One from '../../Components/Grid/panel1/One';
-import Gridss from '../../Components/Grid/panel2/Gridss';
-import Gridss1 from '../../Components/Grid/panel2/Gridss1';
-import Grids from '../../Components/Grid/panel3/Grids';
-import Grids1 from '../../Components/Grid/panel3/Grids1';
-import Grids2 from '../../Components/Grid/panel3/Grids2';
-import Grid from '../../Components/Grid/panel4/Grid';
-import Grid1 from '../../Components/Grid/panel4/Grid1';
-import Grid2 from '../../Components/Grid/panel4/Grid2';
-import Grid3 from '../../Components/Grid/panel4/Grid3';
+import One from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel1/One';
+import Gridss from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel2/Gridss';
+import Gridss1 from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel2/Gridss1';
+import Grids from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel3/Grids';
+import Grids1 from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel3/Grids1';
+import Grids2 from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel3/Grids2';
+import Grid from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel4/Grid';
+import Grid1 from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel4/Grid1';
+import Grid2 from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel4/Grid2';
+import Grid3 from '../../../../../../newChange/AIComicX/Frontend/src/Components/Grid/panel4/Grid3';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { API_ENDPOINTS } from "../../config/api";
@@ -65,7 +65,7 @@ const Height_Width_data = {
                 box_height_2: '640px',
             },
             width: {
-                box_width_0: '1536px',   
+                box_width_0: '1536px',
                 box_width_1: '1536px',
                 box_width_2: '1536px',
             }
@@ -166,10 +166,10 @@ function Conssole() {
     const [showPanelEditor, setShowPanelEditor] = useState(false);
     const [selectedPanel, setSelectedPanel] = useState(null);
     const [showEditControls, setShowEditControls] = useState(false);
-    const [inferenceSteps, setInferenceSteps] = useState(20);
-    const [guidanceScale, setGuidanceScale] = useState(7.5);
-    const [seed, setSeed] = useState(42);
-    const [prompt, setPrompt] = useState("A dynamic comic book scene featuring a superhero in action, flying through a futuristic cityscape with neon lights and towering skyscrapers, detailed art style, vibrant colors, dramatic lighting");
+    // const [inferenceSteps, setInferenceSteps] = useState(20);
+    // const [guidanceScale, setGuidanceScale] = useState(7.5);
+    // const [seed, setSeed] = useState(42);
+    const [prompt, setPrompt] = useState("");
     const [showCopyNotification, setShowCopyNotification] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [inferenceSteps2, setInferenceSteps2] = useState(40);
@@ -180,6 +180,7 @@ function Conssole() {
     const [artStyle, setArtStyle] = useState('ANIME');
     const [grid, setgrid] = useState("");
     const [height_width, setheight_width] = useState([]);
+    const [modalImage, SetmodalImage] = useState("");
 
     //Image transfer states ,uing as props
     //panel1
@@ -221,11 +222,6 @@ function Conssole() {
         }
     };
 
-    const handlePanelClick = (panelIndex) => {
-        setSelectedPanel(panelIndex);
-        setShowPanelEditor(true);
-        setShowEditControls(false);
-    };
 
     const handleEditClick = () => {
         setShowEditControls(true);
@@ -233,9 +229,9 @@ function Conssole() {
 
     const handleRegenerate = () => {
         console.log('Regenerating with:', {
-            inferenceSteps,
-            guidanceScale,
-            seed,
+            inferenceSteps2,
+            guidanceScale2,
+            seed2,
             prompt
         });
     };
@@ -340,12 +336,75 @@ function Conssole() {
         }
     };
 
+
+
+    const handlePanelClick = (panelIndex) => {
+        setSelectedPanel(panelIndex);
+        setShowPanelEditor(true);
+        setShowEditControls(false);
+        get_panel_prompt(panelIndex);
+      //  console.log(panel1_grid1)
+        if (activePanel === 'Panel1_Grid1') {
+            const images = panel1_grid1[6];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel2_Grid1') {
+            const images = panel2_grid1[2];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel2_Grid2') {
+            const images = panel2_grid2[2];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel3_Grid1') {
+            const images = panel3_grid1[1];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel3_Grid2') {
+            const images = panel3_grid2[1];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel3_Grid3') {
+            const images = panel3_grid3[1];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel4_Grid1') {
+            const images = panel4_grid1[1];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel4_Grid2') {
+            const images = panel4_grid2[1];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel4_Grid3') {
+            const images = panel4_grid3[1];
+            SetmodalImage(images[panelIndex - 1])
+        }
+        else if (activePanel === 'Panel4_Grid4') {
+            const images = panel4_grid4[1];
+            SetmodalImage(images[panelIndex - 1])
+        }
+    };
+
+    //get panel prompt 
+    const get_panel_prompt = async (panelIndex) => {
+        try {
+            const res = await axios.post(API_ENDPOINTS.get_panel_prompt, { pageNo })
+            const data = `panel_${panelIndex}`
+            setPrompt(res.data.msg[data])
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     //Calling inference.py and handling images.
     const generateComic = async () => {
         const page_no = pageNo + 1;
         try {
             const res = await axios.post(API_ENDPOINTS.generateComic, { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width });
             const images = res.data;
+            get_panel_prompt();
             if (panel === 'Panel4') {
                 if (grid === 'Grid1') {
                     setpanel4_grid1(prev => ({ ...prev, [page_no]: images }));
@@ -562,10 +621,14 @@ function Conssole() {
                 <>
                     <div className="modal-overlay" onClick={() => setShowPanelEditor(false)} />
                     <div className="panel-editor-modal">
+
                         <button className="close-btn" onClick={() => setShowPanelEditor(false)}>
                             <FontAwesomeIcon icon={faTimes} />
                         </button>
                         <div className="panel-editor-content">
+                            <div className='image_container'>
+                                <img src={modalImage} />
+                            </div>
                             <div className="panel-controls">
                                 <h3 className="panel-title">Panel {selectedPanel}</h3>
                                 <div className="parameter-info">
@@ -587,13 +650,13 @@ function Conssole() {
                                     </div>
 
                                     <div className="control-group">
-                                        <label>Inference Steps: {inferenceSteps}</label>
+                                        <label>Inference Steps: {inferenceSteps2}</label>
                                         <input
                                             type="range"
                                             min="0"
                                             max="50"
-                                            value={inferenceSteps}
-                                            onChange={(e) => setInferenceSteps(parseInt(e.target.value))}
+                                            value={inferenceSteps2}
+                                            onChange={(e) => setInferenceSteps2(parseInt(e.target.value))}
                                             className="slider"
                                             disabled={!showEditControls}
                                         />
@@ -606,8 +669,8 @@ function Conssole() {
                                             min="0"
                                             max="10"
                                             step="0.1"
-                                            value={guidanceScale}
-                                            onChange={(e) => setGuidanceScale(parseFloat(e.target.value) || 0)}
+                                            value={guidanceScale2}
+                                            onChange={(e) => setGuidanceScale2(parseFloat(e.target.value) || 0)}
                                             className="number-input"
                                             readOnly={!showEditControls}
                                         />
@@ -619,8 +682,8 @@ function Conssole() {
                                             type="number"
                                             min="0"
                                             max="100000000"
-                                            value={seed}
-                                            onChange={(e) => setSeed(parseInt(e.target.value) || 0)}
+                                            value={seed2}
+                                            onChange={(e) => setSeed2(parseInt(e.target.value) || 0)}
                                             className="number-input"
                                             readOnly={!showEditControls}
                                         />

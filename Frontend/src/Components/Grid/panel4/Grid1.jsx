@@ -2,7 +2,7 @@ import React from "react";
 import "./Grid.css"
 import { useState } from "react";
 
-function Grid1({ onPanelClick }) {
+function Grid1({ onPanelClick, images }) {
 
     const [zoom, setzoom] = useState(1);
     const gap = "6px"
@@ -18,10 +18,19 @@ function Grid1({ onPanelClick }) {
                         maxHeight: "90vh",
                         overflow: "scroll",
 
-                    }} className="giids">                        <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(1)}>1</div>
-                        <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(2)}>2</div>
-                        <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(3)}>3</div>
-                        <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(4)}>4</div>
+                    }} className="giids">
+                        <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(1)}>
+                            <img src={images[0]} alt="Comic_Space_1" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        </div>
+                        <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(2)}>
+                            <img src={images[1]} alt="Comic_Space_2" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        </div>
+                        <div style={{ ...styles.box2, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(3)}>
+                            <img src={images[2]} alt="Comic_Space_3" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        </div>
+                        <div style={{ ...styles.box1, width: `${zoom * 300}px`, height: `${zoom * 200}` }} onClick={() => onPanelClick?.(4)}>
+                            <img src={images[3]} alt="Comic_Space_4" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -53,7 +62,7 @@ const styles = {
         height: "100vh",
         width: "100vw",
         color: "white",
-    },    box1: {
+    }, box1: {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -96,7 +105,7 @@ const styles = {
         height: "100vh",
         overflow: "auto"
     },
-  
+
 };
 
 export default Grid1
