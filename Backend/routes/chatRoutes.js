@@ -6,7 +6,6 @@ const fs = require('fs');
 const pdf = require('pdf-parse');
 const mammoth = require('mammoth');
 
-
 const router = express.Router();
 
 const pythonConnect = (res, python, scriptPath) => {
@@ -354,38 +353,38 @@ router.post('/generateComic', async (req, res) => {
     const scriptPath = path.join(__dirname, "../genai_models/inference.py")
     const storyPath = path.join(__dirname, "../pythonInput/temp_story_comic.md");
 
-    // async function python_genrating_image() {
-    //     return new Promise((resolve, reject) => {
-    //         const pythonProcess = spawn('python', [scriptPath, storyPath, page_no, artStyle, JSON.stringify(height_width), guidanceScale2, inferenceSteps2]);
-    //         console.log(page_no, artStyle, height_width, guidanceScale2, inferenceSteps2)
-    //         console.log("coming inside /generate comics")
-    //         let output = '';
-    //         let errorOutput = '';
+    async function python_genrating_image() {
+        return new Promise((resolve, reject) => {
+            const pythonProcess = spawn('python', [scriptPath, storyPath, page_no, artStyle, JSON.stringify(height_width), guidanceScale2, inferenceSteps2]);
+            console.log(page_no, artStyle, height_width, guidanceScale2, inferenceSteps2)
+            console.log("coming inside /generate comics")
+            let output = '';
+            let errorOutput = '';
 
-    //         pythonProcess.stdout.on('data', (data) => {
-    //             output += data.toString();
-    //             console.log(output)
-    //         });
+            pythonProcess.stdout.on('data', (data) => {
+                output += data.toString();
+                console.log(output)
+            });
 
-    //         pythonProcess.stderr.on('data', (data) => {
-    //             errorOutput += data.toString();
-    //         });
+            pythonProcess.stderr.on('data', (data) => {
+                errorOutput += data.toString();
+            });
 
-    //         pythonProcess.on('close', (code) => {
-    //             console.log(`Python process exited with code ${code}`);
+            pythonProcess.on('close', (code) => {
+                console.log(`Python process exited with code ${code}`);
 
-    //             if (code !== 0 || errorOutput.includes("tokens_limit_reached")) {
-    //                 console.error('Python script error or token limit:', errorOutput);
-    //                 return res.status(400).json({
-    //                     success: false,
-    //                     error: "Message too long or internal error occurred.",
-    //                     details: errorOutput
-    //                 });
-    //             }
-    //             resolve();
-    //         });
-    //     })
-    // }
+                if (code !== 0 || errorOutput.includes("tokens_limit_reached")) {
+                    console.error('Python script error or token limit:', errorOutput);
+                    return res.status(400).json({
+                        success: false,
+                        error: "Message too long or internal error occurred.",
+                        details: errorOutput
+                    });
+                }
+                resolve();
+            });
+        })
+    }
 
     async function generating_images() {
         return new Promise((resolve, reject) => {
@@ -407,8 +406,9 @@ router.post('/generateComic', async (req, res) => {
         })
     }
 
+
     try {
-       // await python_genrating_image();
+         await python_genrating_image();
         const send_bubble_files = await generating_images();
         return res.status(200).send(send_bubble_files)
     } catch (error) {
@@ -419,6 +419,24 @@ router.post('/generateComic', async (req, res) => {
         });
     }
 })
+
+//panel_prompt_data:
+router.post("/get_panel_prompt", async (req, res) => {
+
+    const { pageNo } = req.body;
+    try {
+        const location = path.join(__dirname, "../genai_models/output/temp_story_comic_prompts.json");
+        const file = fs.readFileSync(location, 'utf8');
+        const file_data = JSON.parse(file);
+        const page_key = `page_${pageNo + 1}`
+        const value = file_data.panel_prompts[page_key]
+        res.json({ success: "true", msg: value })
+    } catch (error) {
+        console.log("cannot read the promptFile :" + error);
+    }
+
+})
+
 
 router.get('/panel_data', async (req, res) => {
     try {
