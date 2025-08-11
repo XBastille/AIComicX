@@ -1,3 +1,4 @@
+import ast
 import os
 import json
 import sys
@@ -345,7 +346,7 @@ def generate_character_detection_prompts(panel_info, character_descriptions, sce
 
 def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensions, guidance_scale, inference_steps,
                       bubble_color=(255, 255, 255), text_color=(0, 0, 0),
-                      narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255)):
+                      narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255), font_path=None, seed=9):
     """
     Generate comic page and add speech bubbles to each panel.
     
@@ -361,6 +362,8 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         text_color: RGB tuple for speech bubble text color
         narration_bg_color: RGB tuple for narration background color
         narration_text_color: RGB tuple for narration text color
+        font_path: Path to the font file to use
+        seed: Seed for image generation
     """
     print(f"Processing page {page_number} from {markdown_file}")
     print(f"Using colors - Bubble: {bubble_color}, Text: {text_color}, Narration BG: {narration_bg_color}, Narration Text: {narration_text_color}")
@@ -370,7 +373,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         "page_number": page_number,
         "style": style,
         "negative_prompt": "photorealistic, realistic, photo, 3d render, photography, photographic, hyperrealistic, low quality, bad anatomy, worst quality, low resolution, text, words, speech, dialogue, speech bubble, bubble",
-        "seed": 9,
+        "seed": seed,
         "randomize_seed": False,
         "width": 768,
         "height": 1024,
@@ -516,6 +519,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
             generator = SpeechBubbleGenerator(
                 panel_image_path, 
                 api_key,
+                font_path=font_path,
                 bubble_color=bubble_color,
                 text_color=text_color,
                 narration_bg_color=narration_bg_color,
@@ -572,7 +576,21 @@ if __name__ == "__main__":
         "narration_text_color": (230, 240, 250)  # Light Blue
     }
     
+    font_mapping = {
+        "anime": "fonts/font1reg.ttf",
+        "manga": "fonts/font2t.ttf", 
+        "comic": "fonts/font3.ttf",
+        "handwritten": "fonts/font4.ttf",
+        "cute": "fonts/font5.ttf"
+    }
+
+    theme = "sepia"  # Can be changed: default, sepia, noir, modern
+    font_style = "anime"  # Can be changed: anime, manga, comic, handwritten, cute
+    seed = 10  
+    
     colors = sepia_colors
+    
+    font_path = font_mapping.get(font_style, "fonts/font1reg.ttf")
     
     process_comic_page(
         markdown_file="test_4_comic.md", 
@@ -589,5 +607,7 @@ if __name__ == "__main__":
         bubble_color=colors["bubble_color"],
         text_color=colors["text_color"],
         narration_bg_color=colors["narration_bg_color"],
-        narration_text_color=colors["narration_text_color"]
+        narration_text_color=colors["narration_text_color"],
+        font_path=font_path,
+        seed=seed
     )

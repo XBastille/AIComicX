@@ -350,7 +350,7 @@ def generate_character_detection_prompts(panel_info, character_descriptions, sce
 
 def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensions, guidance_scale, inference_steps,
                       bubble_color=(255, 255, 255), text_color=(0, 0, 0),
-                      narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255)):
+                      narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255), font_path=None, seed=10):
     """
     Generate comic page and add speech bubbles to each panel.
     
@@ -366,6 +366,8 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         text_color: RGB tuple for speech bubble text color
         narration_bg_color: RGB tuple for narration background color
         narration_text_color: RGB tuple for narration text color
+        font_path: Path to the font file to use
+        seed: Seed for image generation
     """
     print(f"Processing page {page_number} from {markdown_file}")
     print(f"Using colors - Bubble: {bubble_color}, Text: {text_color}, Narration BG: {narration_bg_color}, Narration Text: {narration_text_color}")
@@ -375,7 +377,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         "page_number": page_number,
         "style": style,
         "negative_prompt": "photorealistic, realistic, photo, 3d render, photography, photographic, hyperrealistic, low quality, bad anatomy, worst quality, low resolution, text, words, speech, dialogue, speech bubble, bubble",
-        "seed": 10,
+        "seed": seed,
         "randomize_seed": False,
         "width": 768,
         "height": 1024,
@@ -522,6 +524,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
             generator = SpeechBubbleGenerator(
                 panel_image_path, 
                 api_key,
+                font_path=font_path,
                 bubble_color=bubble_color,
                 text_color=text_color,
                 narration_bg_color=narration_bg_color,
@@ -580,8 +583,23 @@ if __name__ == "__main__":
     
     colors = sepia_colors
 
-    if len(sys.argv) < 7:
-        print("Usage: python inference.py <markdown_file> <page_number> <style> <panel_dimensions> <guidance_scale> <inference_steps>")
+    font_mapping = {
+        "anime": "fonts/font1reg.ttf",
+        "manga": "fonts/font2t.ttf", 
+        "comic": "fonts/font3.ttf",
+        "handwritten": "fonts/font4.ttf",
+        "cute": "fonts/font5.ttf"
+    }
+
+    theme_mapping = {
+        "default": default_colors,
+        "sepia": sepia_colors,
+        "noir": noir_colors,
+        "modern": modern_colors
+    }
+
+    if len(sys.argv) < 10:
+        print("Usage: python inference.py <markdown_file> <page_number> <style> <panel_dimensions> <guidance_scale> <inference_steps> <theme> <font_style> <seed>")
         sys.exit(1)
 
     try:
@@ -592,6 +610,12 @@ if __name__ == "__main__":
         panel_dimensions = [tuple(map(lambda x: int(x.replace('px', '')), dim)) for dim in panel_dimensions_raw]
         guidance_scale = float(sys.argv[5])
         inference_steps = int(sys.argv[6])
+        theme = sys.argv[7].lower()
+        font_style = sys.argv[8].lower()
+        seed = int(sys.argv[9])
+        colors = theme_mapping.get(theme, sepia_colors)
+        font_path = font_mapping.get(font_style, "fonts/font1reg.ttf")
+        
     except (ValueError, SyntaxError) as e:
         print(f"Error parsing arguments: {e}")
         sys.exit(1)
@@ -607,5 +631,7 @@ if __name__ == "__main__":
         bubble_color=colors["bubble_color"],
         text_color=colors["text_color"],
         narration_bg_color=colors["narration_bg_color"],
-        narration_text_color=colors["narration_text_color"]
+        narration_text_color=colors["narration_text_color"],
+        font_path=font_path,
+        seed=seed
     )
