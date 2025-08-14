@@ -2,128 +2,192 @@
   font-family: 'Space Grotesk', sans-serif;
 }
 
-
 .menu-overlay {
   position: fixed;
-  top: -100vh;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #e37450;
+  top: 2%;
+  width: 67.5vw;
+  height: 95vh;
+  background-color: white;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: top 1s ease-in-out;
-  z-index: 1000;
+  transition: right 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+  z-index: 1500;
+  border-radius: 20px ;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
 }
 
-
 .menu-overlay.open {
-  top: 0;
+  right: 1.5%;
 }
 
 .menu-overlay.close {
-  top: -100vh;
+  right: -70vw;
 }
 
 .menu-content {
-  text-align: left;
-  color: white;
+  width: 90%;
+  height: 90%;
   position: relative;
-  width: 80%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.close-button {
-  position: absolute;
-  top: 20px;
-  right: -60px;
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: rgb(0, 0, 0);
-  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-
+  justify-content: center;
 }
 
-.icon {
-  width: 20px;
-  height: 20px;
-}
-
-.menu-container {
+.menu-layout {
   display: flex;
   width: 100%;
-  justify-content: space-between;
+  height: 100%;
   align-items: center;
-  position: relative;
+  justify-content: space-between;
+  padding: 0 5%;
 }
 
-.menu-container::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2px;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateX(-50%);
+.navigation-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .menu-list {
   list-style: none;
   padding: 0;
-  font-size: 65px;
-  font-weight: bold;
+  margin: 0;
 }
 
-.menu-list li {
-  margin: 10px 0;
+.menu-item {
+  margin: 30px 0;
+  position: relative;
+}
+
+.menu-link {
+  font-size: 48px;
+  font-weight: 400;
+  color: black;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 2px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.menu-link::before {
+  content: '';
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: black;
+  z-index: 1;
+}
+
+.menu-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  width: 0%;
+  height: 5px;
+  background: linear-gradient(to right, rgb(223, 30, 114), rgb(230, 110, 41), rgb(255, 191, 0));
+  transition: width 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+  z-index: 2;
+}
+
+.menu-link:hover::after {
+  width: 100%;
+}
+
+.social-section {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: color 0.3s ease-in-out;
-  cursor: pointer;
-}
-
-.menu-list li:hover {
-  color: black;
-}
-
-.menu-list li span {
-  font-size: 24px;
-  font-weight: normal;
-
+  padding-right: 5%;
 }
 
 .social-icons {
   display: flex;
+  flex-direction: row;
   gap: 25px;
-  position: relative;
-  margin-right: 200px;
+  align-items: center;
 }
 
 .social-icon-container {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background 0.3s ease-in-out;
+  transition: transform 0.3s ease;
+  cursor: pointer;
 }
 
 .social-icon-container:hover {
-  background: rgba(0, 0, 0);
+  transform: scale(1.2);
 }
 
 .social-icon {
-  width: 50px;
-  height: 50px;
+  width: 35px;
+  height: 35px;
+  filter: brightness(0);
+  transition: all 0.3s ease;
+}
+
+.social-icon-container:hover .social-icon {
+  filter: brightness(0) saturate(100%) invert(25%) sepia(88%) saturate(6151%) hue-rotate(328deg) brightness(89%) contrast(96%);
+}
+
+@media (max-width: 768px) {
+  .menu-overlay {
+    width: 85vw;
+    right: -85vw;
+  }
+  
+  .menu-overlay.open {
+    right: 3%;
+  }
+  
+  .menu-overlay.close {
+    right: -85vw;
+  }
+  
+  .menu-layout {
+    flex-direction: column;
+    justify-content: center;
+    gap: 50px;
+  }
+  
+  .menu-link {
+    font-size: 36px;
+  }
+  
+  .social-icons {
+    flex-direction: row;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-overlay {
+    width: 95vw;
+    right: -95vw;
+  }
+  
+  .menu-overlay.open {
+    right: 2%;
+  }
+  
+  .menu-overlay.close {
+    right: -95vw;
+  }
+  
+  .menu-link {
+    font-size: 28px;
+  }
+  
+  .social-icon {
+    width: 30px;
+    height: 30px;
+  }
 }

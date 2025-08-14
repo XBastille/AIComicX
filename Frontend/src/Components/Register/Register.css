@@ -47,15 +47,15 @@
 }
 
 @font-face {
-  font-family: 'AnimeAce';
-  src: url('../../animeace2bb_tt/animeace2_reg.ttf') format('truetype');
+  font-family: 'anime';
+  src: url('../../fonts/font1bld.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'AnimeAce';
-  src: url('../../animeace2bb_tt/animeace2_bld.ttf') format('truetype');
+  font-family: 'anime';
+  src: url('../../fonts/font1bld.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
 }
@@ -71,7 +71,7 @@
   color: #000;
   padding: 15px 18px;
   border-radius: 300px;
-  font-family: 'AnimeAce', Arial, sans-serif;
+  font-family: 'anime', Arial, sans-serif;
   font-size: 12px;
   font-weight: bold;
   text-align: center;

@@ -5,42 +5,56 @@ import linkedinIcon from "../../Picture/linkedin.png";
 import instagramIcon from "../../Picture/instagram-new.png";
 import twitterIcon from "../../Picture/X_logo_2023_white.png";
 
-
-function Header ({toggleMenu , menuOpen}) {
-   /* const [isOpen, setIsOpen] = useState(true);*/
+function Header({toggleMenu, menuOpen}) {
     return (
-            <div className={`menu-overlay ${menuOpen ? "open" : "close"}`}>
-              <div className="menu-content">
-                <button className="close-button" onClick={toggleMenu}>
-                   CLOSE
-                </button>
-                <div className="menu-container">
-                <ul className="menu-list">
-                  {[
-                    "Home",
-                    "Team",
-                    "FAQs",
-                    "Socials",
-                    "Donate",
-                    "Contact us",
-                  ].map((item, index) => (
-                    <li key={index}>
-                      <span>{String(index + 1).padStart(2, "0")}</span> {item}
-                    </li>
-                  ))}
-                </ul>
-               <div className="social-icons">
-               {[githubIcon, twitterIcon, instagramIcon, linkedinIcon].map((icon, index) => (
-                <div key={index} className="social-icon-container">
-                  <img src={icon} alt="Social Icon" className="social-icon" /> 
-                </div>
-              )) }
-                </div>
-                </div> 
-              </div>
-            </div>
-          
-    );
-};
+        <div className={`menu-overlay ${menuOpen ? "open" : "close"}`}>
+            <div className="menu-content">
+                <div className="menu-layout">
+                    <div className="navigation-section">
+                        <ul className="menu-list">
+                            {[
+                                "Home",
+                                "License", 
+                                "Socials",
+                                "Donate",
+                                "Contact us",
+                            ].map((item, index) => (
+                                <li key={index} className="menu-item">
+                                    {item === "License" ? (
+                                        <a 
+                                            href="https://github.com/XBastille/AIComicX/blob/main/LICENSE" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="menu-link"
+                                        >
+                                            {item}
+                                        </a>
+                                    ) : (
+                                        <span className="menu-link">{item}</span>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
 
-export default  Header;
+                    <div className="social-section">
+                        <div className="social-icons">
+                            {[
+                                { icon: githubIcon, alt: "GitHub" },
+                                { icon: twitterIcon, alt: "Twitter/X" },
+                                { icon: instagramIcon, alt: "Instagram" },
+                                { icon: linkedinIcon, alt: "LinkedIn" }
+                            ].map((social, index) => (
+                                <div key={index} className="social-icon-container">
+                                    <img src={social.icon} alt={social.alt} className="social-icon" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default Header;
