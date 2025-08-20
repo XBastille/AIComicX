@@ -4,6 +4,7 @@ import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { TextPlugin } from "gsap/TextPlugin"
 import { windowlistner } from "../../Components/WindowListener/WindowListener";
+import Summary from "../../Components/Summary/Summary"
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Nav from "../../Components/Nav/Nav";
@@ -607,7 +608,9 @@ function Body() {
             }}></div>
 
             <div style={styles.heroContainer} className="hero-container">
+               
                 <div style={styles.gridContainer}>
+                   
                     <div style={styles.gridItem}>
                         <video
                             style={styles.gridVideo}
@@ -1032,6 +1035,7 @@ function Body() {
             </div>
 
             <div style={styles.purpleSection} className="purple-section">
+             <Summary />
             </div>
         </div>
     )
@@ -1056,7 +1060,22 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#0a0a0a' 
+        background: 'linear-gradient(to bottom, #0a0a0a 50%, #1a0f1f 80%, rgb(31, 22, 35) 95%)'
+    },
+
+     uShapeGradient: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: `
+            conic-gradient(from 180deg at 15% 50%, rgba(31, 22, 35, 0.9) 0deg, rgba(31, 22, 35, 0.5) 45deg, transparent 90deg, transparent 270deg, rgba(31, 22, 35, 0.5) 315deg, rgba(31, 22, 35, 0.9) 360deg),
+            conic-gradient(from 0deg at 85% 50%, rgba(31, 22, 35, 0.9) 0deg, rgba(31, 22, 35, 0.5) 45deg, transparent 90deg, transparent 270deg, rgba(31, 22, 35, 0.5) 315deg, rgba(31, 22, 35, 0.9) 360deg),
+            linear-gradient(to top, rgba(31, 22, 35, 0.95) 0%, rgba(31, 22, 35, 0.6) 25%, rgba(31, 22, 35, 0.2) 45%, transparent 65%)
+        `,
+        pointerEvents: 'none',
+        zIndex: 1
     },
 
     gridContainer: {
@@ -1070,6 +1089,7 @@ const styles = {
         top: '67%',
         left: '50%',
         transform: 'translate(-50%, -50%)', 
+         zIndex: 2
     },
 
     gridItem: {
@@ -1201,9 +1221,8 @@ const styles = {
         width: '100%',
         position: 'relative',
         zIndex: 999, 
-        marginTop: '35vh',
-        boxShadow: '0 -20px 40px rgba(255, 255, 255, 0.1)', 
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)' 
+        marginTop: '0',
+      
     },
 
     verticalLetter: {
