@@ -165,7 +165,7 @@ def generate_panel_image(prompt, width, height, guidance_scale, inference_steps,
         
         generator = torch.Generator("cuda").manual_seed(seed)
         
-        negative_prompt = "photorealistic, realistic, photo, 3d render, photography, photographic, hyperrealistic, low quality, bad anatomy, worst quality, low resolution, speech bubble, bubble, blurry, distorted"
+        negative_prompt = "photorealistic, photo, 3d render, photography, hyperrealistic, low quality, bad anatomy, worst quality, low resolution, speech bubble, blurry, distorted"
         
         print(f"Generating image with Stable Diffusion...")
         print(f"Dimensions: {width}x{height}")
