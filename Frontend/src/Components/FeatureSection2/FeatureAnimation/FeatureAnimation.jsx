@@ -238,6 +238,7 @@ export const FeatureAnimation = ({
         epochHeading: {
             fontSize: "220px",
             transform: `translateX(100px)`,
+            fontWeight: "800",
             // transform: "translateX(-30px)",
             willChange: "transform",
             whiteSpace: "nowrap",
