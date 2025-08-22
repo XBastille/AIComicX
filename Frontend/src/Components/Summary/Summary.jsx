@@ -3,8 +3,8 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { windowlistner } from "../../Components/WindowListener/WindowListener";
-import SummaryImg1 from "../../Picture/summaryimg1.png";
-import SummaryImg2 from "../../Picture/summaryimg2.png";
+// import SummaryImg1 from "../../Picture/summaryimg1.png";
+// import SummaryImg2 from "../../Picture/summaryimg2.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -145,12 +145,12 @@ function Body() {
 
         <div
           className="left-img"
-          style={{ ...styles.splitImage, backgroundImage: `url(${SummaryImg1})` }}
+        // style={{ ...styles.splitImage, backgroundImage: `url(${SummaryImg1})` }}
         />
         <div className="vertical-line" style={styles.verticalLine} />
         <div
           className="right-img"
-          style={{ ...styles.splitImage, backgroundImage: `url(${SummaryImg2})` }}
+        // style={{ ...styles.splitImage, backgroundImage: `url(${SummaryImg2})` }}
         />
       </div>
     </div>

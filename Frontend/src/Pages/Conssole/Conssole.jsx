@@ -343,7 +343,7 @@ function Conssole() {
         setShowPanelEditor(true);
         setShowEditControls(false);
         get_panel_prompt(panelIndex);
-      //  console.log(panel1_grid1)
+        //  console.log(panel1_grid1)
         if (activePanel === 'Panel1_Grid1') {
             const images = panel1_grid1[6];
             SetmodalImage(images[panelIndex - 1])
