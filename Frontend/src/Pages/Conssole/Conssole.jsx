@@ -16,6 +16,9 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { API_ENDPOINTS } from "../../config/api";
 import { faEdit, faRotateRight, faTimes, faCopy, faCheck, faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { useUser } from "@clerk/clerk-react";
+import LoadingAnimation from "../../Components/LoadingAnimation/LoadingAnimation2";
+import { useNavigate } from "react-router-dom";
 
 const PanelGridCount = {
     Panel1: 1,
@@ -197,6 +200,10 @@ function Conssole() {
     const [panel4_grid2, setpanel4_grid2] = useState({});
     const [panel4_grid3, setpanel4_grid3] = useState({});
     const [panel4_grid4, setpanel4_grid4] = useState({});
+
+
+    const { isSignedIn, user, isLoaded } = useUser();
+    const navigate = useNavigate();
 
     useEffect(() => {
         async function calling() {
@@ -445,6 +452,16 @@ function Conssole() {
             console.log(error)
         }
     }
+
+
+    // useEffect(() => {
+    //     if (isLoaded && !isSignedIn) {
+    //         navigate("/");
+    //     }
+    // }, [isLoaded, isSignedIn, navigate]);
+
+    // if (!isLoaded) return <LoadingAnimation />;
+    // if (!isSignedIn) return null;
 
     return (
         <div className="Comic-container">

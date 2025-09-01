@@ -6,6 +6,9 @@ import axios from 'axios'
 import { useNavigate } from "react-router-dom";
 import "../Register/Register.css"
 import Carousel from '../Carousel/Carousel';
+import { useSignIn } from "@clerk/clerk-react";
+import { useUser } from "@clerk/clerk-react";
+import LoadingAnimation from "../LoadingAnimation/LoadingAnimation2";
 
 function Login() {
 
@@ -18,29 +21,56 @@ function Login() {
     const [errors, setErrors] = useState('');
     const navigate = useNavigate();
 
+
+    const { isSignedIn, user, isLoaded } = useUser();
+    const { signIn, setActive } = useSignIn();
+
     windowlistner('pointermove', (e) => {
         setposition({ x: e.clientX, y: e.clientY })
     })
 
+    // const submitss = async (event) => {
+    //     event.preventDefault();
+    //     setemail('')
+    //     setpassword('')
+    //     setconfirm('')
+
+
+    //     try {
+    //         const response = await axios.post('http://localhost:3000/user/login', { email, password })
+    //         console.log(response.data)
+    //         if (response.data.sucess === true) {
+    //             navigate('/SelectPage')
+    //             console.log("navigate karna h")
+    //         }
+    //         if (response.data.sucess === false) {
+    //             setErrors(response.data.error[0].msg)
+    //         }
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
+
+
     const submitss = async (event) => {
         event.preventDefault();
-        setemail('')
-        setpassword('')
-        setconfirm('')
-
-
+        setemail('');
+        setpassword('');
+        setconfirm('');
         try {
-            const response = await axios.post('http://localhost:3000/user/login', { email, password })
-            console.log(response.data)
-            if (response.data.sucess === true) {
-                navigate('/SelectPage')
-                console.log("navigate karna h")
-            }
-            if (response.data.sucess === false) {
-                setErrors(response.data.error[0].msg)
+            const response = await signIn.create({
+                identifier: email,
+                password: password,
+            });
+            if (response.status === "complete") {
+                await setActive({ session: response.createdSessionId });
+                navigate('/');
+            } else {
+                setErrors('Login failed, please check your credentials.');
             }
         } catch (error) {
-            console.log(error)
+            console.error(error);
+            setErrors('An error occurred during login. Please try again.');
         }
     }
 
@@ -55,6 +85,15 @@ function Login() {
             setErrors('')
         }, 4000);
     }
+
+    useEffect(() => {
+        if (isLoaded && isSignedIn) {
+            navigate("/");
+        }
+    }, [isLoaded, isSignedIn, navigate]);
+
+    if (!isLoaded) return <LoadingAnimation />;
+    if (isSignedIn) return null;
     return (
         <motion.div style={styles.login}>
             <div className="cursor" style={{
@@ -105,12 +144,12 @@ function Login() {
                         </motion.div>
                     </motion.div>
                 </motion.div>
-                
+
                 <motion.div style={styles.carouselSection}>
                     <Carousel />
                 </motion.div>
             </motion.div>
-            
+
             <motion.div>
                 {errors && (
                     <p className="error" style={{

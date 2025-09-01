@@ -10,28 +10,33 @@ import Conssole from './Pages/Conssole/Conssole'
 import ConssoleNav from './Components/Nav/ConssoleNav'
 import PromptPage from './Pages/PromptPage/PromptPage'
 import './App.css'
+import { ClerkProvider } from '@clerk/clerk-react';
+
+const clerkFrontendApi = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 function App() {
    return (
-      <Router>
-         <Routes>
-            <Route path='/' element={<Body />} />
+      <ClerkProvider publishableKey={clerkFrontendApi}>
+         <Router>
+            <Routes>
+               <Route path='/' element={<Body />} />
 
-            {/* Authentication Routes */}
-            <Route path='/user/Register' element={<Register />} />
-            <Route path='/user/Login' element={<Login />} />
+               {/* Authentication Routes */}
+               <Route path='/user/Register' element={<Register />} />
+               <Route path='/user/Login' element={<Login />} />
 
 
-            {/*Main Pages routing */}
+               {/*Main Pages routing */}
 
-            <Route path="/SelectPage" element={<ChoosePage />} />
-            <Route path="/Generate_Story" element={<Conssole />} />
-            <Route path="/PromptPage" element={<PromptPage />} />
-         </Routes>
-      </Router>
-      // <div>
-      //    <Body />
-      // </div>
+               <Route path="/SelectPage" element={<ChoosePage />} />
+               <Route path="/Generate_Story" element={<Conssole />} />
+               <Route path="/PromptPage" element={<PromptPage />} />
+            </Routes>
+         </Router>
+         {/* <div>
+          <Body />
+       </div> */}
+      </ClerkProvider>
    )
 }
 

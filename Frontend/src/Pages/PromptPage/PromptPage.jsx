@@ -12,6 +12,8 @@ import LoadingSpinner from "../../Components/LoadingAnimation/Simple";
 import Appsss from "../../Components/LoadingAnimation/LoadingAnimation2";
 import aicomicx2 from "../../Picture/aicomic2.jpg";
 import { API_ENDPOINTS } from "../../config/api";
+import { useUser } from "@clerk/clerk-react";
+import LoadingAnimation from "../../Components/LoadingAnimation/LoadingAnimation2"
 
 function PromptPage() {
     const [showLogo, setShowLogo] = useState(true);
@@ -26,6 +28,7 @@ function PromptPage() {
     const [displayedChunks, setDisplayedChunks] = useState("");
     const [isScrolling, setIsScrolling] = useState(false);
     const bottomRef = useRef(null);
+    const { isSignedIn, user, isLoaded } = useUser();
 
 
     const handleSend = async () => {
@@ -102,6 +105,14 @@ function PromptPage() {
         setIsScrolling(true);
     }
 
+    //     useEffect(() => {
+    //     if (isLoaded && !isSignedIn) {
+    //         navigate("/");
+    //     }
+    // }, [isLoaded, isSignedIn, navigate]);
+
+    // if (!isLoaded) return <LoadingAnimation />;
+    // if (!isSignedIn) return null;
 
     return (
         <div className="container">

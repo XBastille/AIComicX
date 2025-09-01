@@ -34,6 +34,12 @@ function ChoosePage() {
 
 
     useEffect(() => {
+        // if (!isLoaded || isSignedIn) return;
+
+        // if (!box1Ref.current || !box2Ref.current || !box3Ref.current ||
+        //     !headingRef.current || !energyBeamRef.current || !glitchLayerRef.current) {
+        //     return;
+        // }
         gsap.set([box1Ref.current, box2Ref.current, box3Ref.current], {
             autoAlpha: 0,
             scale: 0.8,
@@ -657,6 +663,16 @@ function ChoosePage() {
             }
         });
     }
+
+
+    // useEffect(() => {
+    //     if (isLoaded && !isSignedIn) {
+    //         navigate("/");
+    //     }
+    // }, [isLoaded, isSignedIn, navigate]);
+
+    // if (!isLoaded) return <LoadingAnimation />;
+    // if (!isSignedIn) return null;
 
     const renderUploadUI = () => {
         if (selectedType === 'dialogue') {

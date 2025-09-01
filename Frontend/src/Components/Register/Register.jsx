@@ -8,6 +8,10 @@ import { faGithub, faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { useNavigate } from "react-router";
 import axios from 'axios'
 import Carousel from '../Carousel/Carousel';
+import { useSignUp } from '@clerk/clerk-react';
+import { useClerk, useAuth } from "@clerk/clerk-react";
+import { useUser } from "@clerk/clerk-react";
+import LoadingAnimation from "../LoadingAnimation/LoadingAnimation2";
 
 function Register() {
 
@@ -21,29 +25,71 @@ function Register() {
 
     const [errors, setErrors] = useState('');
 
-    const submits = async (event) => {
-        event.preventDefault();
-        setname('')
-        setemail('')
-        setpassword('')
-        setconfirm('')
+    const { signUp, setActive } = useSignUp();
 
+    const { signOut } = useClerk();
+
+    // const submits = async (event) => {
+    //     event.preventDefault();
+    //     setname('')
+    //     setemail('')
+    //     setpassword('')
+    //     setconfirm('')
+
+    //     try {
+    //         const response = await axios.post('http://localhost:3000/user/signup', { name, email, password, confirm })
+    //         console.log(response.data)
+    //         if (response.data.sucess === true) {
+    //             navigate('/user/Login')
+    //             console.log("navigate karna h")
+    //         }
+    //         if (response.data.sucess === false) {
+    //             navigate('/user/Register')
+    //             console.log("navigate to signup")
+    //             console.log(response.data.error[0].msg)
+    //             setErrors(response.data.error[0].msg)
+    //         }
+    //         //   console.log(name, email, password, confirm)
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
+
+    const { isSignedIn, user, isLoaded } = useUser();
+
+    const submits = async (e) => {
+        e.preventDefault();
+        if (isSignedIn) {
+            setErrors('You are already signed in, login to continue');
+            return;
+        }
         try {
-            const response = await axios.post('http://localhost:3000/user/signup', { name, email, password, confirm })
-            console.log(response.data)
-            if (response.data.sucess === true) {
-                navigate('/user/Login')
-                console.log("navigate karna h")
+            const response = await signUp.create({
+                fullName: name,
+                emailAddress: email,
+                password: password,
+            });
+            // console.log(response);
+            // console.log(response.status);
+            if (response.status === 'complete') {
+                await setActive({ session: response.createdSessionId });
+                navigate('/');
             }
-            if (response.data.sucess === false) {
-                navigate('/user/Register')
-                console.log("navigate to signup")
-                console.log(response.data.error[0].msg)
-                setErrors(response.data.error[0].msg)
-            }
-            //   console.log(name, email, password, confirm)
         } catch (error) {
-            console.log(error)
+            console.log(error);
+            setErrors(error.errors[0].message);
+        }
+    };
+
+
+    const handleLogout = async (e) => {
+        e.preventDefault();
+        console.log('logout Clicked');
+        try {
+            signOut();
+            console.log('User Logged Out');
+        } catch (error) {
+            console.log(error);
         }
     }
 
@@ -70,6 +116,15 @@ function Register() {
             setErrors('')
         }, 4000);
     }
+
+    useEffect(() => {
+        if (isLoaded && isSignedIn) {
+            navigate("/");
+        }
+    }, [isLoaded, isSignedIn, navigate]);
+
+    if (!isLoaded) return <LoadingAnimation />;
+    if (isSignedIn) return null;
 
     return (
         <motion.div style={styles.login}>
@@ -142,7 +197,7 @@ function Register() {
                         </motion.div>
                     </motion.div>
                 </motion.div>
-                
+
                 <motion.div style={styles.carouselSection}>
                     <Carousel />
                 </motion.div>
