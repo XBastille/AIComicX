@@ -5,11 +5,11 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { TextPlugin } from "gsap/TextPlugin"
 import { windowlistner } from "../../Components/WindowListener/WindowListener";
 import Summary from "../../Components/Summary/Summary"
+import FAQ from "../../Components/FAQ/FAQ"
+import Footer from "../../Components/Footer/Footer"
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Nav from "../../Components/Nav/Nav";
-import FeatureSection from '../../Components/FeaturesSection/FeaturesSection';
-import FeaturesSection2 from "../../Components/FeatureSection2/FeatureSection2";
 
 gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
@@ -25,11 +25,11 @@ function Body() {
     const [visibleBubbles, setVisibleBubbles] = useState({});
     const [videosReady, setVideosReady] = useState(false);
     const [loadedVideos, setLoadedVideos] = useState(0);
-
+    
     const navigate = useNavigate();
-
+    
     const speechBubbles = {
-        0: [
+        0: [ 
             {
                 x: 257,
                 y: 3,
@@ -55,7 +55,7 @@ function Body() {
                 disappearTime: 10
             }
         ],
-        1: [
+        1: [ 
             {
                 x: 270,
                 y: 2,
@@ -69,7 +69,7 @@ function Body() {
                 disappearTime: 10
             }
         ],
-        2: [
+        2: [ 
             {
                 x: 470,
                 y: 90,
@@ -95,7 +95,7 @@ function Body() {
                 disappearTime: 10
             }
         ],
-        3: [
+        3: [ 
             {
                 x: 435,
                 y: 95,
@@ -110,7 +110,7 @@ function Body() {
             }
         ]
     };
-
+    
     const animatedWords = [
         { text: "EPIC", font: "'Nosifer', serif" }, // Horror/creepy
         { text: "BOLD", font: "'Chela One', sans-serif" }, // Chunky cartoon
@@ -131,7 +131,7 @@ function Body() {
         const headline = headlineRef.current;
         if (!headline) return;
 
-        const originalText = "DIVE IN";
+        const originalText = "DIVE IN"; 
         const letters = originalText.split('');
         headline.innerHTML = letters.map(letter =>
             `<span class="letter">${letter}</span>`
@@ -145,7 +145,7 @@ function Body() {
         letterSpans.forEach((span, index) => {
             const originalLetter = span.textContent;
             let scrambleCount = 0;
-            const maxScrambles = 7;
+            const maxScrambles = 7; 
 
             setTimeout(() => {
                 const scrambleInterval = setInterval(() => {
@@ -159,12 +159,12 @@ function Body() {
                         }, 50);
                     }
                 }, 45);
-            }, index * 100);
+            }, index * 100); 
         });
     }, []);
 
     useGSAP(() => {
-        const mottoText = "Dreams Become Visual Stories Here";
+        const mottoText = "Dreams Become Visual Stories Here"; 
         const mottoContainer = document.querySelector('.motto-text');
         if (!mottoContainer) return;
 
@@ -216,7 +216,7 @@ function Body() {
                     opacity: 1,
                     ease: "power2.inOut"
                 })
-                .to({}, { duration: 0.08 });
+                .to({}, { duration: 0.08 }); 
         });
     }, []);
 
@@ -225,7 +225,7 @@ function Body() {
             x: -50,
             opacity: 0,
             duration: 1.2,
-            delay: 0.2,
+            delay: 0.2, 
             ease: "power2.out"
         });
 
@@ -233,7 +233,7 @@ function Body() {
             x: 50,
             opacity: 0,
             duration: 1.2,
-            delay: 0.2,
+            delay: 0.2, 
             ease: "power2.out"
         });
 
@@ -241,7 +241,7 @@ function Body() {
             scale: 0.5,
             opacity: 0,
             duration: 1.5,
-            delay: 0.1,
+            delay: 0.1, 
             ease: "back.out(1.7)"
         });
 
@@ -249,7 +249,7 @@ function Body() {
             scale: 0.5,
             opacity: 0,
             duration: 1.5,
-            delay: 0.1,
+            delay: 0.1, 
             ease: "back.out(1.7)"
         });
     }, []);
@@ -334,7 +334,7 @@ function Body() {
 
         stickAll();
 
-        ScrollTrigger.create({
+    ScrollTrigger.create({
             trigger: '.purple-section',
             start: 'top bottom',
             end: 'bottom top',
@@ -348,7 +348,7 @@ function Body() {
     const handleVideoReady = () => {
         setLoadedVideos(prev => {
             const newCount = prev + 1;
-            if (newCount >= 4) {
+            if (newCount >= 4) { 
                 setVideosReady(true);
             }
             return newCount;
@@ -357,7 +357,7 @@ function Body() {
 
     useGSAP(() => {
         if (!videosReady) return;
-
+        
         setShowBubbles(false);
         setTimeout(() => {
             setShowBubbles(true);
@@ -368,15 +368,15 @@ function Body() {
     const startBubbleTimings = () => {
         const runCycle = () => {
             setVisibleBubbles({});
-
+            
             Object.keys(speechBubbles).forEach(panelIndex => {
                 speechBubbles[panelIndex].forEach((bubble, bubbleIndex) => {
                     const bubbleKey = `${panelIndex}-${bubbleIndex}`;
-
+                    
                     setTimeout(() => {
                         setVisibleBubbles(prev => ({ ...prev, [bubbleKey]: true }));
                     }, bubble.appearTime * 1000);
-
+                    
                     setTimeout(() => {
                         setVisibleBubbles(prev => ({ ...prev, [bubbleKey]: false }));
                     }, bubble.disappearTime * 1000);
@@ -385,7 +385,7 @@ function Body() {
         };
 
         runCycle();
-
+        
         setInterval(runCycle, 10000);
     };
 
@@ -400,7 +400,7 @@ function Body() {
         const expandBorder = borderContainer.querySelector('.expand-border');
         const cornerTopLeft = borderContainer.querySelector('.corner-top-left');
         const cornerBottomRight = borderContainer.querySelector('.corner-bottom-right');
-
+        
         const hoverEdges = borderContainer.querySelector('.hover-edges');
         const edgeTop = borderContainer.querySelector('.edge-top');
         const edgeLeft = borderContainer.querySelector('.edge-left');
@@ -419,89 +419,89 @@ function Body() {
         });
 
         tl.set([travelNode1, travelNode2, drawPath1, drawPath2], { opacity: 1 })
-
-            .to([drawPath1, drawPath2], {
-                strokeDashoffset: 0,
-                duration: 2,
-                ease: "none"
-            }, 0)
-
-            .to(travelNode1, {
-                x: 467,
-                duration: 0.5,
-                ease: "none"
-            }, 0)
-            .to(travelNode1, {
-                y: 140,
-                duration: 0.5,
-                ease: "none"
-            }, 0.5)
-            .to(travelNode1, {
-                x: 0,
-                duration: 0.5,
-                ease: "none"
-            }, 1.0)
-            .to(travelNode1, {
-                y: 0,
-                duration: 0.5,
-                ease: "none"
-            }, 1.5)
-
-            .to(travelNode2, {
-                x: -467,
-                duration: 0.5,
-                ease: "none"
-            }, 0)
-            .to(travelNode2, {
-                y: -140,
-                duration: 0.5,
-                ease: "none"
-            }, 0.5)
-            .to(travelNode2, {
-                x: 0,
-                duration: 0.5,
-                ease: "none"
-            }, 1.0)
-            .to(travelNode2, {
-                y: 0,
-                duration: 0.5,
-                ease: "none"
-            }, 1.5)
-
-            .set([travelNode1, travelNode2], { opacity: 0 })
-            .set(expandBorder, { opacity: 1 })
-            .fromTo(expandBorder, {
-                strokeDasharray: "0 2250",
-                strokeDashoffset: 0
-            }, {
-                strokeDasharray: "2250 2250",
-                duration: 1.0,
-                ease: "power2.out"
-            })
-
-            .set([drawPath1, drawPath2, expandBorder], { opacity: 0 })
-            .set([cornerTopLeft, cornerBottomRight], { opacity: 1 })
-            .set(hoverEdges, { opacity: 1 })
-            .set([edgeTop, edgeBottom], { strokeDashoffset: 0 })
-            .set([edgeLeft, edgeRight], { strokeDashoffset: 0 })
-            .set([cornerTopRight, cornerBottomLeft], { strokeDashoffset: 0 })
-            .to([edgeTop, edgeBottom], {
-                strokeDashoffset: 407,
-                duration: 0.6,
-                ease: "power2.in"
-            })
-            .to([edgeLeft, edgeRight], {
-                strokeDashoffset: 80,
-                duration: 0.6,
-                ease: "power2.in"
-            }, "<")
-            .to([cornerTopRight, cornerBottomLeft], {
-                strokeDashoffset: 16,
-                duration: 0.3,
-                ease: "power2.in"
-            }, "<")
-            .set(hoverEdges, { opacity: 0 });
-
+          
+          .to([drawPath1, drawPath2], { 
+              strokeDashoffset: 0,
+              duration: 2, 
+              ease: "none"
+          }, 0)
+          
+          .to(travelNode1, { 
+              x: 467, 
+              duration: 0.5, 
+              ease: "none"
+          }, 0)
+          .to(travelNode1, { 
+              y: 140,
+              duration: 0.5, 
+              ease: "none"
+          }, 0.5)
+          .to(travelNode1, { 
+              x: 0, 
+              duration: 0.5, 
+              ease: "none"
+          }, 1.0)
+          .to(travelNode1, { 
+              y: 0, 
+              duration: 0.5, 
+              ease: "none"
+          }, 1.5)
+          
+          .to(travelNode2, { 
+              x: -467, 
+              duration: 0.5, 
+              ease: "none"
+          }, 0)
+          .to(travelNode2, { 
+              y: -140, 
+              duration: 0.5, 
+              ease: "none"
+          }, 0.5)
+          .to(travelNode2, { 
+              x: 0, 
+              duration: 0.5, 
+              ease: "none"
+          }, 1.0)
+          .to(travelNode2, { 
+              y: 0, 
+              duration: 0.5, 
+              ease: "none"
+          }, 1.5)
+          
+          .set([travelNode1, travelNode2], { opacity: 0 })
+          .set(expandBorder, { opacity: 1 })
+          .fromTo(expandBorder, {
+              strokeDasharray: "0 2250",
+              strokeDashoffset: 0
+          }, {
+              strokeDasharray: "2250 2250",
+              duration: 1.0,
+              ease: "power2.out"
+          })
+          
+          .set([drawPath1, drawPath2, expandBorder], { opacity: 0 }) 
+          .set([cornerTopLeft, cornerBottomRight], { opacity: 1 }) 
+          .set(hoverEdges, { opacity: 1 }) 
+          .set([edgeTop, edgeBottom], { strokeDashoffset: 0 }) 
+          .set([edgeLeft, edgeRight], { strokeDashoffset: 0 })
+          .set([cornerTopRight, cornerBottomLeft], { strokeDashoffset: 0 })
+          .to([edgeTop, edgeBottom], {
+              strokeDashoffset: 407,
+              duration: 0.6,
+              ease: "power2.in"
+          })
+          .to([edgeLeft, edgeRight], {
+              strokeDashoffset: 80, 
+              duration: 0.6,
+              ease: "power2.in"
+          }, "<") 
+          .to([cornerTopRight, cornerBottomLeft], {
+              strokeDashoffset: 16, 
+              duration: 0.3,
+              ease: "power2.in"
+          }, "<")
+          .set(hoverEdges, { opacity: 0 }); 
+          
     }, [pageLoadComplete]);
 
     useGSAP(() => {
@@ -520,77 +520,77 @@ function Body() {
 
         if (isHovered) {
             gsap.set(hoverEdges, { opacity: 1 });
-
+            
             gsap.set([edgeTop, edgeBottom], { strokeDashoffset: 407 });
             gsap.set([edgeLeft, edgeRight], { strokeDashoffset: 80 });
             gsap.set([cornerTopRight, cornerBottomLeft], { strokeDashoffset: 16 });
-
+            
             const tl = gsap.timeline();
-
+            
             tl.to(buttonContainer, {
                 y: -15,
                 duration: 0.4,
                 ease: "power2.out"
             }, 0)
-
-                .to([edgeTop, edgeBottom], {
-                    strokeDashoffset: 0,
-                    duration: 0.8,
-                    ease: "power2.out"
-                }, 0)
-                .to([edgeLeft, edgeRight], {
-                    strokeDashoffset: 0,
-                    duration: 0.4,
-                    ease: "power2.out"
-                }, 0)
-                .to([cornerTopRight, cornerBottomLeft], {
-                    strokeDashoffset: 0,
-                    duration: 0.3,
-                    ease: "power2.out"
-                }, 0.5);
-
+            
+            .to([edgeTop, edgeBottom], {
+                strokeDashoffset: 0,
+                duration: 0.8,
+                ease: "power2.out"
+            }, 0)
+            .to([edgeLeft, edgeRight], {
+                strokeDashoffset: 0,
+                duration: 0.4,
+                ease: "power2.out"
+            }, 0)
+            .to([cornerTopRight, cornerBottomLeft], {
+                strokeDashoffset: 0,
+                duration: 0.3,
+                ease: "power2.out"
+            }, 0.5);
+            
             if (letterSpans) {
                 letterSpans.forEach((span, index) => {
                     gsap.to(span, {
-                        opacity: 0.1,
-                        duration: 0.12,
-                        repeat: 5,
+                        opacity: 0.1, 
+                        duration: 0.12, 
+                        repeat: 5, 
                         yoyo: true,
-                        delay: index * 0.08,
+                        delay: index * 0.08, 
                         ease: "power2.inOut"
                     });
                 });
             }
-
+            
         } else {
             const tl = gsap.timeline({
                 onComplete: () => {
                     gsap.set(hoverEdges, { opacity: 0 });
                 }
             });
-
+            
             tl.to(buttonContainer, {
                 y: 0,
                 duration: 0.6,
                 ease: "power2.inOut"
             }, 0)
-
-                .to([edgeTop, edgeBottom], {
-                    strokeDashoffset: 407,
-                    duration: 0.6,
-                    ease: "power2.in"
-                }, 0)
-                .to([edgeLeft, edgeRight], {
-                    strokeDashoffset: 80,
-                    duration: 0.6,
-                    ease: "power2.in"
-                }, 0)
-                .to([cornerTopRight, cornerBottomLeft], {
-                    strokeDashoffset: 16,
-                    duration: 0.3,
-                    ease: "power2.in"
-                }, 0);
-
+            
+            .to([edgeTop, edgeBottom], {
+                strokeDashoffset: 407, 
+                duration: 0.6,
+                ease: "power2.in"
+            }, 0)
+            .to([edgeLeft, edgeRight], {
+                strokeDashoffset: 80, 
+                duration: 0.6,
+                ease: "power2.in"
+            }, 0)
+            .to([cornerTopRight, cornerBottomLeft], {
+                strokeDashoffset: 16,
+                duration: 0.3,
+                ease: "power2.in"
+            }, 0);
+            
             if (letterSpans) {
                 gsap.set(letterSpans, { opacity: 1 });
             }
@@ -598,7 +598,7 @@ function Body() {
     }, [isHovered, pageLoadComplete]);
 
     const handleDiveInClick = () => {
-        navigate('/user/Register');
+        navigate('/user/Register'); 
     };
 
     return (
@@ -610,9 +610,9 @@ function Body() {
             }}></div>
 
             <div style={styles.heroContainer} className="hero-container">
-
+               
                 <div style={styles.gridContainer}>
-
+                   
                     <div style={styles.gridItem}>
                         <video
                             style={styles.gridVideo}
@@ -624,7 +624,7 @@ function Body() {
                         >
                             <source src="./src/Picture/land3.mp4" type="video/mp4" />
                         </video>
-
+                        
                         {showBubbles && speechBubbles[0] && speechBubbles[0].map((bubble, index) => {
                             const bubbleKey = `0-${index}`;
                             const isVisible = visibleBubbles[bubbleKey];
@@ -674,7 +674,7 @@ function Body() {
                         >
                             <source src="./src/Picture/land.mp4" type="video/mp4" />
                         </video>
-
+                        
                         {showBubbles && speechBubbles[1] && speechBubbles[1].map((bubble, index) => {
                             const bubbleKey = `1-${index}`;
                             const isVisible = visibleBubbles[bubbleKey];
@@ -724,7 +724,7 @@ function Body() {
                         >
                             <source src="./src/Picture/land4.mp4" type="video/mp4" />
                         </video>
-
+                        
                         {showBubbles && speechBubbles[2] && speechBubbles[2].map((bubble, index) => {
                             const bubbleKey = `2-${index}`;
                             const isVisible = visibleBubbles[bubbleKey];
@@ -739,8 +739,8 @@ function Body() {
                                         transform: bubble.tailDirection === "up"
                                             ? 'translate(-50%, -100%)'
                                             : bubble.tailDirection === "left"
-                                                ? 'translate(-100%, -50%)'
-                                                : 'translate(-50%, -120%)',
+                                            ? 'translate(-100%, -50%)'
+                                            : 'translate(-50%, -120%)',
                                         opacity: isVisible ? 1 : 0,
                                         zIndex: 20
                                     }}
@@ -776,7 +776,7 @@ function Body() {
                         >
                             <source src="./src/Picture/land2.mp4" type="video/mp4" />
                         </video>
-
+                        
                         {showBubbles && speechBubbles[3] && speechBubbles[3].map((bubble, index) => {
                             const bubbleKey = `3-${index}`;
                             const isVisible = visibleBubbles[bubbleKey];
@@ -817,9 +817,9 @@ function Body() {
                     </div>
                 </div>
 
-
-                <button
-                    style={styles.diveInButton}
+                
+                <button 
+                    style={styles.diveInButton} 
                     className="dive-in-button"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
@@ -828,31 +828,31 @@ function Body() {
                     <h1 ref={headlineRef} style={styles.buttonText}>
                         DIVE IN
                     </h1>
-
-                    <svg
+                    
+                    <svg 
                         ref={welcomeBorderRef}
                         style={styles.borderSvg}
                         viewBox="0 0 500 200"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
                     >
-                        <circle
+                        <circle 
                             className="travel-node-1"
                             cx="13" cy="30"
                             r="6"
                             fill="white"
                             filter="url(#glow)"
                         />
-
-                        <circle
+                        
+                        <circle 
                             className="travel-node-2"
                             cx="480" cy="170"
                             r="6"
                             fill="white"
                             filter="url(#glow)"
                         />
-
-                        <path
+                        
+                        <path 
                             className="draw-path-1"
                             d="M13 30 L470 30 Q480 30 480 40 L480 160 Q480 170 470 170 L23 170 Q13 170 13 160 L13 40 Q13 30 23 30"
                             stroke="white"
@@ -861,8 +861,8 @@ function Body() {
                             strokeDasharray="2250 2250"
                             strokeDashoffset="2250"
                         />
-
-                        <path
+                        
+                        <path 
                             className="draw-path-2"
                             d="M480 170 L23 170 Q13 170 13 160 L13 40 Q13 30 23 30 L470 30 Q480 30 480 40 L480 160 Q480 170 470 170"
                             stroke="white"
@@ -871,140 +871,140 @@ function Body() {
                             strokeDasharray="2250 2250"
                             strokeDashoffset="2250"
                         />
-
-                        <rect
+                        
+                        <rect 
                             className="expand-border"
-                            x="13" y="30"
-                            width="467" height="140"
-                            stroke="white"
-                            strokeWidth="6"
+                            x="13" y="30" 
+                            width="467" height="140" 
+                            stroke="white" 
+                            strokeWidth="6" 
                             fill="none"
                             rx="10"
                             strokeDasharray="0 2250"
                         />
-
+                        
                         <g className="corner-top-left">
-                            <line
-                                x1="25" y1="30"
-                                x2="63" y2="30"
-                                stroke="white"
-                                strokeWidth="6"
-                                strokeLinecap="round"
+                            <line 
+                                x1="25" y1="30" 
+                                x2="63" y2="30" 
+                                stroke="white" 
+                                strokeWidth="6" 
+                                strokeLinecap="round" 
                             />
-                            <line
-                                x1="13" y1="42"
-                                x2="13" y2="80"
-                                stroke="white"
-                                strokeWidth="6"
-                                strokeLinecap="round"
+                            <line 
+                                x1="13" y1="42" 
+                                x2="13" y2="80" 
+                                stroke="white" 
+                                strokeWidth="6" 
+                                strokeLinecap="round" 
                             />
-                            <path
-                                d="M13 42 A12 12 0 0 1 25 30"
-                                stroke="white"
-                                strokeWidth="6"
-                                strokeLinecap="round"
-                                fill="none"
+                            <path 
+                                d="M13 42 A12 12 0 0 1 25 30" 
+                                stroke="white" 
+                                strokeWidth="6" 
+                                strokeLinecap="round" 
+                                fill="none" 
                             />
                         </g>
-
+                        
                         <g className="corner-bottom-right">
-                            <line
-                                x1="430" y1="170"
-                                x2="468" y2="170"
-                                stroke="white"
-                                strokeWidth="6"
-                                strokeLinecap="round"
+                            <line 
+                                x1="430" y1="170" 
+                                x2="468" y2="170" 
+                                stroke="white" 
+                                strokeWidth="6" 
+                                strokeLinecap="round" 
                             />
-                            <line
-                                x1="480" y1="120"
-                                x2="480" y2="158"
-                                stroke="white"
-                                strokeWidth="6"
-                                strokeLinecap="round"
+                            <line 
+                                x1="480" y1="120" 
+                                x2="480" y2="158" 
+                                stroke="white" 
+                                strokeWidth="6" 
+                                strokeLinecap="round" 
                             />
-                            <path
-                                d="M468 170 A12 12 0 0 0 480 158"
-                                stroke="white"
-                                strokeWidth="6"
-                                strokeLinecap="round"
-                                fill="none"
+                            <path 
+                                d="M468 170 A12 12 0 0 0 480 158" 
+                                stroke="white" 
+                                strokeWidth="6" 
+                                strokeLinecap="round" 
+                                fill="none" 
                             />
                         </g>
-
+                        
                         <g className="hover-edges">
-                            <line
+                            <line 
                                 className="edge-top"
-                                x1="63" y1="30"
-                                x2="470" y2="30"
-                                stroke="white"
-                                strokeWidth="6"
+                                x1="63" y1="30" 
+                                x2="470" y2="30" 
+                                stroke="white" 
+                                strokeWidth="6" 
                                 strokeLinecap="round"
                                 strokeDasharray="407 407"
                                 strokeDashoffset="407"
                             />
-
-                            <line
+                            
+                            <line 
                                 className="edge-left"
-                                x1="13" y1="80"
-                                x2="13" y2="160"
-                                stroke="white"
-                                strokeWidth="6"
+                                x1="13" y1="80" 
+                                x2="13" y2="160" 
+                                stroke="white" 
+                                strokeWidth="6" 
                                 strokeLinecap="round"
                                 strokeDasharray="80 80"
                                 strokeDashoffset="80"
                             />
-
-                            <line
+                            
+                            <line 
                                 className="edge-bottom"
-                                x1="430" y1="170"
-                                x2="23" y2="170"
-                                stroke="white"
-                                strokeWidth="6"
+                                x1="430" y1="170" 
+                                x2="23" y2="170" 
+                                stroke="white" 
+                                strokeWidth="6" 
                                 strokeLinecap="round"
                                 strokeDasharray="407 407"
                                 strokeDashoffset="407"
                             />
-
-                            <line
+                            
+                            <line 
                                 className="edge-right"
-                                x1="480" y1="120"
-                                x2="480" y2="40"
-                                stroke="white"
-                                strokeWidth="6"
+                                x1="480" y1="120" 
+                                x2="480" y2="40" 
+                                stroke="white" 
+                                strokeWidth="6" 
                                 strokeLinecap="round"
                                 strokeDasharray="80 80"
                                 strokeDashoffset="80"
                             />
-
-                            <path
+                            
+                            <path 
                                 className="corner-top-right"
                                 d="M470 30 Q480 30 480 40"
-                                stroke="white"
-                                strokeWidth="6"
+                                stroke="white" 
+                                strokeWidth="6" 
                                 strokeLinecap="round"
                                 fill="none"
                                 strokeDasharray="16 16"
                                 strokeDashoffset="16"
                             />
-
-                            <path
+                            
+                            <path 
                                 className="corner-bottom-left"
                                 d="M13 160 Q13 170 23 170"
-                                stroke="white"
-                                strokeWidth="6"
+                                stroke="white" 
+                                strokeWidth="6" 
                                 strokeLinecap="round"
                                 fill="none"
                                 strokeDasharray="16 16"
                                 strokeDashoffset="16"
                             />
                         </g>
-
+                        
                         <defs>
                             <filter id="glow">
-                                <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                                <feMerge>
-                                    <feMergeNode in="coloredBlur" />
-                                    <feMergeNode in="SourceGraphic" />
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge> 
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
                                 </feMerge>
                             </filter>
                         </defs>
@@ -1037,12 +1037,9 @@ function Body() {
             </div>
 
             <div style={styles.purpleSection} className="purple-section">
-                <Summary />
-                {/* <FeatureSection /> */}
-
-                <FeaturesSection2 />
-
-
+             <Summary />
+             <FAQ />
+             <Footer />
             </div>
         </div>
     )
@@ -1050,27 +1047,27 @@ function Body() {
 
 const styles = {
     maindiv: {
-        backgroundColor: '#0a0a0a',
+        backgroundColor: '#0a0a0a', 
         textAlign: "center",
         fontFamily: "Arial, sans-serif",
         width: '100vw',
         zIndex: "1",
         position: "relative",
-        overflowX: 'hidden'
+        overflowX: 'hidden' 
     },
 
     heroContainer: {
         position: 'relative',
         width: '100%',
-        height: '100vh',
-        paddingTop: '80px',
+        height: '100vh', 
+        paddingTop: '80px', 
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: 'linear-gradient(to bottom, #0a0a0a 50%, #1a0f1f 80%, rgb(31, 22, 35) 95%)'
     },
 
-    uShapeGradient: {
+     uShapeGradient: {
         position: 'absolute',
         top: 0,
         left: 0,
@@ -1091,12 +1088,12 @@ const styles = {
         gridTemplateRows: '1fr 1fr',
         gap: '12px',
         width: '1344px',
-        height: '768px',
+        height: '768px', 
         position: 'absolute',
         top: '67%',
         left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 2
+        transform: 'translate(-50%, -50%)', 
+         zIndex: 2
     },
 
     gridItem: {
@@ -1105,16 +1102,16 @@ const styles = {
         borderRadius: '8px',
         boxShadow: 'inset 0 0 20px rgba(223, 30, 114, 0.1)',
         transition: 'all 0.3s ease',
-        position: 'relative',
-        overflow: 'hidden'
+        position: 'relative', 
+        overflow: 'hidden' 
     },
 
     gridVideo: {
         width: '100%',
         height: '100%',
-        objectFit: 'cover',
+        objectFit: 'cover', 
         borderRadius: '8px',
-        opacity: 0.8
+        opacity: 0.8 
     },
 
     diveInButton: {
@@ -1181,11 +1178,11 @@ const styles = {
         border: '2px solid rgba(255, 255, 255, 0.8)',
         borderRadius: '0px',
         padding: '20px 12px',
-        height: '150px',
-        width: '30px',
+        height: '150px', 
+        width: '30px', 
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: 'center', 
+        justifyContent: 'center', 
         backgroundColor: 'rgba(15, 15, 15, 0.3)',
         backdropFilter: 'blur(5px)'
     },
@@ -1200,7 +1197,7 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center' 
     },
 
     mottoContainer: {
@@ -1212,8 +1209,8 @@ const styles = {
         maxHeight: '80vh',
         overflow: 'hidden',
         fontSize: '1.0rem',
-        fontFamily: "'anime', sans-serif",
-        fontWeight: '500',
+        fontFamily: "'anime', sans-serif", 
+        fontWeight: '500', 
         textTransform: 'none',
         letterSpacing: '0.8px',
         color: 'rgba(248, 245, 220, 0.9)',
@@ -1223,13 +1220,13 @@ const styles = {
     },
 
     purpleSection: {
-        backgroundColor: 'rgb(31, 22, 35)',
+        backgroundColor: 'rgb(31, 22, 35)', 
         minHeight: '100vh',
         width: '100%',
         position: 'relative',
-        zIndex: 999,
+        zIndex: 999, 
         marginTop: '0',
-
+      
     },
 
     verticalLetter: {
@@ -1428,9 +1425,9 @@ const speechBubbleStyles = `
 `;
 
 if (typeof document !== 'undefined') {
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = speechBubbleStyles;
-    document.head.appendChild(styleSheet);
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = speechBubbleStyles;
+  document.head.appendChild(styleSheet);
 }
 
 export default Body;
