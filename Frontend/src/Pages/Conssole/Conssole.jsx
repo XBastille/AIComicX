@@ -1,174 +1,35 @@
 import React, { act, useEffect, useState } from 'react';
 import './Conssole.css';
 import aicomicx2 from "../../Picture/aicomic2.jpg";
-import SideNav from '../../Components/SideNav/SideNav';
-import One from '../../Components/Grid/panel1/One';
-import Gridss from '../../Components/Grid/panel2/Gridss';
-import Gridss1 from '../../Components/Grid/panel2/Gridss1';
-import Grids from '../../Components/Grid/panel3/Grids';
-import Grids1 from '../../Components/Grid/panel3/Grids1';
-import Grids2 from '../../Components/Grid/panel3/Grids2';
-import Grid from '../../Components/Grid/panel4/Grid';
-import Grid1 from '../../Components/Grid/panel4/Grid1';
-import Grid2 from '../../Components/Grid/panel4/Grid2';
-import Grid3 from '../../Components/Grid/panel4/Grid3';
+import SideNav from '../../Components/navigations/SideNav/SideNav';
+import One from '../../Components/layouts/Grid/panel1/One';
+import Gridss from '../../Components/layouts/Grid/panel2/Gridss';
+import Gridss1 from '../../Components/layouts/Grid/panel2/Gridss1';
+import Grids from '../../Components/layouts/Grid/panel3/Grids';
+import Grids1 from '../../Components/layouts/Grid/panel3/Grids1';
+import Grids2 from '../../Components/layouts/Grid/panel3/Grids2';
+import Grid from '../../Components/layouts/Grid/panel4/Grid';
+import Grid1 from '../../Components/layouts/Grid/panel4/Grid1';
+import Grid2 from '../../Components/layouts/Grid/panel4/Grid2';
+import Grid3 from '../../Components/layouts/Grid/panel4/Grid3';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { API_ENDPOINTS } from "../../config/api";
-import { faEdit, faRotateRight, faTimes, faCopy, faCheck, faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
-
-const PanelGridCount = {
-    Panel1: 1,
-    Panel2: 2,
-    Panel3: 3,
-    Panel4: 4
-};
-
-const Height_Width_data = {
-    Panel1: {
-        Grid1: {
-            heigth: {
-                box_height_0: '1216px',  // 2:3
-            },
-            width: {
-                box_width_0: '832px',
-            }
-        },
-    },
-    Panel2: {
-        Grid1: {
-            heigth: {
-                box_height_0: '896px',   // 5:4
-                box_height_1: '896px',
-            },
-            width: {
-                box_width_0: '1088px',
-                box_width_1: '1088px',
-            }
-        },
-        Grid2: {
-            heigth: {
-                box_height_0: '1088px',  // 4:5
-                box_height_1: '1088px',
-            },
-            width: {
-                box_width_0: '896px',
-                box_width_1: '896px',
-            }
-        },
-    },
-    Panel3: {
-        Grid1: {
-            heigth: {
-                box_height_0: '640px',   // 21:9
-                box_height_1: '640px',
-                box_height_2: '640px',
-            },
-            width: {
-                box_width_0: '1536px',
-                box_width_1: '1536px',
-                box_width_2: '1536px',
-            }
-        },
-        Grid2: {
-            heigth: {
-                box_height_0: '1344px',  // 9:16 
-                box_height_1: '1024px',  // 1:1
-                box_height_2: '1024px',
-            },
-            width: {
-                box_width_0: '768px',
-                box_width_1: '1024px',
-                box_width_2: '1024px',
-            }
-        },
-        Grid3: {
-            heigth: {
-                box_height_0: '1024px',  // 1:1 
-                box_height_1: '1024px',
-                box_height_2: '768px',   // 16:9 
-            },
-            width: {
-                box_width_0: '1024px',
-                box_width_1: '1024px',
-                box_width_2: '1344px',
-            }
-        },
-    },
-    Panel4: {
-        Grid1: {
-            heigth: {
-                box_height_0: '1088px',  // 4:5
-                box_height_1: '1088px',
-                box_height_2: '1088px',
-                box_height_3: '1088px',
-            },
-            width: {
-                box_width_0: '896px',
-                box_width_1: '896px',
-                box_width_2: '896px',
-                box_width_3: '896px',
-            }
-        },
-        Grid2: {
-            heigth: {
-                box_height_0: '768px',   // 16:9 
-                box_height_1: '1088px',  // 4:5 
-                box_height_2: '1088px',
-                box_height_3: '768px',
-            },
-            width: {
-                box_width_0: '1344px',
-                box_width_1: '896px',
-                box_width_2: '896px',
-                box_width_3: '1344px',
-            }
-        },
-        Grid3: {
-            heigth: {
-                box_height_0: '1344px',  // 9:16
-                box_height_1: '1344px',
-                box_height_2: '1536px',  // 9:21 
-                box_height_3: '1024px',   // 1:1
-            },
-            width: {
-                box_width_0: '768px',
-                box_width_1: '768px',
-                box_width_2: '640px',
-                box_width_3: '1024px',
-            }
-        },
-        Grid4: {
-            heigth: {
-                box_height_0: '832px',   // 3:2 landscape (1216x832)
-                box_height_1: '1344px',  // 9:16 
-                box_height_2: '1344px',
-                box_height_3: '832px',
-            },
-            width: {
-                box_width_0: '1216px',
-                box_width_1: '768px',
-                box_width_2: '768px',
-                box_width_3: '1216px',
-            }
-        }
-    }
-};
-
-
+import { faCheck, faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import Settings from '../../Components/ui/setting/Settings';
+import About from '../../Components/ui/about/About';
+import PanelEditor from '../../Components/ui/PanelEditor/PanelEditor';
+import useSideNav from '../../hooks/useSideNav';
+import { PanelGridCount, Height_Width_data } from '../../config/panelConfig';
 
 
 function Conssole() {
     const [showAbout, setShowAbout] = useState(false);
     const [activePanel, SetactivePanel] = useState('');
     const [panel, setpanel] = useState('');
-    const [sideNav, SetsideNav] = useState('');
-    const [showPanelEditor, setShowPanelEditor] = useState(false);
     const [selectedPanel, setSelectedPanel] = useState(null);
+    const [showPanelEditor, setShowPanelEditor] = useState(false);
     const [showEditControls, setShowEditControls] = useState(false);
-    // const [inferenceSteps, setInferenceSteps] = useState(20);
-    // const [guidanceScale, setGuidanceScale] = useState(7.5);
-    // const [seed, setSeed] = useState(42);
     const [prompt, setPrompt] = useState("");
     const [showCopyNotification, setShowCopyNotification] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -177,7 +38,9 @@ function Conssole() {
     const [seed2, setSeed2] = useState(9);
     const [panelInfo, setPanelInfo] = useState([]);
     const [pageNo, setPageNo] = useState(0);
-    const [artStyle, setArtStyle] = useState('ANIME');
+    const [artStyle, setArtStyle] = useState('American(1950)');
+    const [fontStyle, setFontStyle] = useState('Anime');
+    const [themeStyle, setThemeStyle] = useState('Default');
     const [grid, setgrid] = useState("");
     const [height_width, setheight_width] = useState([]);
     const [modalImage, SetmodalImage] = useState("");
@@ -198,17 +61,7 @@ function Conssole() {
     const [panel4_grid3, setpanel4_grid3] = useState({});
     const [panel4_grid4, setpanel4_grid4] = useState({});
 
-    useEffect(() => {
-        async function calling() {
-            try {
-                const res = await axios.get(API_ENDPOINTS.mdToFront);
-                SetsideNav(res.data);
-            } catch (error) {
-                console.log(error);
-            }
-        }
-        calling();
-    }, []);
+    const sideNav = useSideNav();
 
     const defaults = (panel) => {
         if (panel === 'Panel1') {
@@ -223,31 +76,6 @@ function Conssole() {
     };
 
 
-    const handleEditClick = () => {
-        setShowEditControls(true);
-    };
-
-    const handleRegenerate = () => {
-        console.log('Regenerating with:', {
-            inferenceSteps2,
-            guidanceScale2,
-            seed2,
-            prompt
-        });
-    };
-
-    const handleCopyPrompt = async () => {
-        try {
-            await navigator.clipboard.writeText(prompt);
-            setShowCopyNotification(true);
-            setTimeout(() => setShowCopyNotification(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy prompt: ', err);
-        }
-    };
-
-
-
     const gridOptions = [];
     for (let i = 1; i <= (PanelGridCount[panel] || 1); i++) {
         gridOptions.push({
@@ -255,18 +83,6 @@ function Conssole() {
             label: `Grid${i}`,
         });
     }
-
-    const handleResetDefaults = () => {
-        setInferenceSteps2(40);
-        setGuidanceScale2(7.5);
-        setSeed2(9);
-    };
-
-    const handleApplySettings = () => {
-        //    console.log({ inferenceSteps2, guidanceScale2, seed2 });
-        setShowSettings(false);
-    };
-
 
     //panel_data from backend
     useEffect(() => {
@@ -284,7 +100,6 @@ function Conssole() {
         }
         get_panel_data();
     }, []);
-
 
     useEffect(() => {
         if (panelInfo.length > 0) {
@@ -343,17 +158,17 @@ function Conssole() {
         setShowPanelEditor(true);
         setShowEditControls(false);
         get_panel_prompt(panelIndex);
-      //  console.log(panel1_grid1)
         if (activePanel === 'Panel1_Grid1') {
             const images = panel1_grid1[6];
             SetmodalImage(images[panelIndex - 1])
         }
         else if (activePanel === 'Panel2_Grid1') {
-            const images = panel2_grid1[2];
+            const images = panel2_grid1[1];
+            console.log(images)
             SetmodalImage(images[panelIndex - 1])
         }
         else if (activePanel === 'Panel2_Grid2') {
-            const images = panel2_grid2[2];
+            const images = panel2_grid2[1];
             SetmodalImage(images[panelIndex - 1])
         }
         else if (activePanel === 'Panel3_Grid1') {
@@ -402,7 +217,7 @@ function Conssole() {
     const generateComic = async () => {
         const page_no = pageNo + 1;
         try {
-            const res = await axios.post(API_ENDPOINTS.generateComic, { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width });
+            const res = await axios.post(API_ENDPOINTS.generateComic, { inferenceSteps2, guidanceScale2, seed2, page_no, artStyle, height_width, fontStyle, themeStyle });
             const images = res.data;
             get_panel_prompt();
             if (panel === 'Panel4') {
@@ -446,9 +261,67 @@ function Conssole() {
         }
     }
 
+
+
+    const regenerateComic = async (params) => {
+        const page_no = pageNo + 1;
+        console.log(params)
+        try {
+            const res = await axios.post(API_ENDPOINTS.regenerateComic, params)
+            const images = res.data;
+            console.log(panel)
+            console.log(grid)
+            console.log(selectedPanel)
+
+            if (panel === 'Panel4') {
+                if (grid === 'Grid1') {
+                    setpanel4_grid1(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                } else if (grid === 'Grid2') {
+                    setpanel4_grid2(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                } else if (grid === 'Grid3') {
+                    setpanel4_grid3(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                } else {
+                    setpanel4_grid4(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                }
+            } else if (panel === 'Panel3') {
+                if (grid === 'Grid1') {
+                    setpanel3_grid1(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                } else if (grid === 'Grid2') {
+                    setpanel3_grid2(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                } else {
+                    setpanel3_grid3(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                }
+            } else if (panel === 'Panel2') {
+                if (grid === 'Grid1') {
+                    setpanel2_grid1(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                } else {
+                    setpanel2_grid2(prev => ({ ...prev, [page_no]: images }));
+                    console.log(images[selectedPanel - 1])
+                }
+            } else if (panel === 'Panel1') {
+                setpanel1_grid1(prev => ({ ...prev, [page_no]: images }));
+                console.log(images[selectedPanel - 1])
+            }
+
+            // Update modal image so user sees the regenerated panel immediately
+            SetmodalImage(images[selectedPanel - 1]);
+
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     return (
         <div className="Comic-container">
-            <SideNav content={sideNav} />
+            <SideNav {...sideNav} />
 
             {showCopyNotification && (
                 <div className="copy-notification">
@@ -457,13 +330,13 @@ function Conssole() {
                 </div>
             )}
 
+            {/* structure of the page */}
             <div className="nav-bar">
-                <select className='art-options'>
+                <select className='art-options' value={artStyle} onChange={e => setArtStyle(e.target.value)}>
                     <option value="American">American(1950)</option>
-                    <option value="Japanese">Japanese</option>
-                    <option value="Humanoid">Humanoid</option>
-                    <option value="Egyptian">Egyptian</option>
-                    <option value="Nihonga">Nihonga</option>
+                    <option value="Japanese">Anime</option>
+                    <option value="Humanoid">Manga</option>
+                    <option value="Egyptian">European Ligne Claire</option>
                 </select>
 
                 <select
@@ -493,16 +366,19 @@ function Conssole() {
                     <img src={aicomicx2} className='Logo' alt="Logo" />
                 </div>
 
-                <select className="Font-box" value={artStyle} onChange={e => setArtStyle(e.target.value)}>
-                    <option value="ANIME">ANIME</option>
-                    <option value="MANGA">MANGA</option>
+                <select className="Font-box" value={fontStyle} onChange={(e) => setFontStyle(e.target.value)}>
+                    <option value="anime">Anime</option>
+                    <option value="manga">Manga</option>
+                    <option value="comic">Comic</option>
+                    <option value="handwritten">Handwritten</option>
+                    <option value="cute">Cute</option>
                 </select>
 
-                <select className='comic-theme'>
-                    <option value="theme1">Default</option>
-                    <option value="theme2">Serpia Colors</option>
-                    <option value="theme3">Noir Colors</option>
-                    <option value="theme4">Modern Colors</option>
+                <select className='comic-theme' value={themeStyle} onChange={(e) => setThemeStyle(e.target.value)}>
+                    <option value="default">Default</option>
+                    <option value="sepia">Serpia</option>
+                    <option value="noir">Noir</option>
+                    <option value="modern">Modern</option>
                 </select>
 
                 <button className='generate-button' onClick={generateComic}>Generate Comic</button>
@@ -511,8 +387,6 @@ function Conssole() {
                     {pageNo + 1} / {panelInfo.length}
                 </div>
             </div>
-
-
 
             <div className="grid-container">
                 {renderGrid()}
@@ -546,162 +420,29 @@ function Conssole() {
                     <button className="pdf-btn">Get PDF</button>
                 </div>
             </div>
+            {/* --------------------- */}
 
+            {/* it is small section present in components/ui/... */}
             {showAbout && (
-                <>
-                    <div className="modal-overlay" onClick={() => setShowAbout(false)} />
-                    <div className="about-modal">
-                        <button className="close-btn" onClick={() => setShowAbout(false)}>✖</button>
-                        <div className="modal-content">
-                            <h2>AIComicX 1.0 (May 2025)</h2>
-                            <p>AIComicX is an AI-powered platform that transforms your stories into stunning comics with ease.</p>
-                            <p><strong>Default Image Generation Model:</strong> Stable Diffusion 3.5</p>
-                            <p>This is an open-source project licensed under the Creative Commons BY-NC-ND License. See the <a href="https://github.com/XBastille/AIComicX" target="_blank" rel="noopener noreferrer">GitHub repo</a> for more info.</p>
-                            <p>📧 Reach us at <a href="mailto:eziopuhan825@gmail.com">eziopuhan825@gmail.com</a>.</p>
-                        </div>
-                    </div>
-                </>
+                <About onClose={() => setShowAbout(false)} />
             )}
-
             {showSettings && (
-                <>
-                    <div className="modal-overlay" onClick={() => setShowSettings(false)} />
-                    <div className="about-modal">
-                        <button className="close-btn" onClick={() => setShowSettings(false)}>✖</button>
-                        <div className="modal-content">
-                            <p style={{ marginBottom: '1rem', color: '#f4d03f' }}>
-                                ⚠️ The default settings are recommended. Changing these fields may lead to undesired results — proceed with caution!
-                            </p>
-
-                            <div className="setting-field">
-                                <label>Inference Steps</label>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="50"
-                                    value={inferenceSteps2}
-                                    onChange={(e) => setInferenceSteps2(e.target.value)}
-                                />
-                                <div>{inferenceSteps2}</div>
-                            </div>
-
-                            <div className="setting-field">
-                                <label>Guidance Scale</label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
-                                    max="10"
-                                    value={guidanceScale2}
-                                    onChange={(e) => setGuidanceScale2(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="setting-field">
-                                <label>Seed</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100000000"
-                                    value={seed2}
-                                    onChange={(e) => setSeed2(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="settings-buttons">
-                                <button className='default-btn' onClick={handleResetDefaults}>Reset to Default</button>
-                                <button className='apply-btn' onClick={handleApplySettings}>Apply</button>
-                            </div>
-                        </div>
-                    </div>
-                </>
+                <Settings onClose={() => setShowSettings(false)} />
             )}
-
             {showPanelEditor && (
-                <>
-                    <div className="modal-overlay" onClick={() => setShowPanelEditor(false)} />
-                    <div className="panel-editor-modal">
+                <PanelEditor onClose={() =>
+                    setShowPanelEditor(false)}
+                    selectedPanel={selectedPanel}
+                    modalImage={modalImage}
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    pageNo={pageNo}
+                    height_width={height_width}
+                    fontStyle={fontStyle}
+                    themeStyle={themeStyle}
+                    regenerateComic={regenerateComic}
 
-                        <button className="close-btn" onClick={() => setShowPanelEditor(false)}>
-                            <FontAwesomeIcon icon={faTimes} />
-                        </button>
-                        <div className="panel-editor-content">
-                            <div className='image_container'>
-                                <img src={modalImage} />
-                            </div>
-                            <div className="panel-controls">
-                                <h3 className="panel-title">Panel {selectedPanel}</h3>
-                                <div className="parameter-info">
-                                    <div className="control-group">
-                                        <div className="prompt-header">
-                                            <label>Prompt:</label>
-                                            <button className="copy-btn" onClick={handleCopyPrompt} title="Copy prompt">
-                                                <FontAwesomeIcon icon={faCopy} />
-                                            </button>
-                                        </div>
-                                        <textarea
-                                            value={prompt}
-                                            onChange={(e) => setPrompt(e.target.value)}
-                                            className={`prompt-input ${!showEditControls ? 'readonly' : ''}`}
-                                            readOnly={!showEditControls}
-                                            rows={4}
-                                            placeholder="Enter your comic panel prompt here..."
-                                        />
-                                    </div>
-
-                                    <div className="control-group">
-                                        <label>Inference Steps: {inferenceSteps2}</label>
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="50"
-                                            value={inferenceSteps2}
-                                            onChange={(e) => setInferenceSteps2(parseInt(e.target.value))}
-                                            className="slider"
-                                            disabled={!showEditControls}
-                                        />
-                                    </div>
-
-                                    <div className="control-group">
-                                        <label>Guidance Scale:</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="10"
-                                            step="0.1"
-                                            value={guidanceScale2}
-                                            onChange={(e) => setGuidanceScale2(parseFloat(e.target.value) || 0)}
-                                            className="number-input"
-                                            readOnly={!showEditControls}
-                                        />
-                                    </div>
-
-                                    <div className="control-group">
-                                        <label>Seed:</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="100000000"
-                                            value={seed2}
-                                            onChange={(e) => setSeed2(parseInt(e.target.value) || 0)}
-                                            className="number-input"
-                                            readOnly={!showEditControls}
-                                        />
-                                    </div>
-                                </div>
-                                {showEditControls ? (
-                                    <button className="regenerate-btn" onClick={handleRegenerate}>
-                                        <FontAwesomeIcon icon={faRotateRight} /> Regenerate
-                                    </button>
-                                ) : (
-                                    <button className="edit-btn" onClick={handleEditClick}>
-                                        <FontAwesomeIcon icon={faEdit} /> Edit
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </>
+                />
             )}
         </div>
     );

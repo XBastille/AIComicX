@@ -217,7 +217,7 @@ def generate_character_detection_prompts_llm(speaking_characters, scene_descript
     """
     try:
         client = genai.Client(
-            api_key=os.getenv("GEMINI_KEY"),
+            api_key="",
         )
         
         char_descriptions = {}
@@ -551,7 +551,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
 
 if __name__ == "__main__":
     
-    api_key = os.getenv("LANDING_API_KEY")
+    api_key = ""
     
     default_colors = {
         "bubble_color": (255, 255, 255),  # White

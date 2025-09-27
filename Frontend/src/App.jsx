@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from './Components/Login/Login'
-import Register from './Components/Register/Register'
+import Login from './Pages/auth/Login/Login'
+import Register from './Pages/auth/Register/Register'
 import Body from './Pages/LandingPage/LandingPage'
 import ChoosePage from './Pages/Choose/ChoosePage'
-import Nav from './Components/Nav/Nav'
-import Footer from './Components/Footer/Footer'
+import Nav from './Components/navigations/Nav/Nav'
+import Footer from './Components/navigations/Footer/Footer'
 import Conssole from './Pages/Conssole/Conssole'
-import ConssoleNav from './Components/Nav/ConssoleNav'
+import ConssoleNav from './Components/navigations/Nav/ConssoleNav'
 import PromptPage from './Pages/PromptPage/PromptPage'
 import './App.css'
 

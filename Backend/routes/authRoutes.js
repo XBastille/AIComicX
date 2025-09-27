@@ -5,11 +5,12 @@ const validator = require('validator');
 //const passport = require('passport');
 //require('../passport');
 
-const router = express.Router();
+const authRoute = express.Router();
 
 
 //___________________________________SIGN UP______________________________________________________________
-router.post('/signup', async (req, res) => {
+authRoute.
+post('/signup', async (req, res) => {
     console.log('signup k andar');
 
     try {
@@ -69,7 +70,8 @@ router.post('/signup', async (req, res) => {
 
 //LOGIN_________________________________________________________________________________________
 
-router.post('/login', async (req, res) => {
+authRoute.
+post('/login', async (req, res) => {
     console.log("login ke andar")
     let error = [];
     try {
@@ -104,17 +106,20 @@ router.post('/login', async (req, res) => {
 
 //______________________________GOOGLE AUTH___________________________________________________________________
 
-// router.get('/auth/google', passport.authenticate('google', {
+// authRoute.
+// get('/auth/google', passport.authenticate('google', {
 //     scope:
 //         ['email', 'profile']
 // }));
 
-// router.get('auth/google/callback', passport.authenticate('google', {
+// authRoute.
+// get('auth/google/callback', passport.authenticate('google', {
 //     successRedirect: '/success',
 //     failureRedirect: '/faliure'
 // }));
 
-// router.get('/success', (req, res) => {
+// authRoute.
+// get('/success', (req, res) => {
 //     console.log(req.user);
 //     res.json({
 //         sucess: true,
@@ -122,7 +127,8 @@ router.post('/login', async (req, res) => {
 //     })
 // })
 
-// router.get('/faliure', (req, res) => {
+// authRoute.
+// get('/faliure', (req, res) => {
 //     res.json({
 //         sucess: false,
 //         message: 'failed to authenticate'
@@ -141,4 +147,4 @@ router.post('/login', async (req, res) => {
 //         res.json('/');
 //     });
 
-module.exports = router;
+module.exports = authRoute;

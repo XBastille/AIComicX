@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Carousel.css';
 
-import auth1 from '../../Picture/auth.png';
-import auth2 from '../../Picture/auth2.png';
-import auth3 from '../../Picture/auth3.png';
-import auth4 from '../../Picture/auth4.png';
+import auth1 from '../../..//Picture/auth.png';
+import auth2 from '../../../Picture/auth2.png';
+import auth3 from '../../../Picture/auth3.png';
+import auth4 from '../../../Picture/auth4.png';
 
 const Carousel = () => {
     const [currentIndex, setCurrentIndex] = useState(0);

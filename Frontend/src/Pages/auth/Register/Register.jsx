@@ -1,13 +1,13 @@
 import React from "react";
 import { color, motion } from "framer-motion";
 import { useState } from "react";
-import { windowlistner } from "../WindowListener/WindowListener"
-import "../Register/Register.css"
+import { windowlistner } from "../../../Components/common/WindowListener/WindowListener"
+import "./Register.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGithub, faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { useNavigate } from "react-router";
 import axios from 'axios'
-import Carousel from '../Carousel/Carousel';
+import Carousel from '../../../Components/ui/Carousel/Carousel';
 
 function Register() {
 

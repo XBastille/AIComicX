@@ -1,9 +1,9 @@
 import React from "react";
 import "./Header.css";
-import githubIcon from "../../Picture/github.png";
-import linkedinIcon from "../../Picture/linkedin.png";
-import instagramIcon from "../../Picture/instagram-new.png";
-import twitterIcon from "../../Picture/X_logo_2023_white.png";
+import githubIcon from "../../../Picture/github.png";
+import linkedinIcon from "../../../Picture/linkedin.png";
+import instagramIcon from "../../../Picture/instagram-new.png";
+import twitterIcon from "../../../Picture/X_logo_2023_white.png";
 
 function Header({toggleMenu, menuOpen}) {
     return (

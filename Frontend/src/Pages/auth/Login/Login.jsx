@@ -1,11 +1,11 @@
 import React from "react";
 import { color, motion } from "framer-motion";
 import { useState } from "react";
-import { windowlistner } from "../WindowListener/WindowListener"
+import { windowlistner } from "../../../Components/common/WindowListener/WindowListener"
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
-import "../Register/Register.css"
-import Carousel from '../Carousel/Carousel';
+import "../../../Pages/auth/Register/Register.css"
+import Carousel from '../../../Components/ui/Carousel/Carousel';
 
 function Login() {
 

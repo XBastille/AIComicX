@@ -12,7 +12,7 @@ function SideNav({ content }) {
     return (
         <div className={`side-nav ${isOpen ? 'open' : ''}`}>
             <div className="side-nav-content">
-                <ReactMarkdown>{content}</ReactMarkdown>
+                <ReactMarkdown>{content || "Unable to load story..."}</ReactMarkdown>
             </div>
             <button className="toggle-btn" onClick={toggleNav}>
                 {isOpen ? '←' : '→'}

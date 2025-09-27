@@ -1,5 +1,5 @@
 import Spline from '@splinetool/react-spline';
-import epochPresents from '../../Picture/aicomic2.jpg';
+import epochPresents from '../../../Picture/aicomic2.jpg';
 import './LoadingAnimation2.css';
 
 export default function Appsss() {

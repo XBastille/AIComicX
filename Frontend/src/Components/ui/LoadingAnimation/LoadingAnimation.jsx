@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import './LoadingAnimation.css';
-import loadingVideo from '../../Picture/loading.mp4';
+import loadingVideo from '../../../Picture/loading.mp4';
 import aicomicLogo from '../../Picture/aicomic2.jpg';
 import epochPresents from '../../Picture/Epoch_Present.png';
 

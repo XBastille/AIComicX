@@ -34,7 +34,7 @@ def extract_page_panel_info(comic_text):
 def generate_character_descriptions(formatted_text, style):
     """Generate character descriptions from formatted text with enhanced focus on outfit and hair details"""
     client = genai.Client(
-        api_key=os.getenv("GEMINI_KEY"),
+        api_key="",
     )
 
     character_names = set()
@@ -122,7 +122,7 @@ def generate_character_descriptions(formatted_text, style):
 def generate_character_reference_prompt(character_name, character_desc, style):
     """Generate intelligent reference image prompt using LLM with increased detail focus"""
     client = genai.Client(
-        api_key=os.getenv("GEMINI_KEY"),
+        api_key="",
     )
     
     if style.lower() == "manga":
@@ -299,7 +299,7 @@ def convert_formatted_to_comic(formatted_text):
     Character B: dialogue
     """
     client = genai.Client(
-        api_key=os.getenv("GEMINI_KEY"),
+        api_key="",
     )
 
     system_prompt = """

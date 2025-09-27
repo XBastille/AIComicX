@@ -8,8 +8,8 @@ import axios from 'axios';
 import ReactMarkdown from "react-markdown";
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from "react-router-dom";
-import LoadingSpinner from "../../Components/LoadingAnimation/Simple";
-import Appsss from "../../Components/LoadingAnimation/LoadingAnimation2";
+import LoadingSpinner from "../../Components/common/loader/Simple";
+import Appsss from "../../Components/ui/LoadingAnimation/LoadingAnimation2";
 import aicomicx2 from "../../Picture/aicomic2.jpg";
 import { API_ENDPOINTS } from "../../config/api";
 
@@ -21,12 +21,12 @@ function PromptPage() {
     const [text, setresponse] = useState("");
     const [LoadingIdx, SetLoadingIdx] = useState(false);
     const [loading, setloading] = useState(false);
-    const navigate = useNavigate();
     const [latestResponse, setLatestResponse] = useState("");
     const [displayedChunks, setDisplayedChunks] = useState("");
     const [isScrolling, setIsScrolling] = useState(false);
     const bottomRef = useRef(null);
 
+    const navigate = useNavigate();
 
     const handleSend = async () => {
         if (message.trim() !== "") {
@@ -62,7 +62,6 @@ function PromptPage() {
             setloading(true);
             try {
                 const res = await axios.post(API_ENDPOINTS.ayush, { text })
-                console.log(res.data.sucess)
                 if (res.data.sucess === true) {
                     navigate('/Generate_Story');
                 }
@@ -85,11 +84,8 @@ function PromptPage() {
                     clearInterval(interval);
                 }
             }, 30);
-
         }
-
         setDisplayedChunks("");
-
     }, [latestResponse]);
 
     useEffect(() => {
@@ -140,19 +136,10 @@ function PromptPage() {
 
                             ) : (
                                 <>
-
                                     {msg.text}
-
-
-
-
                                 </>
-
-
                             )
                             }
-
-
 
                         </div>
                         {msg.sender === "user" && (
@@ -165,7 +152,6 @@ function PromptPage() {
                                 {index === LoadingIdx && (
                                     <LoadingSpinner />
                                 )}
-
                             </>
                         )}
 
@@ -177,7 +163,6 @@ function PromptPage() {
 
             <div className="search-bar">
                 <textarea
-
                     type="text"
                     placeholder="Ask Sam..."
                     className="input"

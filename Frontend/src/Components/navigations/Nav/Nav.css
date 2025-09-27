@@ -18,7 +18,7 @@ html, body {
   justify-content: space-between;
   align-items: center;
   padding: 20px 40px;
-  z-index: 2000;
+  z-index: 99999;
 }
 
 .logo-container {
@@ -32,7 +32,7 @@ html, body {
   object-fit: contain;
   border-radius: 12px;
   transition: transform 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); */
 }
 
 .logo:hover {

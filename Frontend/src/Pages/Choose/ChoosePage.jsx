@@ -3,11 +3,11 @@ import "./ChoosePage.css";
 import narrationImage from "../../Picture/nar.jpg"
 import storyImage from "../../Picture/story.jpg";
 import sam from "../../Picture/sam.png";
-import Nav_2 from "../../Components/Nav_2/Nav_2";
+import Nav_2 from "../../Components/navigations/Nav_2/Nav_2";
 import axios from 'axios'
 import { gsap } from "gsap";
 import { useNavigate } from "react-router-dom";
-import Appsss from "../../Components/LoadingAnimation/LoadingAnimation2";
+import Appsss from "../../Components/ui/LoadingAnimation/LoadingAnimation2";
 import { API_ENDPOINTS } from "../../config/api";
 
 function ChoosePage() {

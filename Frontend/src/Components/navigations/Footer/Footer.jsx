@@ -1,5 +1,5 @@
 import React from "react";
-import aicomicx2 from "../../Picture/aicomic2.jpg"
+import aicomicx2 from "../../../Picture/aicomic2.jpg"
 import './Footer.css'
 
 function Footer () {

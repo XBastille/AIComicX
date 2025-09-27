@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import "./Nav.css";
 import Header from "../Header/Header";
-import aicomicLogo from "../../Picture/aicomic2.jpg";
+import aicomicLogo from "../../../Picture/aicomic2.jpg";
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useNavigate } from 'react-router-dom';

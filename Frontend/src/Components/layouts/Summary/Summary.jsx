@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { windowlistner } from "../../Components/WindowListener/WindowListener";
-import SummaryImg1 from "../../Picture/summaryimg1.png";
-import SummaryImg2 from "../../Picture/summaryimg2.png";
+import { windowlistner } from "../../common/WindowListener/WindowListener";
+// import SummaryImg1 from "../../Picture/summaryimg1.png";
+// import SummaryImg2 from "../../Picture/summaryimg2.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -143,15 +143,15 @@ function Body() {
           </p>
         </div>
 
-        <div
+        {/* <div
           className="left-img"
           style={{ ...styles.splitImage, backgroundImage: `url(${SummaryImg1})` }}
-        />
+        /> */}
         <div className="vertical-line" style={styles.verticalLine} />
-        <div
+        {/* <div
           className="right-img"
           style={{ ...styles.splitImage, backgroundImage: `url(${SummaryImg2})` }}
-        />
+        /> */}
       </div>
     </div>
   );

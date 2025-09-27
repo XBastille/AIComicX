@@ -205,7 +205,7 @@ def generate_character_detection_prompts_llm(speaking_characters, scene_descript
     """
     try:
         client = genai.Client(
-            api_key=os.getenv("GEMINI_KEY"),
+            api_key="",
         )
         
         char_descriptions = {}
@@ -437,20 +437,20 @@ if __name__ == "__main__":
         markdown_file = sys.argv[1]
         page_number = int(sys.argv[2])
         panel_number = int(sys.argv[3])
-        custom_prompt = "anime, vibrant cel-shaded, dynamic composition, A man in his late 20s with a lean, wiry build. His hair is an unruly, spiky charcoal-black cut in a messy undercut; a few strands are interwoven with faint, glowing blue micro-filaments, hinting at cheap neural mods. He wears a grease-stained, dark grey canvas utility jacket with a high collar over a faded black t-shirt, paired with baggy, olive-drab cargo pants that have numerous straps and pockets, tucked into scuffed, steel-toed black combat boots. annoyed, swatting away a holographic ad with one hand, other hand using a multi-tool to zap a tiny, crab-shaped piece of malware on a logic board, Noodle-Bot's single red eye flickering."
-        guidance_scale = float(sys.argv[4])
-        inference_steps = int(sys.argv[5])
-        panel_width = int(sys.argv[6])
-        panel_height = int(sys.argv[7])
-        theme = sys.argv[8]
-        font_style = sys.argv[9]
-        seed = int(sys.argv[10])
+        custom_prompt = sys.argv[4]
+        guidance_scale = float(sys.argv[5])
+        inference_steps = int(sys.argv[6])
+        panel_width = int(sys.argv[7])
+        panel_height = int(sys.argv[8])
+        theme = sys.argv[9]
+        font_style = sys.argv[10]
+        seed = int(sys.argv[11])
         
     except (ValueError, IndexError) as e:
         print(f"Error parsing arguments: {e}")
         sys.exit(1)
 
-    api_key = os.getenv("LANDING_API_KEY")
+    api_key = ""
     
     result_path = regenerate_panel_image(
         markdown_file=markdown_file,

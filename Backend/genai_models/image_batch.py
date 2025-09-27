@@ -184,7 +184,7 @@ def extract_key_character_features(description):
 def generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text=""):
     """Generate detailed prompts for ALL panels using a single mega-prompt approach"""
     client = genai.Client(
-        api_key=os.getenv("GEMINI_KEY"),
+        api_key="",
     )
     
     total_panels = sum(len(page['panels']) for page in comic_structure)
