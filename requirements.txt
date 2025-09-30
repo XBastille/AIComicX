@@ -11,3 +11,5 @@ accelerate==1.9.0
 sentencepiece==0.2.0
 google-genai==1.26.0
 transformers==4.53.2
+dfloat11==0.5.0
+cupy-cuda12x==13.6.0

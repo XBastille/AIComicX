@@ -51,150 +51,82 @@ def parse_additional_dialogues(panel_content, panel_num):
 
 def parse_direct_from_markdown(markdown_file, page_number, panel_number):
     """
-    Parse dialogues directly from the markdown file to catch ALL dialogues.
-    This bypasses any limitations in the extract_panel_content function.
+    Parse dialogues and narrations directly from the markdown for a specific page/panel.
+    CRITICAL: Each **Name:** line becomes a separate dialogue entry for multiple bubbles.
     
     Args:
         markdown_file: Path to the markdown file
-        page_number: Page number to look for
-        panel_number: Panel number to extract dialogues from
+        page_number: Page number to extract
+        panel_number: Panel number to extract
         
-    Returns:
-        Tuple: (dialogues_list, scene_description)
+    Returns: 
+        Tuple of (entries_list, scene_description)
+        - entries_list: List of dicts with keys {type, character, text, sequence_position}
+        - scene_description: Concatenated content from [ ... ] blocks
     """
     try:
         with open(markdown_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            
+
         print(f"\nReading markdown file: {markdown_file}")
         print(f"File excerpt (first 200 chars): {content[:200]}...")
-        
-        page_pattern = rf"## Page {page_number}\s*\n(.*?)(?:## Page|\Z)"
-        page_match = re.search(page_pattern, content, re.DOTALL)
-        
+
+        page_pattern = rf"^##\s*Page\s+{page_number}\s*\n(.*?)(?=^##\s*Page\s+\d+\s*$|\Z)"
+        page_match = re.search(page_pattern, content, flags=re.DOTALL | re.MULTILINE)
         if not page_match:
             print(f"Could not find Page {page_number} in markdown file")
             return [], ""
-            
         page_content = page_match.group(1)
         print(f"Found page {page_number} content (first 100 chars): {page_content[:100]}...")
-        
-        panel_pattern = rf"### Panel {panel_number}\s*\n(.*?)(?:(?:### Panel \d+)|(?:---)|(?:\Z))"
-        panel_match = re.search(panel_pattern, page_content, re.DOTALL)
-        
+
+        panel_pattern = rf"^###\s*Panel\s+{panel_number}\s*\n(.*?)(?=^###\s*Panel\s+\d+\s*$|^---\s*$|\Z)"
+        panel_match = re.search(panel_pattern, page_content, flags=re.DOTALL | re.MULTILINE)
         if not panel_match:
             print(f"Could not find Panel {panel_number} in Page {page_number}")
             return [], ""
-            
-        panel_content = panel_match.group(1).strip()
-        print(f"Found panel {panel_number} content: \n{panel_content}")
-        
+        panel_block = panel_match.group(1).strip()
+        print(f"Found panel {panel_number} content: \n{panel_block}")
+
         scene_description = ""
-        scene_pattern = r"\[(.*?)\]"
-        scene_matches = re.findall(scene_pattern, panel_content)
-        if scene_matches:
-            scene_description = " ".join(scene_matches)
+        bracket_blocks = re.findall(r"\[(.*?)\]", panel_block, flags=re.DOTALL)
+        if bracket_blocks:
+            scene_description = " ".join(s.strip() for s in bracket_blocks if s.strip())
             print(f"Extracted scene description: {scene_description}")
-        
-        result = []
-        
-        narration_pattern = r"\*\*Narration\*\*:\s*(.*?)(?=\n\*\*|\n\n|\Z)"
-        for narration_match in re.finditer(narration_pattern, panel_content, re.DOTALL):
-            narration_text = narration_match.group(1).strip()
-            if narration_text:
-                narration_start = narration_match.start()
-                result.append({
-                    'character': 'Narration',
-                    'text': narration_text,
-                    'sequence_position': narration_start,
-                    'type': 'narration'
-                })
-                print(f"Added narration at position {narration_start}: {narration_text[:30]}...")
-        
-        dialogue_pattern = r"\*\*([^*:]+)\*\*:\s*(.*?)(?=\n\*\*|\n\n|\Z)"
-        for dialogue_match in re.finditer(dialogue_pattern, panel_content, re.DOTALL):
-            char_name = dialogue_match.group(1).strip()
-            dialogue_text = dialogue_match.group(2).strip()
-            
-            if dialogue_text.startswith('"') and dialogue_text.endswith('"'):
-                dialogue_text = dialogue_text[1:-1]
-            
-            dialogue_start = dialogue_match.start()
-            
-            if char_name.lower() != "narration":
-                result.append({
-                    'character': char_name,
-                    'text': dialogue_text,
-                    'sequence_position': dialogue_start,
-                    'type': 'dialogue'
-                })
-                print(f"Added dialogue at position {dialogue_start}: {char_name}: {dialogue_text[:30]}...")
-        
-        if not result:
-            print("\nAttempting line-by-line dialogue extraction:")
-            lines = panel_content.split('\n')
-            sequence_position = 0
-            
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
+
+        entries = []
+        seq = 0
+
+        for line_num, line in enumerate(panel_block.splitlines()):
+            line = line.strip()
+            if line.startswith('**') and ':**' in line:
+                parts = line.split(':**', 1)
+                if len(parts) == 2:
+                    name = parts[0][2:].strip()  
+                    text = parts[1].strip()
                     
-                if "**Narration**:" in line:
-                    try:
-                        narr_text = line.split("**Narration**:")[1].strip()
-                        if narr_text:
-                            result.append({
-                                'character': 'Narration',
-                                'text': narr_text,
-                                'sequence_position': sequence_position,
-                                'type': 'narration'
-                            })
-                            print(f"Line-by-line extracted narration: {narr_text[:30]}...")
-                    except Exception as e:
-                        print(f"Error extracting narration: {e}")
-                
-                elif "**" in line and ":" in line:
-                    try:
-                        char_start = line.find("**") + 2
-                        char_end = line.find("**", char_start)
-                        if char_end == -1:
-                            continue
-                            
-                        char_name = line[char_start:char_end].strip()
-                        
-                        colon_pos = line.find(":", char_end)
-                        if colon_pos == -1:
-                            continue
-                            
-                        dialogue_text = line[colon_pos + 1:].strip()
-                        
-                        if dialogue_text.startswith('"') and dialogue_text.endswith('"'):
-                            dialogue_text = dialogue_text[1:-1]
-                        
-                        if char_name.lower() != "narration" and dialogue_text:
-                            result.append({
-                                'character': char_name,
-                                'text': dialogue_text,
-                                'sequence_position': sequence_position,
-                                'type': 'dialogue'
-                            })
-                            print(f"Line-by-line extracted: {char_name}: \"{dialogue_text[:30]}...\"")
-                    except Exception as e:
-                        print(f"Error in line-by-line extraction: {e}")
-                        continue
-                
-                sequence_position += 10  
-        
-        result.sort(key=lambda x: x.get('sequence_position', 0))
-        
-        print(f"Direct parsing found {len(result)} entries in panel {panel_number} in sequence order:")
-        for i, item in enumerate(result):
-            item_type = item.get('type', 'unknown')
-            print(f"  {i+1}. [{item_type}] {item['character']}: {item['text'][:30]}...")
-        
-        return result, scene_description
-        
+                    if len(text) >= 2 and text.startswith('"') and text.endswith('"'):
+                        text = text[1:-1].strip()
+                    
+                    if text:  
+                        entry_type = 'narration' if name.lower() == 'narration' else 'dialogue'
+                        entries.append({
+                            'type': entry_type,
+                            'character': name,
+                            'text': text,
+                            'sequence_position': seq
+                        })
+                        seq += 1
+
+        entries.sort(key=lambda x: x.get('sequence_position', 0))
+        print(f"Direct parsing found {len(entries)} entries in panel {panel_number} in sequence order:")
+        for i, item in enumerate(entries):
+            kind = item.get('type', 'dialogue')
+            who = item.get('character', 'Unknown')
+            preview = item.get('text', '')[:30]
+            print(f"  {i+1}. [{kind}] {who}: {preview}...")
+
+        return entries, scene_description
+
     except Exception as e:
         print(f"Error parsing markdown directly: {e}")
         traceback.print_exc()
@@ -213,7 +145,7 @@ def generate_character_detection_prompts_llm(speaking_characters, scene_descript
     """
     try:
         client = genai.Client(
-            api_key=os.getenv("GEMINI_KEY"),
+            api_key=os.environ["GEMINI_KEY"],
         )
         
         char_descriptions = {}
@@ -259,7 +191,7 @@ RESPONSE FORMAT: Return ONLY JSON with speaking character names as keys:
 }}
 """
         
-        model = "gemini-2.5-pro"
+        model = "gemini-2.5-flash"
         contents = [
             types.Content(
                 role="user",
@@ -282,16 +214,36 @@ RESPONSE FORMAT: Return ONLY JSON with speaking character names as keys:
         
         response_text = response.candidates[0].content.parts[0].text
         print(f"\nLLM Raw Response for detection prompts: {response_text}")
-        
-        detection_prompts = json.loads(response_text)
-        
-        visible_prompts = {}
-        for char_name, prompt in detection_prompts.items():
-            if prompt != "NOT_VISIBLE":
-                visible_prompts[char_name] = prompt
-        
-        print(f"Final LLM-generated detection prompts (visible only): {visible_prompts}")
-        return visible_prompts
+
+        try:
+            detection_prompts = json.loads(response_text)
+        except Exception:
+            print("Failed to parse detection JSON; using fallback prompts per speaker")
+            detection_prompts = {}
+
+        def fallback_prompt(name):
+            desc = character_descriptions.get(name, {}).get('main') or character_descriptions.get(name, {}).get('base', '')
+            s = desc.lower()
+            if re.search(r"\bwoman|female|girl\b", s):
+                return "woman's head"
+            if re.search(r"\bman|male|boy\b", s):
+                return "man's head"
+            m = re.search(r"\[HAIR\]\s*(.*?)(?=\[[A-Z_]+\]|$)", desc, flags=re.IGNORECASE|re.DOTALL)
+            if m:
+                snippet = " ".join(m.group(1).strip().split()[:3])
+                return f"head with {snippet}"
+            return "person's head"
+
+        final_map = {}
+        for name in speaking_characters:
+            prompt = (detection_prompts or {}).get(name)
+            if not prompt or str(prompt).upper() == "NOT_VISIBLE":
+                final_map[name] = fallback_prompt(name)
+            else:
+                final_map[name] = prompt
+
+        print(f"Final detection prompts (with fallbacks): {final_map}")
+        return final_map
         
     except Exception as e:
         print(f"Error generating detection prompts with LLM: {e}")
@@ -584,23 +536,36 @@ if __name__ == "__main__":
         "cute": "fonts/font5.ttf"
     }
 
-    theme = "sepia"  # Can be changed: default, sepia, noir, modern
-    font_style = "anime"  # Can be changed: anime, manga, comic, handwritten, cute
-    seed = 10  
-    
-    colors = sepia_colors
+    theme = "default"  # Options: default, sepia, noir, modern
+    font_style = "anime"  # Options: anime, manga, comic, handwritten, cute
+    seed = 10234
+
+    theme_map = {
+        "default": default_colors,
+        "sepia": sepia_colors,
+        "noir": noir_colors,
+        "modern": modern_colors,    
+    }
+
+    if theme.lower() not in theme_map:
+        print(f"Unknown theme '{theme}', falling back to default")
+        colors = default_colors
+    else:
+        colors = theme_map[theme.lower()]
+    print(f"Using theme '{theme}': {colors}")
     
     font_path = font_mapping.get(font_style, "fonts/font1reg.ttf")
     
     process_comic_page(
-        markdown_file="test_4_comic.md", 
-        page_number=1, 
+        markdown_file="test.md", 
+        page_number=6, 
         api_key=api_key,
-        style="Makoto shinkai Anime style",
+        style="anime",
         panel_dimensions=[
-            (768, 1024),
-            (768, 1024),
-            (768, 1024),
+            (1216, 832),
+            (768, 1344),
+            (768, 1344),
+            (1216, 832),
         ],
         guidance_scale=7.5,
         inference_steps=40,

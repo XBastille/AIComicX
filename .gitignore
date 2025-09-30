@@ -217,6 +217,7 @@ output/
 uploads/
 response/
 node_modules/
+DFloat11__Qwen-Image-DF11/
 nosetests.xml
 npm-debug.log*
 out

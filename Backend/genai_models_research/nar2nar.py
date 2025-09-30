@@ -2,6 +2,8 @@ import os
 import sys
 import json
 import torch
+import re
+import shutil
 from google import genai
 from google.genai import types
 from markitdown import MarkItDown
@@ -10,7 +12,6 @@ from gradio_client import Client
 
 def extract_page_panel_info(comic_text):
     """Extract page and panel information from comic markdown"""
-    import re
     
     page_pattern = r'^## Page \d+$'
     pages = re.findall(page_pattern, comic_text, re.MULTILINE)
@@ -31,7 +32,7 @@ def extract_page_panel_info(comic_text):
     }
 
 def generate_character_descriptions(formatted_text, style):
-    """Generate character descriptions from formatted text with enhanced focus on outfit and hair details"""
+    """Generate character descriptions with dynamic variations based on story context"""
     client = genai.Client(
         api_key=os.environ["GEMINI_KEY"],
     )
@@ -47,7 +48,7 @@ def generate_character_descriptions(formatted_text, style):
     story_context = f"CHARACTERS FOUND: {', '.join(character_names)}\n\nSTORY CONTENT:\n{formatted_text}"
 
     llm_prompt = f"""
-    Create DETAILED visual descriptions of each character in this pre-formatted story with HEAVY FOCUS on outfit and hair details.
+    Create DETAILED character descriptions with DYNAMIC VARIATIONS based on story context and scenes.
     
     FULL STORY CONTEXT:
     {story_context}
@@ -55,32 +56,125 @@ def generate_character_descriptions(formatted_text, style):
     STYLE REQUESTED:
     {style} style
 
-    For EACH named character that appears or is mentioned in the story, create a DETAILED visual description that includes:
-    1. HAIR: Very detailed hair color, style, length, texture, and any accessories (35-40 words)
-    2. OUTFIT: Complete detailed clothing description including colors, materials, style, accessories, and condition (40-45 words)
-    3. Basic physical attributes: age range, build (10-15 words)
+    TASK: For EACH named character, create a MAIN description plus CONTEXTUAL VARIATIONS based on different scenes, settings, or time periods in the story.
 
-    VERY IMPORTANT don't include the "narration" as character, it's not a character, it is interfering with the image generation
-    Your descriptions should be COMPREHENSIVE and DETAILED (80-100 words total per character) to ensure perfect character consistency.
+    CRITICAL: Focus ONLY on PURE VISUAL APPEARANCE - no environmental context, emotions, or situational details.
 
-    FOCUS PRIORITY:
-    1. Hair details (color, style, length, texture)
-    2. Complete outfit description (every piece of clothing, colors, materials)
-    3. Physical build and age
-    4. Essential facial features
+    STRUCTURED FEATURE TAGGING (MANDATORY): Each description (main & variations) MUST contain tags in this exact order: [AGE_BUILD] [HAIR] [EYES] [FACIAL_FEATURES] [OUTFIT] [ACCESSORIES] [DISTINCTIVES]. Example:
+    "[AGE_BUILD] 30-year-old lean athletic man. [HAIR] short dark brown windswept hair ... [EYES] intense grey eyes ... [FACIAL_FEATURES] angular jaw, straight nose ... [OUTFIT] fitted charcoal technical jacket over moisture-wicking base layer, reinforced black tactical pants, weathered climbing harness, dark composite boots ... [ACCESSORIES] fingerless tactical gloves, slim wrist device ... [DISTINCTIVES] faint healed scar across left eyebrow."
+
+    CONTINUITY / RANGE INFERENCE:
+    - Extend outfit variation ranges forward until explicit change occurs; e.g. wetsuit introduced 4.2 and used through storm at 5.1 => range "4.2-5.1".
+    - Do not fragment continuous identical outfits into multiple variations.
+    - Minor condition changes (wet, torn, bloodied) stay inside same [OUTFIT] segment with state adjectives appended.
+    - Major garment swap (adding/removing distinct layer) starts a new variation.
+    - Ensure chronological, non-overlapping ranges; fill gaps if outfit obviously maintained.
+
+    OUTFIT COMPLETENESS RULE:
+    - [OUTFIT] must always enumerate: upper layers, lower garment, footwear, materials, dominant colors, fit descriptors, and any harness/gear.
+    - Never omit [OUTFIT]; omission invalid.
+
+    SELF VALIDATION BEFORE OUTPUT:
+    - Verify all seven tags appear exactly once per description.
+    - Verify no variation duplicates main verbatim without justification.
+    - Verify extended ranges reflect continuous presence.
+    - Repair any missing tag segments prior to returning JSON.
+
+    CORE CHARACTER CONSISTENCY (MUST MAINTAIN):
+    - Exact hair color with specific shade descriptions
+    - Exact eye color with intensity details  
+    - Facial structure and distinctive features
+    - Body build, height, age appearance
+    - Any scars, birthmarks, or unique traits
+
+    REQUIRED VISUAL DETAIL LEVEL:
+    1. HAIR: Include color, texture, length, specific style, and distinctive features
+       Examples: "striking metallic silver hair", "gravity-defying spiky layered brown hair with lighter brunette highlights"
+    2. EYES: Include exact color, shape, and distinctive qualities
+       Examples: "piercing bright emerald green eyes", "intense grey eyes", "sharp dark brown eyes"
+    3. CLOTHING: Include materials, colors, fit, layering, and specific style details
+       Examples: "long form-fitting trench coat of black synth-leather over sleeveless high-necked black silk top"
+    4. PHYSICAL BUILD: Include height indication, build type, and distinctive physical traits
+       Examples: "lean athletic build", "tall muscular imposing build", "slender but resilient build"
+
+    FORBIDDEN ELEMENTS (NEVER INCLUDE):
+    - Environmental context: "by the cold London air", "in the jungle humidity"
+    - Emotional states: "determined", "focused", "concerned"
+    - Situational details: "during escape", "after struggle", "while working"
+    - Action descriptions: "leaning", "running", "speaking"
+    - Only pure static visual appearance allowed
+
+    VARIATION CATEGORIES TO DETECT AND CREATE (PHYSICAL APPEARANCE CHANGES ONLY):
+    1. MAIN/DEFAULT: Primary outfit used throughout most of the story
+    2. OUTFIT CHANGES: Different clothing/outfits worn in specific scenes
+        - Casual vs formal wear
+        - Work uniform vs street clothes
+        - Seasonal clothing (winter coat, summer wear, etc.)
+        - Special event outfits (party dress, suit, etc.)
+    3. TEMPORAL CHANGES: Different ages of the same character
+        - Childhood versions (younger appearance)
+        - Teenage versions
+        - Elderly versions (older appearance)
+    4. PHYSICAL STATE CHANGES: Visible physical alterations
+        - Injured/bandaged appearance
+        - Different hairstyles (if significantly different)
+        - Costume/disguise changes
+
+    INSTRUCTIONS:
+    1. Analyze the story to identify different contexts where characters appear
+    2. Create variations ONLY for VISIBLE PHYSICAL CHANGES (outfits, age, appearance)
+    3. DO NOT create variations for emotional states, moods, or situational contexts
+    4. ALWAYS maintain core physical features (hair color, eyes, build, etc.)
+    5. Main description should be the most commonly used outfit
+    6. Each variation should be 80-100 words with complete outfit details
+    7. Include specific page.panel ranges where each variation applies (e.g., "1.2-3.4")
+    8. Only create variations when there are ACTUAL outfit changes or temporal differences mentioned in the story
 
     OUTPUT FORMAT:
-    Return a JSON object where keys are character names and values have "base" description:
-
-    Example format:
+    Use page.panel-page.panel format for precise panel-level tracking (e.g., "1.2-3.4, 8.1-10.3")
     {{
       "Character1": {{
-        "base": "30-year-old athletic man with thick wavy auburn hair styled in a messy pompadour with silver streaks at the temples, wearing a weathered dark brown leather jacket over a faded blue denim shirt with rolled sleeves, black tactical cargo pants with multiple pockets and silver buckles, scuffed combat boots, fingerless gloves, and a worn leather shoulder holster, sharp angular jawline with piercing green eyes"
-      }},
-      "Character2": {{
-        "base": "young woman with long silky platinum blonde hair braided with blue ribbons and small silver beads, wearing an elegant white silk dress with intricate lace sleeves and pearl buttons, blue velvet cloak with silver embroidery, white leather boots with pearl buckles, delicate silver jewelry, slender build with bright blue eyes"
+        "main": "detailed main outfit description with core features...",
+        "variations": {{
+          "work_outfit": {{
+            "1.2-3.4, 8.1-10.3": "COMPLETE character description with work uniform while maintaining ALL core features (hair, eyes, build, etc.)..."
+          }},
+          "formal_suit": {{
+            "15.1-17.2": "COMPLETE character description with formal attire while maintaining ALL core features (hair, eyes, build, etc.)..."
+          }},
+          "childhood": {{
+            "22.3-24.1": "COMPLETE younger version description maintaining hair color, facial features, and build..."
+          }}
+        }}
       }}
     }}
+
+    EXAMPLE:
+    {{
+      "Emma": {{
+        "main": "25-year-old woman with flowing golden blonde hair cascading to her shoulders in soft waves, bright emerald green eyes, athletic build, wearing elegant navy blue business blazer over white silk blouse, tailored black trousers, black leather heels",
+        "variations": {{
+          "winter_coat": {{
+            "5.2-7.4": "25-year-old woman with flowing golden blonde hair in messy bun, bright emerald green eyes, athletic build, wearing thick navy winter coat, warm scarf, dark jeans, winter boots, gloves"
+          }},
+          "teenage": {{
+            "12.1-14.3": "17-year-old version with same golden blonde hair but shorter and straighter, bright emerald green eyes, slender teenage build, wearing school uniform with pleated skirt, white blouse, navy blazer"
+          }}
+        }}
+      }}
+    }}
+
+    IMPORTANT: 
+    - NEVER include "narration" as a character
+    - Only create variations for ACTUAL outfit changes or temporal (age) differences
+    - DO NOT create variations for emotions, moods, situations, or contexts
+    - DO NOT create variations like "determined_action", "empathetic_support", "grieving", etc.
+    - Maintain character consistency across all variations
+    - Use precise page.panel ranges like "1.2-3.4" for panel-level accuracy
+    - Each variation should be a COMPLETE character description, not partial
+    - Variations should be the SAME LENGTH and DETAIL as the main description
+    - Focus ONLY on visible physical appearance changes (clothes, age, hair style)
+    - Mandated tags order: [AGE_BUILD][HAIR][EYES][FACIAL_FEATURES][OUTFIT][ACCESSORIES][DISTINCTIVES]
     """
     
     try:
@@ -111,9 +205,15 @@ def generate_character_descriptions(formatted_text, style):
         response_content = "".join(response_chunks)
         
         character_descriptions = json.loads(response_content)
+        
         print(f"Generated detailed descriptions for {len(character_descriptions)} characters")
+        
         return character_descriptions
         
+    except json.JSONDecodeError as e:
+        print(f"Error: Could not parse JSON response: {e}")
+        print(f"Response content: {response_content[:500]}...")
+        return {}
     except Exception as e:
         print(f"Error generating character descriptions: {e}")
         return {}
@@ -252,7 +352,6 @@ def generate_character_reference_image(character_index, character_name, characte
         
         image_path = f"character_references/reference{character_index}.png"
         if isinstance(result[0], str):
-            import shutil
             shutil.copy(result[0], image_path)
         else:
             result[0].save(image_path)
@@ -414,7 +513,10 @@ def process_formatted_file(file_path, style="american comic (modern)", generate_
             
             character_index = 1
             for char_name, char_data in character_descriptions.items():
-                char_desc = char_data.get('base', '')
+                if char_name == "comic_structure":
+                    continue
+                
+                char_desc = char_data.get('main', char_data.get('base', ''))
                 if char_desc:
                     print(f"\nProcessing character {character_index}: {char_name}")
                     print(f"Description: {char_desc}")

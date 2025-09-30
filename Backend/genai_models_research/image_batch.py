@@ -2,13 +2,15 @@ import os
 import re
 import json
 import torch
-from diffusers import StableDiffusion3Pipeline
+from diffusers import DiffusionPipeline, QwenImageTransformer2DModel
+from transformers.modeling_utils import no_init_weights
+from dfloat11 import DFloat11Model
 import shutil
 import markdown
 import bs4
 from google import genai
 from google.genai import types
-import time
+import time 
 
 global_pipeline = None
 
@@ -17,12 +19,31 @@ def get_or_create_pipeline():
     global global_pipeline
     
     if global_pipeline is None:
-        print("Creating new Stable Diffusion pipeline...")
-        global_pipeline = StableDiffusion3Pipeline.from_pretrained(
-            "stabilityai/stable-diffusion-3.5-large", 
-            torch_dtype=torch.bfloat16
+        print("Creating new Qwen Image pipeline...")
+        model_name = "Qwen/Qwen-Image"
+        
+        with no_init_weights():
+            transformer = QwenImageTransformer2DModel.from_config(
+                QwenImageTransformer2DModel.load_config(
+                    model_name, subfolder="transformer",
+                ),
+            ).to(torch.bfloat16)
+
+        DFloat11Model.from_pretrained(
+            "DFloat11/Qwen-Image-DF11",
+            device="cpu",
+            cpu_offload=False,
+            cpu_offload_blocks=None,
+            pin_memory=True,
+            bfloat16_model=transformer,
         )
-        global_pipeline = global_pipeline.to("cuda")
+
+        global_pipeline = DiffusionPipeline.from_pretrained(
+            model_name,
+            transformer=transformer,
+            torch_dtype=torch.bfloat16,
+        )
+        global_pipeline.enable_model_cpu_offload()
         print("Pipeline created and moved to CUDA")
     else:
         print("Reusing existing pipeline")
@@ -122,19 +143,80 @@ def get_character_description(character_descriptions, character_name, page_num, 
     if character_name not in character_descriptions:
         return f"{character_name} (no detailed description available)"
     
-    base_description = character_descriptions[character_name].get("base", "")
+    char_data = character_descriptions[character_name]
     
-    variations = character_descriptions[character_name].get("variations", {})
-    panel_key = f"page_{page_num}_panel_{panel_num}"
+    main_description = char_data.get("main", char_data.get("base", ""))
     
-    if panel_key in variations:
-        return variations[panel_key]
+    variations = char_data.get("variations", {})
     
-    page_key = f"page_{page_num}"
-    if page_key in variations:
-        return variations[page_key]
+    for var_name, var_data in variations.items():
+        for range_str, description in var_data.items():
+            if check_page_panel_in_range(page_num, panel_num, range_str):
+                return description
     
-    return base_description
+    return main_description
+
+def check_page_panel_in_range(page_num, panel_num, range_str):
+    """Check if a page.panel combination falls within the specified page.panel ranges"""
+    if not range_str or range_str == "N/A":
+        return False
+    
+    ranges = [r.strip() for r in range_str.split(',')]
+    
+    for single_range in ranges:
+        if '-' in single_range:
+            try:
+                start_str, end_str = single_range.split('-')
+                start_page, start_panel = map(int, start_str.split('.'))
+                end_page, end_panel = map(int, end_str.split('.'))
+                
+                current_pos = page_num * 100 + panel_num
+                start_pos = start_page * 100 + start_panel
+                end_pos = end_page * 100 + end_panel
+                
+                if start_pos <= current_pos <= end_pos:
+                    return True
+            except (ValueError, IndexError):
+                if check_page_in_range(page_num, single_range):
+                    return True
+                continue
+        else:
+            try:
+                if '.' in single_range:
+                    range_page, range_panel = map(int, single_range.split('.'))
+                    if range_page == page_num and range_panel == panel_num:
+                        return True
+                else:
+                    if int(single_range) == page_num:
+                        return True
+            except (ValueError, IndexError):
+                continue
+    
+    return False
+
+def check_page_in_range(page_num, pages_str):
+    """Check if a page number falls within the specified page ranges (legacy function for backward compatibility)"""
+    if not pages_str or pages_str == "N/A":
+        return False
+    
+    ranges = [r.strip() for r in pages_str.split(',')]
+    
+    for range_str in ranges:
+        if '-' in range_str:
+            try:
+                start, end = map(int, range_str.split('-'))
+                if start <= page_num <= end:
+                    return True
+            except ValueError:
+                continue
+        else:
+            try:
+                if int(range_str) == page_num:
+                    return True
+            except ValueError:
+                continue
+    
+    return False
 
 def extract_key_character_features(description):
     """Extract key visual features from character description for consistency"""
@@ -183,50 +265,44 @@ def extract_key_character_features(description):
 def generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text=""):
     """Generate detailed prompts for ALL panels using a single mega-prompt approach"""
     client = genai.Client(
-        api_key=os.getenv("GEMINI_KEY"),
+        api_key=os.environ["GEMINI_KEY"],
     )
     
     total_panels = sum(len(page['panels']) for page in comic_structure)
     print(f"Total panels to process: {total_panels}")
     print(f"Using MEGA-PROMPT approach: 1 API call for all {total_panels} panels")
     
-    character_desc_text = ""
-    character_consistency_map = {}
-    
-    for char_name, char_data in character_descriptions.items():
-        if char_name.lower() != "narration" and char_name != "comic_structure":
-            base_desc = char_data.get("base", "")
-            if "(no detailed description available)" not in base_desc and base_desc.strip():
-                character_desc_text += f"[{char_name} - OUTFIT MUST REMAIN IDENTICAL IN ALL PANELS]: {base_desc}. "
-                
-                character_consistency_map[char_name] = {
-                    "full_description": base_desc,
-                    "key_features": extract_key_character_features(base_desc)
-                }
-    
-    character_desc_text = character_desc_text.rstrip(". ")
-    
-    if character_desc_text:
-        character_desc_text += "\n\nCONSISTENCY MANDATE: Every character must appear in their EXACT same outfit, hair, and accessories in ALL panels. DO NOT modify, add, or remove any clothing items or physical features."
-    
     panels_info = []
     for page in comic_structure:
         page_num = page['page_number']
         for panel in page['panels']:
             panel_num = panel['panel_number']
+            panel_desc = panel.get('description', '')
+            panel_dialogues = panel.get('dialogues', [])
+            panel_narration = panel.get('narration', '')
+            
+            panel_character_descriptions = {}
+            for char_name in character_descriptions.keys():
+                if char_name.lower() != "narration" and char_name != "comic_structure":
+                    exact_desc = get_character_description(character_descriptions, char_name, page_num, panel_num)
+                    if "(no detailed description available)" not in exact_desc:
+                        panel_character_descriptions[char_name] = exact_desc
             
             scene_description = panel.get('italic_text', '')
-            if panel.get('narration'):
+            if panel_narration:
                 if scene_description:
-                    scene_description += " " + panel['narration']
+                    scene_description += " " + panel_narration
                 else:
-                    scene_description = panel['narration']
+                    scene_description = panel_narration
             
             panels_info.append({
                 'page': page_num,
                 'panel': panel_num,
+                'description': panel_desc,
                 'scene': scene_description,
-                'dialogues': panel.get('dialogues', [])
+                'dialogues': panel_dialogues,
+                'narration': panel_narration,
+                'character_descriptions': panel_character_descriptions
             })
     
     manga_specific_instructions = ""
@@ -245,13 +321,10 @@ MANGA-SPECIFIC REQUIREMENTS (MANDATORY):
     else:
         style_guidance = f"MANDATORY: Start every prompt with '{style},' and consistently maintain this artistic style throughout. NEVER use terms like 'photorealistic', 'realistic', 'hyper-detailed', or 'hyper-realistic' as these conflict with the target style."
 
-    mega_prompt = f"""You are an expert comic book panel image prompt generator. Generate Stable Diffusion 3.5 prompts that perfectly balance character consistency, rich artistic style, and dynamic scene composition.
+    mega_prompt = f"""You are an expert comic book panel image prompt generator. Generate prompts with EXACT character descriptions and proper panel composition.
 
 FULL STORY CONTEXT:
 {full_story_text}
-
-CHARACTER VISUAL REFERENCE (MEMORIZE AND COPY EXACTLY):
-{character_desc_text}
 
 ARTISTIC STYLE REQUIREMENT:
 {style_guidance}
@@ -262,91 +335,162 @@ PANELS TO GENERATE PROMPTS FOR:
 """
     
     for i, panel_info in enumerate(panels_info, 1):
+        panel_chars_section = ""
+        if panel_info['character_descriptions']:
+            panel_chars_section = "EXACT CHARACTER DESCRIPTIONS FOR THIS PANEL:\n"
+            for char_name, char_desc in panel_info['character_descriptions'].items():
+                panel_chars_section += f"- {char_name}: {char_desc}\n"
+        
         mega_prompt += f"""
 Panel {i} (Page {panel_info['page']}, Panel {panel_info['panel']}):
 Scene: {panel_info['scene']}
 Characters speaking: {[d.get('character', '') for d in panel_info['dialogues']]}
+{panel_chars_section}
 """
     
     mega_prompt += f"""
 
-CRITICAL REQUIREMENTS:
+CRITICAL REQUIREMENTS FOR PERFECT CHARACTER CONSISTENCY:
 
-1. ARTISTIC STYLE STRUCTURE (MANDATORY):
-   - Start with: "{style}," 
-   - Follow immediately with rich artistic descriptions that enhance the {style} aesthetic
-   - Examples of rich style descriptions:
-     * "with luminous cel-shaded coloring and ethereal atmospheric lighting"
-     * "featuring dramatic depth of field and vibrant color gradients"
-     * "rendered with soft bokeh effects and cinematic composition"
-     * "showcasing detailed character animation with expressive linework"
-     * "emphasizing emotional lighting and atmospheric perspective"
+CHARACTER CONSISTENCY IS PRIORITY #1 - NEVER COMPROMISE ON THIS
 
-2. CHARACTER CONSISTENCY (ABSOLUTE PRECISION REQUIRED):
-   - Copy character descriptions WORD-FOR-WORD from CHARACTER VISUAL REFERENCE
-   - NEVER abbreviate or summarize character features
-   - NEVER change hair color/style, clothing items, or physical features
-   - Use COMPLETE descriptions every time a character appears
+1. MANDATORY FEATURE COPYING PROTOCOL:
+   - COPY EVERY SINGLE WORD from character descriptions provided for each panel
+   - NEVER abbreviate, summarize, or improve the descriptions
+   - Include ALL adjectives, materials, colors, and style details EXACTLY as written
    
-   CORRECT EXAMPLES:
-   ✓ "striking, metallic silver hair is cut into a perfectly sleek and sharp asymmetrical bob, with one side falling to her chin and the other tucked cleanly behind her ear"
-   ✓ "gravity-defying, chaotic shock of spiky, layered brown hair with lighter brunette highlights that seems to float upwards"
-   ✓ "long, form-fitting trench coat of black synth-leather over a sleeveless, high-necked black silk top"
+   HAIR CONSISTENCY (CRITICAL):
+   CORRECT: "striking, metallic silver hair cut into a perfectly sleek and sharp asymmetrical bob, with one side falling to her chin and the other tucked cleanly behind her ear"
+   WRONG: "silver hair" or "asymmetrical bob" or "sleek silver hair"
    
-   WRONG EXAMPLES:
-   ✗ "sleek silver hair" (missing "striking, metallic" and bob description)
-   ✗ "chaotic brown hair" (missing "spiky, layered" and "brunette highlights")
-   ✗ "black coat" (missing "long, form-fitting trench coat of black synth-leather")
-
-3. DYNAMIC SCENE COMPOSITION (MANDATORY FOR ENGAGING PANELS):
-   - Characters should interact WITH EACH OTHER, not with the camera
-   - Use specific directional interactions: "facing each other", "looking at [character]", "turned toward [character]"
-   - Avoid portrait-style compositions - focus on CHARACTER RELATIONSHIPS and ACTIONS
-   - Show clear spatial relationships between characters
-   - Use varied camera angles that enhance the drama: over-shoulder shots, Dutch angles, dynamic perspectives
-
-   GOOD ACTION EXAMPLES:
-   ✓ "Character A leans forward toward Character B, who steps back defensively"
-   ✓ "Character A grabs Character B's shoulder, both facing each other intensely"
-   ✓ "Over-shoulder shot from behind Character A, focusing on Character B's reaction"
+   CLOTHING CONSISTENCY (CRITICAL):
+   CORRECT: "long, form-fitting trench coat of black synth-leather over a sleeveless, high-necked black silk top"
+   WRONG: "black coat" or "leather jacket" or "trench coat"
    
-   BAD ACTION EXAMPLES:
-   ✗ "Character A talks" (no clear target or interaction)
-   ✗ "Character A looks concerned" (portrait mode, no relationship shown)
-   ✗ "Character A stands" (static, no dynamic action)
+   EYE CONSISTENCY (CRITICAL):
+   CORRECT: "piercing bright emerald green eyes"
+   WRONG: "green eyes" or "bright eyes"
 
-4. ENVIRONMENTAL INTEGRATION:
-   - Rich, detailed backgrounds that support the story
-   - Environmental storytelling through objects and atmosphere
-   - Proper lighting that enhances mood and character interaction
-   - Never use plain or empty backgrounds
+2. ZERO TOLERANCE FOR DESCRIPTION CHANGES:
+   - Use character descriptions as if they are SACRED TEXT
+   - Every adjective matters: "striking", "metallic", "perfectly sleek", "form-fitting"
+   - Every material matters: "synth-leather", "silk", "cashmere"
+   - Every color detail matters: "bright emerald green", "midnight blue", "cream-colored"
+   - Every texture matters: "sleek", "spiky", "layered", "windswept"
+   - Every fit descriptor matters: "form-fitting", "tailored", "loose", "oversized"
 
-PROMPT STRUCTURE TEMPLATE:
-"{style}, [rich artistic descriptions], [COMPLETE character 1 description from reference] [specific action/pose], [COMPLETE character 2 description from reference] [specific reaction/interaction], [detailed environment description], [camera angle and composition notes]"
+3. MANDATORY INCLUSION CHECKLIST:
+   For every character appearance, include:
+   - Complete hair description with color, texture, style, length
+   - Complete eye description with color and intensity
+   - Complete clothing with materials, colors, fit, and layering details
+   - All accessories mentioned in the character description
+   - Physical build and distinctive features
+   - Age appearance and any distinguishing marks
 
-EXAMPLES OF PERFECT PROMPTS:
+CORE FEATURE MINIMUM (APPLIES TO EVERY PANEL WHERE THE CHARACTER APPEARS):
+- Even in close/zoom shots, you MUST include at minimum for EACH appearing character:
+    - HAIR (exact phrase from [HAIR], including color + cut/style)
+    - EYES (exact phrase from [EYES])
+    - FACIAL_FEATURES (one short clause from [FACIAL_FEATURES])
+    - OUTFIT ANCHOR (explicit TOP-WEAR torso garment mention from [OUTFIT])
+- These are MANDATORY anchors and cannot be omitted for framing, brevity, or action.
 
-DIALOGUE SCENE:
-"{style}, featuring soft bokeh lighting effects and cinematic depth of field, tall, lithe woman in her late 20s with striking, metallic silver hair cut into a perfectly sleek and sharp asymmetrical bob with one side falling to her chin and the other tucked cleanly behind her ear, wearing long, form-fitting trench coat of black synth-leather over sleeveless, high-necked black silk top, leans forward intensely toward lanky man in his early 20s with gravity-defying, chaotic shock of spiky, layered brown hair with lighter brunette highlights, wearing faded, olive-green canvas mechanic's jumpsuit heavily stained with grease over plain, worn-out charcoal grey t-shirt, who steps back nervously while his mismatched, second-hand chrome cybernetic arm with exposed wires twitches, cluttered workshop with scattered cybernetic parts and warm overhead lighting, over-shoulder shot emphasizing their tense confrontation"
+2. PANEL-SPECIFIC DESCRIPTION PROTOCOL:
+   - Each panel has its own "EXACT CHARACTER DESCRIPTIONS FOR THIS PANEL" section
+   - Use ONLY the descriptions provided for that specific panel
+   - NEVER use descriptions from other panels or create your own versions
+   - Copy descriptions WORD-FOR-WORD with ZERO modifications
 
-ACTION SCENE:
-"{style}, with dynamic motion blur and kinetic energy effects, lanky man in his early 20s with gravity-defying, chaotic shock of spiky, layered brown hair with lighter brunette highlights, wearing faded, olive-green canvas mechanic's jumpsuit over charcoal grey t-shirt, grabs tall, lithe woman in her late 20s with striking, metallic silver hair in perfectly sleek asymmetrical bob, wearing long black synth-leather trench coat over sleeveless black silk top, pulling her close as she wraps her arms around his neck, both characters facing each other in passionate embrace, detailed workshop background with cybernetic equipment, dramatic lighting from multiple angles"
+ABSOLUTE RULE: COPY CHARACTER DESCRIPTIONS EXACTLY AS PROVIDED
+Treat each character description like a legal document - change NOTHING!
+
+3. OUTFIT ELEMENT BREAKDOWN:
+   When describing clothing, include:
+   - Material: leather, silk, cotton, synth-leather, etc.
+   - Fit: form-fitting, loose, tailored, oversized
+   - Color: exact shades, not generic colors
+   - Style details: high-necked, sleeveless, long, short
+   - Layering: what goes over what ("coat over top", "blazer over shirt")
+
+4. ACTION-CONTEXT INTEGRATION (CRITICAL FOR DYNAMIC SCENES):
+   INNOVATION: Integrate action directly into character descriptions instead of treating them separately
+   - WRONG: "Character standing + separate action happening"
+   - CORRECT: "Character actively performing action with dynamic body language"
+   
+   ACTION INTEGRATION TECHNIQUES:
+   - Mid-action poses: "character caught mid-unwrapping motion, hands grasping package edges"
+   - Dynamic body language: "character leaning forward with focused intensity while examining"
+   - Motion indicators: "character with flowing movement lines, hair and clothes in motion"
+   - Emotional physicality: "character's entire body expressing tension/excitement/determination"
+   - Interactive poses: "character actively engaging with objects/environment"
+   
+   SCENE EXAMPLES:
+   CORRECT: "character crouched down, both hands actively unwrapping a package, eyes focused intently on contents, body language showing curiosity and concentration"
+   WRONG: "character standing nearby while package is unwrapped"
+   
+   CORRECT: "character in mid-leap across gap, body stretched horizontally, coat trailing behind, expression of intense focus"
+   WRONG: "character floating above gap"
+
+5. DYNAMIC SCENE COMPOSITION:
+   - Characters interact with EACH OTHER, not the camera
+   - Use specific directional interactions: "facing each other", "looking at [character]"
+   - Show clear spatial relationships and character actions
+   - Varied camera angles that enhance drama
+
+5. STYLE INTEGRATION:
+   - Start every prompt with the required style prefix
+   - Maintain consistent artistic style throughout
+   - Add style-specific visual elements that complement the chosen art style
+
+PROMPT STRUCTURE:
+"{style}, [character 1 FULL visual (hair, eyes, outfit, accessories, distinctives) + integrated mid-action pose + continuity note if unchanged] , [character 2 FULL visual + reactive/dynamic pose + continuity if unchanged], [environment with spatial dynamics, motion effects, lighting], [dynamic camera / composition specification]"
+
+SELF-CHECK (LLM MUST PERFORM BEFORE RETURNING JSON):
+1. Enumerate characters per panel; ensure each has FULL visual block including outfit.
+2. If a character appeared in the previous panel with same outfit, include an explicit continuity phrase (e.g. "still wearing", "continues in").
+3. Reject static portrait phrasing; each subject must be mid-action or reacting.
+4. Ensure no outfit omissions; if any missing details, internally repair before output.
+5. Multi-character panels: separate blocks; never merge descriptions.
+
+CRITICAL ACTION REQUIREMENTS:
+- NEVER create static character portraits - always show characters MID-ACTION
+- Integrate actions into character descriptions: "character leaning forward while examining"
+- Use dynamic body language: "character's body language expressing [emotion] while [action]"
+- Include motion indicators: "movement lines", "flowing hair/clothes", "dynamic posture"
+- Show cause-and-effect: "character reacting to" or "character actively engaging with"
+- CLOSE / EXTREME CLOSE FRAMING RULE: Even if panel framing is a close-up / extreme close-up / tight focus on face, hands, an object, document, eyes, or a kiss, you MUST STILL explicitly mention the character's TOP WEAR (torso garment: type + material/texture + color + fit/cut) to anchor continuity (e.g. "still in the sleek black neoprene wetsuit torso", "collar of the tactical matte charcoal jacket visible", "soaked pale blue linen shirt upper section"). Compress wording but NEVER omit. Omitting top wear = critical failure.
+
+IDIOM & METAPHOR LITERALIZATION GUARD (SEMANTIC SANITY):
+- NEVER literalize idioms or figurative language from the story into visuals unless explicitly described as literal.
+- Examples of SAFE translations:
+    - "eye of the storm" → depict the calm circular center region of the storm, NOT a literal giant eye in the sky.
+    - "circuits of the city" → depict a labyrinth/network of streets, pipes, and conduits, NOT a printed circuit board city.
+- BANNED LITERALIZATIONS (unless the story explicitly states them as literal visuals): giant eye in sky for storm-eye; glowing PCB-style city for figurative "circuits".
+
+PROMPT LENGTH FLOOR:
+- If any character appears in a panel, target 150–200 words. Never go below ~120 words. Use concise, information-dense phrasing if needed.
 
 TECHNICAL REQUIREMENTS:
 - Generate exactly {len(panels_info)} prompts, one per panel
-- Maximum 200 words per prompt (increased for character detail requirements)
-- Replace character names with COMPLETE physical descriptions
-- Focus on character interactions and relationships
-- Ensure rich artistic style integration throughout
+- Maximum 200 words per prompt (increased to accommodate full character descriptions)
+- Use COMPLETE character descriptions provided for each panel - never abbreviate
+- Each character appearance must include hair, eyes, clothing (full layered outfit), accessories, distinctives
+- Continuity wording when outfit unchanged between panels
+- MANDATORY: Every prompt must show characters in DYNAMIC ACTION, never static poses
 
-FORBIDDEN ACTIONS:
-- Abbreviated character descriptions
-- Portrait-mode character poses
-- Characters talking "to camera" instead of each other
-- Generic environmental backgrounds
-- Missing key character details (hair style, clothing specifics)
+OUTPUT FORMAT (JSON ONLY):
+{{
+  "prompts": [
+    {{
+      "page": 1,
+      "panel": 1,
+      "prompt": "exact prompt text..."
+    }}
+  ]
+}}
 
-Generate prompts with PERFECT character consistency and dynamic interactions:"""
+Generate prompts with PERFECT character consistency using panel-specific descriptions:"""
     
     try:
         print("Sending mega-prompt to LLM...")
@@ -369,24 +513,95 @@ Generate prompts with PERFECT character consistency and dynamic interactions:"""
         
         try:
             parsed_response = json.loads(response_text)
-            prompts_list = parsed_response.get("prompts", [])
+            print(f"Parsed response type: {type(parsed_response)}")
+            print(f"Parsed response keys: {list(parsed_response.keys()) if isinstance(parsed_response, dict) else 'Not a dict'}")
+            
+            if isinstance(parsed_response, list):
+                prompts_list = parsed_response
+            elif isinstance(parsed_response, dict):
+                prompts_list = parsed_response.get("prompts", [])
+                if not prompts_list and any(key.startswith('panel_') for key in parsed_response.keys()):
+                    prompts_list = []
+                    for key, value in parsed_response.items():
+                        if key.startswith('panel_'):
+                            panel_num = int(key.split('_')[1])
+                            prompts_list.append({
+                                "page": 1,  
+                                "panel": panel_num,
+                                "prompt": value
+                            })
+            else:
+                print(f"Unexpected response format: {type(parsed_response)}")
+                return {}
             
             if len(prompts_list) != len(panels_info):
                 print(f"WARNING: Expected {len(panels_info)} prompts, got {len(prompts_list)}")
             
             all_prompts = {}
-            for prompt_data in prompts_list:
-                page_num = prompt_data.get("page")
-                panel_num = prompt_data.get("panel")
-                prompt_text = prompt_data.get("prompt", "")
+            for i, prompt_data in enumerate(prompts_list):
+                if isinstance(prompt_data, str):
+                    panel_info = panels_info[i] if i < len(panels_info) else {"page": 1, "panel": i+1}
+                    page_num = panel_info["page"]
+                    panel_num = panel_info["panel"]
+                    prompt_text = prompt_data
+                elif isinstance(prompt_data, dict):
+                    page_num = prompt_data.get("page")
+                    panel_num = prompt_data.get("panel")
+                    prompt_text = prompt_data.get("prompt", "")
+                else:
+                    print(f"Unexpected prompt data format: {type(prompt_data)}")
+                    continue
                 
+                safe_text = prompt_text
+
+                replacements = {
+                    r"\beye of the storm\b": "calm central region of the storm",
+                    r"\bcircuits of the city\b": "maze-like network of streets, pipes, and conduits",
+                    r"\belectric circuit city\b": "labyrinthine industrial city",
+                }
+                import re as _re
+                for _pat, _rep in replacements.items():
+                    safe_text = _re.sub(_pat, _rep, safe_text, flags=_re.IGNORECASE)
+
+                panel_info_ref = panels_info[i] if i < len(panels_info) else None
+                if panel_info_ref:
+                    char_descs = panel_info_ref.get('character_descriptions', {})
+                    for cname, cdesc in char_descs.items():
+                        def _extract_tag(tag):
+                            m = _re.search(rf"\[{tag}\]\s*(.*?)\s*(?=\[[A-Z_]+\]|$)", cdesc, flags=_re.IGNORECASE|_re.DOTALL)
+                            return m.group(1).strip() if m else ""
+                        hair = _extract_tag('HAIR')
+                        eyes = _extract_tag('EYES')
+                        face = _extract_tag('FACIAL_FEATURES')
+                        outfit = _extract_tag('OUTFIT')
+
+                        name_present = _re.search(_re.escape(cname), safe_text, flags=_re.IGNORECASE)
+                        if name_present:
+                            def _ensure(snippet, label):
+                                nonlocal safe_text
+                                if snippet and (label.lower() not in safe_text.lower() and snippet.split(',')[0][:30].lower() not in safe_text.lower()):
+                                    safe_text += f"; {label.lower()}: {snippet}"
+                            _ensure(hair, "hair")
+                            _ensure(eyes, "eyes")
+                            if face:
+                                short_face = face.split('.')[0]
+                                if short_face and short_face.lower() not in safe_text.lower():
+                                    safe_text += f"; facial features: {short_face}"
+                            if outfit and all(k not in safe_text.lower() for k in ["jacket", "shirt", "vest", "coat", "collar", "torso"]):
+                                top_candidates = [seg.strip() for seg in _re.split(r",|;|\.", outfit) if any(k in seg.lower() for k in ["jacket","coat","shirt","vest","top","torso","blazer"]) ]
+                                anchor = top_candidates[0] if top_candidates else outfit.split('.')[0]
+                                safe_text += f"; outfit: {anchor}"
+
+                words = safe_text.split()
+                if len(words) < 120:
+                    addendum = "; dynamic composition with clear spatial relationships, motion effects, and dramatic lighting; camera angle emphasizes action and continuity"
+                    safe_text += addendum
+
                 page_key = f"page_{page_num}"
                 panel_key = f"panel_{panel_num}"
-                
                 if page_key not in all_prompts:
                     all_prompts[page_key] = {}
-                
-                all_prompts[page_key][panel_key] = prompt_text
+                all_prompts[page_key][panel_key] = safe_text
                 print(f"Generated prompt for Page {page_num}, Panel {panel_num} ({len(prompt_text.split())} words)")
             
             print(f"Successfully generated prompts for all panels using 1 mega-prompt API call with JSON mode!")
@@ -486,6 +701,15 @@ def load_prompts_from_json(markdown_file):
 def generate_with_diffusers(prompt, negative_prompt, seed, randomize_seed, width, height, guidance_scale, num_inference_steps):
     pipe = get_or_create_pipeline()
     
+    aspect_ratios = {
+        "1:1": (1328, 1328),
+        "16:9": (1664, 928),
+        "9:16": (928, 1664),
+        "4:3": (1472, 1140),
+        "3:4": (1140, 1472),
+    }
+    
+    
     if not randomize_seed and seed is not None:
         generator = torch.Generator("cuda").manual_seed(seed)
     else:
@@ -496,17 +720,16 @@ def generate_with_diffusers(prompt, negative_prompt, seed, randomize_seed, width
         negative_prompt=negative_prompt,
         width=width,
         height=height,
-        max_sequence_length=512,
-        guidance_scale=guidance_scale,
         num_inference_steps=num_inference_steps,
+        true_cfg_scale=guidance_scale,  
         generator=generator
     ).images[0]
     
     return image
 
 def generate_image(prompt, negative_prompt, seed, randomize_seed, width, height, guidance_scale, num_inference_steps):
-    """Generate a single image using local Diffusers pipeline with reuse"""
-    print("Using local Diffusers pipeline...")
+    """Generate a single image using Qwen Image pipeline with reuse"""
+    print("Using Qwen Image pipeline...")
     try:
         image = generate_with_diffusers(
             prompt=prompt,
@@ -524,7 +747,7 @@ def generate_image(prompt, negative_prompt, seed, randomize_seed, width, height,
         image.save(temp_path)
         return temp_path
     except Exception as e:
-        print(f"Error with local pipeline: {e}")
+        print(f"Error with Qwen Image pipeline: {e}")
         raise e
 
 def generate_comic_images_for_page(settings=None):

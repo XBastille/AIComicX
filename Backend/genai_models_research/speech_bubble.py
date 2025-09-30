@@ -8,9 +8,9 @@ import random
 
 class SpeechBubbleGenerator:
     def __init__(self, image_path, api_key=None, detection_prompt=None, 
-                 bubble_padding=15, arrow_size=20, font_path="animeace2bb_tt/animeace2_bld.ttf", 
-                 bubble_color=(255, 255, 255), text_color=(0, 0, 0), border_width=2, border_color=(0, 0, 0),
-                 narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255), narration_padding=20):
+                 bubble_padding=25, arrow_size=30, font_path="animeace2bb_tt/animeace2_bld.ttf", 
+                 bubble_color=(255, 255, 255), text_color=(0, 0, 0), border_width=3, border_color=(0, 0, 0),
+                 narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255), narration_padding=2):
         """Initialize the speech bubble generator."""
         self.image_path = image_path
         self.api_key = api_key or os.getenv("LANDING_API_KEY")
@@ -78,11 +78,11 @@ class SpeechBubbleGenerator:
             traceback.print_exc()
             return None
     
-    def calculate_text_size(self, text, font_size=20):
+    def calculate_text_size(self, text, font_size=32):
         """Calculate the dimensions needed for the text."""
         font = ImageFont.truetype(self.font_path, font_size)
         
-        max_width_scale = 0.25  
+        max_width_scale = 0.35  
         max_line_width = int(self.width * max_width_scale)
         
         avg_char_width = font.getlength("X")
@@ -104,12 +104,20 @@ class SpeechBubbleGenerator:
         
         return text_width, text_height, lines
     
-    def calculate_narration_size(self, text, font_size=20):
-        """Calculate the dimensions needed for narration text."""
+    def calculate_narration_size(self, text, font_size=42):
+        """Calculate the dimensions needed for narration text with adaptive width."""
         font = ImageFont.truetype(self.font_path, font_size)
         
-        max_width_scale = 0.9  
-        max_line_width = int(self.width * max_width_scale)
+        # Adaptive width calculation based on text length
+        text_length = len(text)
+        if text_length < 50:
+            width_scale = 0.95  # Shorter text uses less width
+        elif text_length < 100:
+            width_scale = 0.97  # Medium text uses more width
+        else:
+            width_scale = 0.99  # Longer text uses maximum width
+            
+        max_line_width = int(self.width * width_scale)
         
         avg_char_width = font.getlength("X")
         chars_per_line = max(8, int(max_line_width / avg_char_width))
@@ -130,7 +138,7 @@ class SpeechBubbleGenerator:
         
         return text_width, text_height, lines
     
-    def find_optimal_bubble_position(self, char_box, text, used_areas, font_size=20, attempt=0):
+    def find_optimal_bubble_position(self, char_box, text, used_areas, font_size=32, attempt=0):
         """Find the optimal position for a speech bubble for a specific character."""
         if not char_box:
             if attempt == 0:
@@ -205,7 +213,7 @@ class SpeechBubbleGenerator:
         if best_pos:
             return best_pos, best_arrow_pos, lines, font_size
         
-        if font_size > 10:
+        if font_size > 16:
             return self.find_optimal_bubble_position(char_box, text, used_areas, font_size - 2, attempt)
         
         if attempt < 1:
@@ -214,7 +222,7 @@ class SpeechBubbleGenerator:
         
         return None, None, None, None
     
-    def find_off_panel_bubble_position(self, text, used_areas, font_size=20):
+    def find_off_panel_bubble_position(self, text, used_areas, font_size=32):
         """Find position for a speech bubble for off-panel dialogue following priority order."""
         text_width, text_height, lines = self.calculate_text_size(text, font_size)
         
@@ -274,7 +282,7 @@ class SpeechBubbleGenerator:
         print("Failed to place off-panel bubble at any position.")
         return None, None, None
     
-    def find_any_open_space(self, text, used_areas, font_size=20):
+    def find_any_open_space(self, text, used_areas, font_size=32):
         """Find any open space for a speech bubble when normal positioning fails."""
         text_width, text_height, lines = self.calculate_text_size(text, font_size)
         
@@ -302,7 +310,7 @@ class SpeechBubbleGenerator:
                     arrow_pos = (pos_x + bubble_width/2, pos_y + bubble_height)
                     return (pos_x, pos_y, bubble_width, bubble_height), arrow_pos, lines, font_size
         
-        if font_size > 10:
+        if font_size > 16:
             return self.find_any_open_space(text, used_areas, font_size - 2)
         
         return None, None, None, None
@@ -390,7 +398,7 @@ class SpeechBubbleGenerator:
             self.draw.text((text_x, text_y), line, fill=self.text_color, font=font)
             text_y += line_height
     
-    def add_narration(self, narration_text, position="top", font_size=20):
+    def add_narration(self, narration_text, position="top", font_size=42):
         """
         Add narration text at the top or bottom of the image.
         
@@ -440,7 +448,7 @@ class SpeechBubbleGenerator:
         
         return self.image
     
-    def add_both_narrations(self, top_narration, bottom_narration, font_size=20):
+    def add_both_narrations(self, top_narration, bottom_narration, font_size=42):
         """
         Add both top and bottom narrations with proper black backgrounds.
         
