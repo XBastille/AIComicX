@@ -218,6 +218,97 @@ def check_page_in_range(page_num, pages_str):
     
     return False
 
+def extract_character_features_from_tags(description):
+    """Extract character features from tagged description format.
+    
+    Extracts content from tags like [AGE_BUILD], [HAIR], [EYES], [FACIAL_FEATURES], 
+    [OUTFIT], [ACCESSORIES], [DISTINCTIVES].
+    
+    Args:
+        description: Character description string with tagged sections
+        
+    Returns:
+        Dictionary with feature tags as keys and their content as values
+    """
+    import re
+    
+    features = {}
+    
+    tags = ['AGE_BUILD', 'HAIR', 'EYES', 'FACIAL_FEATURES', 'OUTFIT', 'ACCESSORIES', 'DISTINCTIVES']
+    
+    for tag in tags:
+        pattern = rf'\[{tag}\]\s*(.*?)(?=\s*\[(?:AGE_BUILD|HAIR|EYES|FACIAL_FEATURES|OUTFIT|ACCESSORIES|DISTINCTIVES)\]|$)'
+        match = re.search(pattern, description, re.IGNORECASE | re.DOTALL)
+        
+        if match:
+            content = match.group(1).strip()
+            content = content.rstrip('.').strip()
+            features[tag] = content
+    
+    return features
+
+def inject_character_features_into_prompt(prompt, character_descriptions, page_num, panel_num):
+    """Inject character features into prompt tokens.
+    
+    Replaces tokens like [CHARACTER_NAME:HAIR], [CHARACTER_NAME:EYES], etc. with actual
+    character descriptions from character_descriptions.json, handling variations.
+    
+    Args:
+        prompt: Prompt string with character tokens
+        character_descriptions: Dictionary of character descriptions
+        page_num: Current page number
+        panel_num: Current panel number
+        
+    Returns:
+        Prompt with all character tokens replaced with actual descriptions
+    """
+    import re
+    
+    token_pattern = r'\[([^:]+):(AGE_BUILD|HAIR|EYES|FACIAL_FEATURES|OUTFIT|ACCESSORIES|DISTINCTIVES)\]'
+    
+    tokens = re.findall(token_pattern, prompt)
+    
+    if not tokens:
+        return prompt
+    
+    processed_chars = set()
+    
+    for char_name, feature_tag in tokens:
+        char_name = char_name.strip()
+        
+        if char_name in processed_chars:
+            continue
+            
+        full_description = get_character_description(character_descriptions, char_name, page_num, panel_num)
+        
+        if "(no detailed description available)" in full_description:
+            print(f"Warning: No description found for character '{char_name}'")
+            for tag in ['AGE_BUILD', 'HAIR', 'EYES', 'FACIAL_FEATURES', 'OUTFIT', 'ACCESSORIES', 'DISTINCTIVES']:
+                token = f"[{char_name}:{tag}]"
+                prompt = prompt.replace(token, f"[{tag.lower()}]")
+            continue
+        
+        features = extract_character_features_from_tags(full_description)
+        
+        for tag in ['AGE_BUILD', 'HAIR', 'EYES', 'FACIAL_FEATURES', 'OUTFIT', 'ACCESSORIES', 'DISTINCTIVES']:
+            token = f"[{char_name}:{tag}]"
+            if token in prompt:
+                if tag in features:
+                    replacement = features[tag]
+                    prompt = prompt.replace(token, replacement)
+                    print(f"  Injected {char_name}:{tag} -> {replacement[:50]}...")
+                else:
+                    print(f"  Warning: {tag} not found for {char_name}, removing token")
+                    prompt = prompt.replace(token, "")
+        
+        processed_chars.add(char_name)
+    
+    prompt = re.sub(r'\[([^:]+):(AGE_BUILD|HAIR|EYES|FACIAL_FEATURES|OUTFIT|ACCESSORIES|DISTINCTIVES)\]', '', prompt)
+    
+    prompt = re.sub(r'\s+', ' ', prompt).strip()
+    
+    return prompt
+
 def extract_key_character_features(description):
     """Extract key visual features from character description for consistency"""
     import re
@@ -263,14 +354,15 @@ def extract_key_character_features(description):
     return key_features
 
 def generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text=""):
-    """Generate detailed prompts for ALL panels using a single mega-prompt approach"""
+    """Generate detailed prompts for ALL panels using token-based character injection approach"""
     client = genai.Client(
         api_key=os.environ["GEMINI_KEY"],
     )
     
     total_panels = sum(len(page['panels']) for page in comic_structure)
     print(f"Total panels to process: {total_panels}")
-    print(f"Using MEGA-PROMPT approach: 1 API call for all {total_panels} panels")
+    print(f"Using TOKEN-BASED MEGA-PROMPT approach: 1 API call for all {total_panels} panels")
+    print(f"Character features will be injected programmatically after LLM generation")
     
     panels_info = []
     for page in comic_structure:
@@ -337,9 +429,9 @@ PANELS TO GENERATE PROMPTS FOR:
     for i, panel_info in enumerate(panels_info, 1):
         panel_chars_section = ""
         if panel_info['character_descriptions']:
-            panel_chars_section = "EXACT CHARACTER DESCRIPTIONS FOR THIS PANEL:\n"
-            for char_name, char_desc in panel_info['character_descriptions'].items():
-                panel_chars_section += f"- {char_name}: {char_desc}\n"
+            panel_chars_section = "CHARACTERS IN THIS PANEL:\n"
+            for char_name in panel_info['character_descriptions'].keys():
+                panel_chars_section += f"- {char_name}\n"
         
         mega_prompt += f"""
 Panel {i} (Page {panel_info['page']}, Panel {panel_info['panel']}):
@@ -350,68 +442,42 @@ Characters speaking: {[d.get('character', '') for d in panel_info['dialogues']]}
     
     mega_prompt += f"""
 
-CRITICAL REQUIREMENTS FOR PERFECT CHARACTER CONSISTENCY:
+CRITICAL CHARACTER TOKEN SYSTEM:
 
-CHARACTER CONSISTENCY IS PRIORITY #1 - NEVER COMPROMISE ON THIS
+For character descriptions, use TOKENS instead of full text. Tokens will be programmatically replaced with complete descriptions.
 
-1. MANDATORY FEATURE COPYING PROTOCOL:
-   - COPY EVERY SINGLE WORD from character descriptions provided for each panel
-   - NEVER abbreviate, summarize, or improve the descriptions
-   - Include ALL adjectives, materials, colors, and style details EXACTLY as written
-   
-   HAIR CONSISTENCY (CRITICAL):
-   CORRECT: "striking, metallic silver hair cut into a perfectly sleek and sharp asymmetrical bob, with one side falling to her chin and the other tucked cleanly behind her ear"
-   WRONG: "silver hair" or "asymmetrical bob" or "sleek silver hair"
-   
-   CLOTHING CONSISTENCY (CRITICAL):
-   CORRECT: "long, form-fitting trench coat of black synth-leather over a sleeveless, high-necked black silk top"
-   WRONG: "black coat" or "leather jacket" or "trench coat"
-   
-   EYE CONSISTENCY (CRITICAL):
-   CORRECT: "piercing bright emerald green eyes"
-   WRONG: "green eyes" or "bright eyes"
+AVAILABLE TOKENS (per character):
+  [CHARACTER_NAME:AGE_BUILD] - age and body type
+  [CHARACTER_NAME:HAIR] - MANDATORY - hair style and color
+  [CHARACTER_NAME:EYES] - eye color and shape
+  [CHARACTER_NAME:FACIAL_FEATURES] - facial structure
+  [CHARACTER_NAME:OUTFIT] - MANDATORY - complete clothing
+  [CHARACTER_NAME:ACCESSORIES] - MANDATORY - items and gear
+  [CHARACTER_NAME:DISTINCTIVES] - scars, marks, traits
 
-2. ZERO TOLERANCE FOR DESCRIPTION CHANGES:
-   - Use character descriptions as if they are SACRED TEXT
-   - Every adjective matters: "striking", "metallic", "perfectly sleek", "form-fitting"
-   - Every material matters: "synth-leather", "silk", "cashmere"
-   - Every color detail matters: "bright emerald green", "midnight blue", "cream-colored"
-   - Every texture matters: "sleek", "spiky", "layered", "windswept"
-   - Every fit descriptor matters: "form-fitting", "tailored", "loose", "oversized"
+MANDATORY TOKENS (MUST INCLUDE FOR EVERY CHARACTER APPEARANCE):
+  ✓ [CHARACTER_NAME:OUTFIT] - Without this = FAILURE
+  ✓ [CHARACTER_NAME:HAIR] - Without this = FAILURE
+  ✓ [CHARACTER_NAME:ACCESSORIES] - Without this = FAILURE
 
-3. MANDATORY INCLUSION CHECKLIST:
-   For every character appearance, include:
-   - Complete hair description with color, texture, style, length
-   - Complete eye description with color and intensity
-   - Complete clothing with materials, colors, fit, and layering details
-   - All accessories mentioned in the character description
-   - Physical build and distinctive features
-   - Age appearance and any distinguishing marks
+OPTIONAL BUT RECOMMENDED:
+  • [CHARACTER_NAME:AGE_BUILD] - helps establish identity
+  • [CHARACTER_NAME:EYES] - good for facial consistency
+  • [CHARACTER_NAME:FACIAL_FEATURES] - for close-ups
+  • [CHARACTER_NAME:DISTINCTIVES] - when visible
 
-CORE FEATURE MINIMUM (APPLIES TO EVERY PANEL WHERE THE CHARACTER APPEARS):
-- Even in close/zoom shots, you MUST include at minimum for EACH appearing character:
-    - HAIR (exact phrase from [HAIR], including color + cut/style)
-    - EYES (exact phrase from [EYES])
-    - FACIAL_FEATURES (one short clause from [FACIAL_FEATURES])
-    - OUTFIT ANCHOR (explicit TOP-WEAR torso garment mention from [OUTFIT])
-- These are MANDATORY anchors and cannot be omitted for framing, brevity, or action.
+NAMING RULE (CRITICAL):
+  ✗ NEVER write character names in the prompt text itself
+  ✗ WRONG: "Elias stands...", "Dr. Thorne examines..."
+  ✓ CORRECT: "A man stands...", "A woman examines...", "An elderly man..."
+  ✓ Use: "a man", "a woman", "a young man", "an elderly woman", "a person"
+  ✓ Names ONLY appear in tokens: [Elias Thorne:OUTFIT]
 
-2. PANEL-SPECIFIC DESCRIPTION PROTOCOL:
-   - Each panel has its own "EXACT CHARACTER DESCRIPTIONS FOR THIS PANEL" section
-   - Use ONLY the descriptions provided for that specific panel
-   - NEVER use descriptions from other panels or create your own versions
-   - Copy descriptions WORD-FOR-WORD with ZERO modifications
+EXAMPLE (CORRECT):
+"anime, medium shot of a man with [Elias Thorne:HAIR] and [Elias Thorne:EYES]. He wears [Elias Thorne:OUTFIT] with [Elias Thorne:ACCESSORIES]. He examines glowing equipment in his workshop."
 
-ABSOLUTE RULE: COPY CHARACTER DESCRIPTIONS EXACTLY AS PROVIDED
-Treat each character description like a legal document - change NOTHING!
-
-3. OUTFIT ELEMENT BREAKDOWN:
-   When describing clothing, include:
-   - Material: leather, silk, cotton, synth-leather, etc.
-   - Fit: form-fitting, loose, tailored, oversized
-   - Color: exact shades, not generic colors
-   - Style details: high-necked, sleeveless, long, short
-   - Layering: what goes over what ("coat over top", "blazer over shirt")
+EXAMPLE WITH MULTIPLE CHARACTERS (CORRECT):
+"anime, wide shot showing a man with [Elias Thorne:HAIR] wearing [Elias Thorne:OUTFIT] and [Elias Thorne:ACCESSORIES] facing a woman with [Dr. Aris Thorne:HAIR] in [Dr. Aris Thorne:OUTFIT] and [Dr. Aris Thorne:ACCESSORIES]. They stand in the dimly lit chamber."
 
 4. ACTION-CONTEXT INTEGRATION (CRITICAL FOR DYNAMIC SCENES):
    INNOVATION: Integrate action directly into character descriptions instead of treating them separately
@@ -446,12 +512,6 @@ Treat each character description like a legal document - change NOTHING!
 PROMPT STRUCTURE:
 "{style}, [character 1 FULL visual (hair, eyes, outfit, accessories, distinctives) + integrated mid-action pose + continuity note if unchanged] , [character 2 FULL visual + reactive/dynamic pose + continuity if unchanged], [environment with spatial dynamics, motion effects, lighting], [dynamic camera / composition specification]"
 
-SELF-CHECK (LLM MUST PERFORM BEFORE RETURNING JSON):
-1. Enumerate characters per panel; ensure each has FULL visual block including outfit.
-2. If a character appeared in the previous panel with same outfit, include an explicit continuity phrase (e.g. "still wearing", "continues in").
-3. Reject static portrait phrasing; each subject must be mid-action or reacting.
-4. Ensure no outfit omissions; if any missing details, internally repair before output.
-5. Multi-character panels: separate blocks; never merge descriptions.
 
 CRITICAL ACTION REQUIREMENTS:
 - NEVER create static character portraits - always show characters MID-ACTION
@@ -459,7 +519,15 @@ CRITICAL ACTION REQUIREMENTS:
 - Use dynamic body language: "character's body language expressing [emotion] while [action]"
 - Include motion indicators: "movement lines", "flowing hair/clothes", "dynamic posture"
 - Show cause-and-effect: "character reacting to" or "character actively engaging with"
-- CLOSE / EXTREME CLOSE FRAMING RULE: Even if panel framing is a close-up / extreme close-up / tight focus on face, hands, an object, document, eyes, or a kiss, you MUST STILL explicitly mention the character's TOP WEAR (torso garment: type + material/texture + color + fit/cut) to anchor continuity (e.g. "still in the sleek black neoprene wetsuit torso", "collar of the tactical matte charcoal jacket visible", "soaked pale blue linen shirt upper section"). Compress wording but NEVER omit. Omitting top wear = critical failure.
+- CLOSE / EXTREME CLOSE FRAMING RULE: Even if panel framing is a close-up / extreme close-up / tight focus on face, hands, an object, document, eyes, or a kiss, you MUST STILL explicitly mention the character's TOP WEAR (torso garment: type + material/texture + color + fit/cut) to anchor continuity (e.g. "in the sleek black neoprene wetsuit torso", "collar of the tactical matte charcoal jacket visible", "soaked pale blue linen shirt upper section"). Compress wording but NEVER omit. Omitting top wear = critical failure.
+
+PANEL INDEPENDENCE RULE (CRITICAL):
+- Each panel is COMPLETELY INDEPENDENT - the image generation model has NO MEMORY of previous panels
+- NEVER use continuity words like "still", "continues", "remains", "same", "unchanged" - these assume model memory
+- WRONG: "still sitting at the desk", "continues wearing the jacket", "remains in the same pose"
+- CORRECT: "sitting at the desk", "wearing the jacket", "in a relaxed pose"
+- Every panel must be described as if it's the FIRST and ONLY panel being generated
+- Include full character descriptions in EVERY panel, not references to previous panels
 
 IDIOM & METAPHOR LITERALIZATION GUARD (SEMANTIC SANITY):
 - NEVER literalize idioms or figurative language from the story into visuals unless explicitly described as literal.
@@ -552,7 +620,7 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
                     print(f"Unexpected prompt data format: {type(prompt_data)}")
                     continue
                 
-                safe_text = prompt_text
+                prompt_text_with_tokens = prompt_text
 
                 replacements = {
                     r"\beye of the storm\b": "calm central region of the storm",
@@ -561,42 +629,16 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
                 }
                 import re as _re
                 for _pat, _rep in replacements.items():
-                    safe_text = _re.sub(_pat, _rep, safe_text, flags=_re.IGNORECASE)
+                    prompt_text_with_tokens = _re.sub(_pat, _rep, prompt_text_with_tokens, flags=_re.IGNORECASE)
 
-                panel_info_ref = panels_info[i] if i < len(panels_info) else None
-                if panel_info_ref:
-                    char_descs = panel_info_ref.get('character_descriptions', {})
-                    for cname, cdesc in char_descs.items():
-                        def _extract_tag(tag):
-                            m = _re.search(rf"\[{tag}\]\s*(.*?)\s*(?=\[[A-Z_]+\]|$)", cdesc, flags=_re.IGNORECASE|_re.DOTALL)
-                            return m.group(1).strip() if m else ""
-                        hair = _extract_tag('HAIR')
-                        eyes = _extract_tag('EYES')
-                        face = _extract_tag('FACIAL_FEATURES')
-                        outfit = _extract_tag('OUTFIT')
-
-                        name_present = _re.search(_re.escape(cname), safe_text, flags=_re.IGNORECASE)
-                        if name_present:
-                            def _ensure(snippet, label):
-                                nonlocal safe_text
-                                if snippet and (label.lower() not in safe_text.lower() and snippet.split(',')[0][:30].lower() not in safe_text.lower()):
-                                    safe_text += f"; {label.lower()}: {snippet}"
-                            _ensure(hair, "hair")
-                            _ensure(eyes, "eyes")
-                            if face:
-                                short_face = face.split('.')[0]
-                                if short_face and short_face.lower() not in safe_text.lower():
-                                    safe_text += f"; facial features: {short_face}"
-                            if outfit and all(k not in safe_text.lower() for k in ["jacket", "shirt", "vest", "coat", "collar", "torso"]):
-                                top_candidates = [seg.strip() for seg in _re.split(r",|;|\.", outfit) if any(k in seg.lower() for k in ["jacket","coat","shirt","vest","top","torso","blazer"]) ]
-                                anchor = top_candidates[0] if top_candidates else outfit.split('.')[0]
-                                safe_text += f"; outfit: {anchor}"
-
-                words = safe_text.split()
-                if len(words) < 120:
-                    addendum = "; dynamic composition with clear spatial relationships, motion effects, and dramatic lighting; camera angle emphasizes action and continuity"
-                    safe_text += addendum
-
+                print(f"Injecting character features for Page {page_num}, Panel {panel_num}...")
+                safe_text = inject_character_features_into_prompt(
+                    prompt_text_with_tokens, 
+                    character_descriptions, 
+                    page_num, 
+                    panel_num
+                )
+                
                 page_key = f"page_{page_num}"
                 panel_key = f"panel_{panel_num}"
                 if page_key not in all_prompts:
@@ -604,8 +646,33 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
                 all_prompts[page_key][panel_key] = safe_text
                 print(f"Generated prompt for Page {page_num}, Panel {panel_num} ({len(prompt_text.split())} words)")
             
+            print("Saving raw tokenized prompts to debug file...")
+            all_prompts_tokenized = {}
+            for i, prompt_data in enumerate(prompts_list):
+                if isinstance(prompt_data, str):
+                    panel_info = panels_info[i] if i < len(panels_info) else {"page": 1, "panel": i+1}
+                    page_num = panel_info["page"]
+                    panel_num = panel_info["panel"]
+                    prompt_text = prompt_data
+                elif isinstance(prompt_data, dict):
+                    page_num = prompt_data.get("page")
+                    panel_num = prompt_data.get("panel")
+                    prompt_text = prompt_data.get("prompt", "")
+                else:
+                    continue
+                
+                prompt_text_clean = prompt_text
+                for _pat, _rep in replacements.items():
+                    prompt_text_clean = _re.sub(_pat, _rep, prompt_text_clean, flags=_re.IGNORECASE)
+                
+                page_key = f"page_{page_num}"
+                panel_key = f"panel_{panel_num}"
+                if page_key not in all_prompts_tokenized:
+                    all_prompts_tokenized[page_key] = {}
+                all_prompts_tokenized[page_key][panel_key] = prompt_text_clean
+            
             print(f"Successfully generated prompts for all panels using 1 mega-prompt API call with JSON mode!")
-            return all_prompts
+            return all_prompts, all_prompts_tokenized
             
         except json.JSONDecodeError as e:
             print(f"Error parsing JSON response: {e}")
@@ -616,6 +683,7 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
                 prompts_list = parsed_response.get("prompts", [])
                 
                 all_prompts = {}
+                all_prompts_tokenized = {}
                 for prompt_data in prompts_list:
                     page_num = prompt_data.get("page")
                     panel_num = prompt_data.get("panel")
@@ -626,19 +694,25 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
                     
                     if page_key not in all_prompts:
                         all_prompts[page_key] = {}
+                    if page_key not in all_prompts_tokenized:
+                        all_prompts_tokenized[page_key] = {}
                     
-                    all_prompts[page_key][panel_key] = prompt_text
+                    all_prompts_tokenized[page_key][panel_key] = prompt_text
+                    
+                    all_prompts[page_key][panel_key] = inject_character_features_into_prompt(
+                        prompt_text, character_descriptions, page_num, panel_num
+                    )
                 
                 print(f"Successfully generated prompts using fallback JSON extraction!")
-                return all_prompts
+                return all_prompts, all_prompts_tokenized
                 
             except json.JSONDecodeError as e2:
                 print(f"Fallback JSON extraction also failed: {e2}")
-                return {}
+                return {}, {}
             
     except Exception as e:
         print(f"Error in mega-prompt generation: {e}")
-        return {}
+        return {}, {}
 
 def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file):
     """Generate detailed image prompts for ALL panels with full story context and character consistency"""
@@ -665,27 +739,52 @@ def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
     print(f"Character descriptions loaded from {character_desc_path}")
     
     print("Generating panel prompts with full story context and character descriptions...")
-    panel_prompts = generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text)
+    panel_prompts, panel_prompts_tokenized = generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text)
     
-    return {
-        "character_descriptions": character_descriptions,
-        "panel_prompts": panel_prompts
+    comic_structure_info = {
+        "total_pages": len(comic_structure),
+        "panels_per_page": [len(page['panels']) for page in comic_structure]
     }
+    
+    if "comic_structure" in character_descriptions:
+        return {
+            "character_descriptions": character_descriptions,
+            "panel_prompts": panel_prompts
+        }, {
+            "character_descriptions": character_descriptions,
+            "panel_prompts": panel_prompts_tokenized
+        }
+    else:
+        return {
+            "character_descriptions": character_descriptions,
+            "comic_structure": comic_structure_info,
+            "panel_prompts": panel_prompts
+        }, {
+            "character_descriptions": character_descriptions,
+            "comic_structure": comic_structure_info,
+            "panel_prompts": panel_prompts_tokenized
+        }
 
 def get_prompts_json_path(markdown_file):
     """Get the path to the JSON file for story prompts"""
     base_name = os.path.basename(markdown_file).split('.')[0]
     return os.path.join('output', f"{base_name}_prompts.json")
 
-def save_prompts_to_json(prompts_data, markdown_file):
-    """Save generated prompts to a JSON file"""
+def save_prompts_to_json(prompts_data, prompts_data_tokenized, markdown_file):
+    """Save both injected and tokenized prompts to separate JSON files"""
     json_path = get_prompts_json_path(markdown_file)
+    tokenized_json_path = json_path.replace('_prompts.json', '_prompts_tokenized.json')
+    
     os.makedirs(os.path.dirname(json_path), exist_ok=True)
     
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(prompts_data, f, indent=2)
+    print(f"Saved injected prompts to: {json_path}")
     
-    print(f"Saved prompts to {json_path}")
+    with open(tokenized_json_path, 'w', encoding='utf-8') as f:
+        json.dump(prompts_data_tokenized, f, indent=2)
+    print(f"Saved tokenized prompts (debug) to: {tokenized_json_path}")
+    
     return json_path
 
 def load_prompts_from_json(markdown_file):
@@ -767,8 +866,8 @@ def generate_comic_images_for_page(settings=None):
         print("Processing page 1: Generating character descriptions and prompts for the entire story...")
         comic_structure = extract_full_comic_structure(markdown_file)
         if comic_structure:
-            prompts_data = generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
-            save_prompts_to_json(prompts_data, markdown_file)
+            prompts_data, prompts_data_tokenized = generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
+            save_prompts_to_json(prompts_data, prompts_data_tokenized, markdown_file)
     else:
         prompts_data = load_prompts_from_json(markdown_file)
         if not prompts_data:

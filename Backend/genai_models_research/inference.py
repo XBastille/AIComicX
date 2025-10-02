@@ -11,124 +11,89 @@ from speech_bubble import SpeechBubbleGenerator
 from google import genai
 from google.genai import types
 
-def parse_additional_dialogues(panel_content, panel_num):
+def parse_direct_from_json(json_file, page_number, panel_number):
     """
-    Parse additional character dialogues from the panel content using regex.
-    The extract_panel_content function doesn't seem to be getting all dialogues.
+    Parse dialogues and narrations directly from the JSON comic file for a specific page/panel.
     
     Args:
-        panel_content: Dictionary with panel content
-        panel_num: Panel number
-    
-    Returns:
-        List of additional dialogue dictionaries
-    """
-    panel_desc = panel_content.get('description', '')
-    
-    dialogue_pattern = r'([A-Z][a-zA-Z\s]+):\s+"([^"]+)"'
-    
-    matches = re.findall(dialogue_pattern, panel_desc)
-    
-    additional_dialogues = []
-    for match in matches:
-        character = match[0].strip()
-        text = match[1].strip()
-        
-        is_duplicate = False
-        for existing in panel_content.get('dialogues', []):
-            if existing.get('character') == character and existing.get('text') == text:
-                is_duplicate = True
-                break
-        
-        if not is_duplicate:
-            print(f"Found additional dialogue for panel {panel_num}: {character}: {text[:30]}...")
-            additional_dialogues.append({
-                'character': character,
-                'text': text
-            })
-    
-    return additional_dialogues
-
-def parse_direct_from_markdown(markdown_file, page_number, panel_number):
-    """
-    Parse dialogues and narrations directly from the markdown for a specific page/panel.
-    CRITICAL: Each **Name:** line becomes a separate dialogue entry for multiple bubbles.
-    
-    Args:
-        markdown_file: Path to the markdown file
-        page_number: Page number to extract
-        panel_number: Panel number to extract
+        json_file: Path to the JSON file
+        page_number: Page number to extract (1-indexed)
+        panel_number: Panel number to extract (1-indexed)
         
     Returns: 
         Tuple of (entries_list, scene_description)
         - entries_list: List of dicts with keys {type, character, text, sequence_position}
-        - scene_description: Concatenated content from [ ... ] blocks
+        - scene_description: Scene description from the panel
     """
     try:
-        with open(markdown_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        print(f"\nReading markdown file: {markdown_file}")
-        print(f"File excerpt (first 200 chars): {content[:200]}...")
-
-        page_pattern = rf"^##\s*Page\s+{page_number}\s*\n(.*?)(?=^##\s*Page\s+\d+\s*$|\Z)"
-        page_match = re.search(page_pattern, content, flags=re.DOTALL | re.MULTILINE)
-        if not page_match:
-            print(f"Could not find Page {page_number} in markdown file")
+        with open(json_file, 'r', encoding='utf-8') as f:
+            comic_data = json.load(f)
+        
+        print(f"\nReading JSON file: {json_file}")
+        
+        # Find the page
+        page_data = None
+        for page in comic_data.get('pages', []):
+            if page.get('page_number') == page_number:
+                page_data = page
+                break
+        
+        if not page_data:
+            print(f"Could not find Page {page_number} in JSON file")
             return [], ""
-        page_content = page_match.group(1)
-        print(f"Found page {page_number} content (first 100 chars): {page_content[:100]}...")
-
-        panel_pattern = rf"^###\s*Panel\s+{panel_number}\s*\n(.*?)(?=^###\s*Panel\s+\d+\s*$|^---\s*$|\Z)"
-        panel_match = re.search(panel_pattern, page_content, flags=re.DOTALL | re.MULTILINE)
-        if not panel_match:
+        
+        panel_data = None
+        for panel in page_data.get('panels', []):
+            if panel.get('panel_number') == panel_number:
+                panel_data = panel
+                break
+        
+        if not panel_data:
             print(f"Could not find Panel {panel_number} in Page {page_number}")
             return [], ""
-        panel_block = panel_match.group(1).strip()
-        print(f"Found panel {panel_number} content: \n{panel_block}")
-
-        scene_description = ""
-        bracket_blocks = re.findall(r"\[(.*?)\]", panel_block, flags=re.DOTALL)
-        if bracket_blocks:
-            scene_description = " ".join(s.strip() for s in bracket_blocks if s.strip())
-            print(f"Extracted scene description: {scene_description}")
-
+        
+        print(f"Found panel {panel_number} data")
+        
+        scene_description = panel_data.get('scene_description', '')
+        print(f"Extracted scene description: {scene_description[:100]}...")
+        
         entries = []
         seq = 0
 
-        for line_num, line in enumerate(panel_block.splitlines()):
-            line = line.strip()
-            if line.startswith('**') and ':**' in line:
-                parts = line.split(':**', 1)
-                if len(parts) == 2:
-                    name = parts[0][2:].strip()  
-                    text = parts[1].strip()
-                    
-                    if len(text) >= 2 and text.startswith('"') and text.endswith('"'):
-                        text = text[1:-1].strip()
-                    
-                    if text:  
-                        entry_type = 'narration' if name.lower() == 'narration' else 'dialogue'
-                        entries.append({
-                            'type': entry_type,
-                            'character': name,
-                            'text': text,
-                            'sequence_position': seq
-                        })
-                        seq += 1
-
-        entries.sort(key=lambda x: x.get('sequence_position', 0))
-        print(f"Direct parsing found {len(entries)} entries in panel {panel_number} in sequence order:")
-        for i, item in enumerate(entries):
-            kind = item.get('type', 'dialogue')
-            who = item.get('character', 'Unknown')
-            preview = item.get('text', '')[:30]
-            print(f"  {i+1}. [{kind}] {who}: {preview}...")
-
+        for narration in panel_data.get('narrations', []):
+            entries.append({
+                'type': 'narration',
+                'character': None,
+                'text': narration,
+                'sequence_position': seq
+            })
+            seq += 1
+            print(f"Added narration: {narration[:50]}...")
+        
+        for dialogue in panel_data.get('dialogues', []):
+            character = dialogue.get('character', '')
+            text = dialogue.get('text', '')
+            entries.append({
+                'type': 'dialogue',
+                'character': character,
+                'text': text,
+                'sequence_position': seq
+            })
+            seq += 1
+            print(f"Added dialogue: {character}: {text[:50]}...")
+        
+        print(f"Total entries parsed: {len(entries)} ({sum(1 for e in entries if e['type']=='narration')} narrations, {sum(1 for e in entries if e['type']=='dialogue')} dialogues)")
+        
         return entries, scene_description
-
+        
+    except FileNotFoundError:
+        print(f"JSON file not found: {json_file}")
+        return [], ""
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON file: {e}")
+        return [], ""
     except Exception as e:
-        print(f"Error parsing markdown directly: {e}")
+        print(f"Error in parse_direct_from_json: {e}")
         traceback.print_exc()
         return [], ""
 
@@ -303,7 +268,7 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
     Generate comic page and add speech bubbles to each panel.
     
     Args:
-        markdown_file: Path to the markdown file with comic content
+        markdown_file: Path to the markdown file with comic content (will also check for JSON)
         page_number: Page number to process
         api_key: API key for character detection
         style: Comic style for image generation
@@ -319,6 +284,15 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
     """
     print(f"Processing page {page_number} from {markdown_file}")
     print(f"Using colors - Bubble: {bubble_color}, Text: {text_color}, Narration BG: {narration_bg_color}, Narration Text: {narration_text_color}")
+    
+    json_file = markdown_file.replace('.md', '.json')
+    
+    if not os.path.exists(json_file):
+        print(f"ERROR: JSON file not found: {json_file}")
+        print(f"Please generate the JSON file first using st2nar.py or nar2nar.py")
+        return
+    
+    print(f"Using JSON file: {json_file}")
     
     settings = {
         "markdown_file": markdown_file,
@@ -375,17 +349,18 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
             print(f"Warning: No content found for panel {panel_num}")
             continue
         
-        all_content, scene_description = parse_direct_from_markdown(markdown_file, page_number, panel_num)
+        all_content, scene_description = parse_direct_from_json(json_file, page_number, panel_num)
         
         if all_content:
             panel_dialogues = []
             narrations = []
             
             for item in all_content:
-                if item['character'].lower() == "narration":
+                item_type = item.get('type', 'dialogue')
+                if item_type == 'narration' or (item.get('character') and item['character'].lower() == "narration"):
                     narrations.append({
                         'text': item['text'],
-                        'sequence_position': item['sequence_position']
+                        'sequence_position': item.get('sequence_position', 0)
                     })
                 else:
                     panel_dialogues.append(item)
@@ -557,8 +532,8 @@ if __name__ == "__main__":
     font_path = font_mapping.get(font_style, "fonts/font1reg.ttf")
     
     process_comic_page(
-        markdown_file="test.md", 
-        page_number=6, 
+        markdown_file="test_2.md", 
+        page_number=18, 
         api_key=api_key,
         style="anime",
         panel_dimensions=[

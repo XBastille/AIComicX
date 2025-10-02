@@ -10,26 +10,6 @@ from markitdown import MarkItDown
 from diffusers import StableDiffusion3Pipeline
 from gradio_client import Client
 
-def extract_page_panel_info(comic_text):
-    """Extract page and panel information from comic markdown"""
-    
-    page_pattern = r'^## Page \d+$'
-    pages = re.findall(page_pattern, comic_text, re.MULTILINE)
-    total_pages = len(pages)
-    
-    page_sections = re.split(r'^## Page \d+$', comic_text, flags=re.MULTILINE)[1:]  
-    
-    panels_per_page = []
-    
-    for page_content in page_sections:
-        panel_pattern = r'^### Panel \d+$'
-        panels = re.findall(panel_pattern, page_content, re.MULTILINE)
-        panels_per_page.append(len(panels))
-    
-    return {
-        "total_pages": total_pages,
-        "panels_per_page": panels_per_page
-    }
 
 def generate_character_descriptions(formatted_text, style):
     """Generate character descriptions with dynamic variations based on story context"""
@@ -390,7 +370,7 @@ def generate_character_reference_image(character_index, character_name, characte
 
 def convert_formatted_to_comic(formatted_text):
     """
-    Convert pre-formatted text with narration and dialogue into comic format with pages and panels
+    Convert pre-formatted text with narration and dialogue into comic format JSON
     Input format expected:
     narration text
     Character A: dialogue
@@ -401,38 +381,56 @@ def convert_formatted_to_comic(formatted_text):
     )
 
     prompt = f"""
-    Convert the following pre-formatted text (which already has narration and character dialogue) into a comic book format with pages and panels.
+    Convert the following pre-formatted text (which already has narration and character dialogue) into a comic book JSON format with pages and panels.
     Follow these formatting rules:
 
-    1. Divide the story into pages using markdown headers: ## Page 1, ## Page 2, etc.
-    2. Pages should have 1-4 panels, depending on the scene's importance:
+    1. Divide the story into pages. Pages should have 1-4 panels, depending on the scene's importance:
        - Use a single panel for an entire page to emphasize heroic, iconic, or very important moments
        - Use 2-4 panels for regular storytelling where multiple scenes flow together
-    3. Label panels with: ### Panel 1, ### Panel 2, etc.
-    4. Each panel must contain maximum 3 dialogue lines.
-    5. Format narration as regular paragraphs inside each panel.
-    6. Format dialogue with character names and their lines as: **Character Name:** Their dialogue
-    7. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
-    8. Use visual language in narration that suggests what should be drawn in the panel.
-    9. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
-    10. IMPORTANT: Do not include any parenthetical descriptions after character names like "(off-panel)" or "(shouting)".
-    11. IMPORTANT: Include all character actions as part of the narration, not as separate italicized lines.
-    12. IMPORTANT: Do not use any markdown formatting (asterisks, italics, etc.) inside narration text.
+    2. Each panel must contain maximum 3 dialogue lines.
+    3. Format narration as array entries in the panel.
+    4. If a conversation continues beyond 3 dialogue exchanges, move to a new panel.
+    5. Use visual language in scene descriptions that suggests what should be drawn in the panel.
+    6. For dramatic moments (revelations, plot twists, action climaxes), use a single full-page panel.
+    7. IMPORTANT: Do not include any parenthetical descriptions after character names like "(off-panel)" or "(shouting)".
+    8. IMPORTANT: Include all character actions as part of the narration.
 
-    Example of your output:
-    ## Page 1
+    LENGTH LIMITS (CRITICAL):
+    9. Single narration: Maximum 200 characters. If longer, split into multiple panels.
+    10. Single dialogue: Maximum 100 characters. If longer, split into multiple dialogue entries or panels.
+    11. If content exceeds limits, intelligently break it:
+        - For narration: Create a new panel with continuation
+        - For dialogue: Split into multiple dialogue entries in same panel, or move to next panel if already at 3 dialogues
 
-    ### Panel 1  
-    [detailed description of the scene in square brackets]
+    JSON OUTPUT FORMAT:
+    {{
+      "pages": [
+        {{
+          "page_number": 1,
+          "panels": [
+            {{
+              "panel_number": 1,
+              "scene_description": "Description of the visual scene",
+              "narrations": [
+                "First narration text",
+                "Second narration text (optional)"
+              ],
+              "dialogues": [
+                {{
+                  "character": "Character Name",
+                  "text": "Dialogue line without quotes"
+                }}
+              ]
+            }}
+          ]
+        }}
+      ]
+    }}
 
-    **Character A:** character A's dialogue
-
-    **Narration**: Any narration text goes here, including character actions. Do not format this with italics or stars.
-
-    **Character B:** character B's dialogue
-    
     Note: The input is already formatted with narration paragraphs and character dialogues in the format "Character: dialogue".
-    Your job is to organize this into the comic book page and panel structure while maintaining the original dialogue.
+    Your job is to organize this into the comic book page and panel JSON structure while maintaining the original dialogue.
+
+    IMPORTANT: Return ONLY valid JSON, no markdown code blocks or explanations.
 
     Input text:
     {formatted_text}
@@ -449,24 +447,109 @@ def convert_formatted_to_comic(formatted_text):
             ),
         ]
         generate_content_config = types.GenerateContentConfig(
-            response_mime_type="text/plain",
+            response_mime_type="application/json",
             temperature=0.7,
             max_output_tokens=65536,
             top_p=1
         )
 
         response_chunks = []
-        for chunk in client.models.generate_content_stream(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
-        ):
-            response_chunks.append(chunk.text)
+        content = ""
         
-        return "".join(response_chunks)
+        try:
+            for chunk in client.models.generate_content_stream(
+                model=model,
+                contents=contents,
+                config=generate_content_config,
+            ):
+                response_chunks.append(chunk.text)
+            
+            content = "".join(response_chunks)
+        except Exception as stream_error:
+            print(f"Error during streaming: {stream_error}")
+            print(f"Attempting non-streaming generation...")
+            
+            response = client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=generate_content_config,
+            )
+            content = response.text
+        
+        if not content or content.strip() == "":
+            print("Error: Empty response from Gemini API")
+            return None
+        
+        try:
+            comic_json = json.loads(content)
+        except json.JSONDecodeError as e:
+            print(f"Error: Could not parse JSON response: {e}")
+            print(f"Response content (first 500 chars): {content[:500]}...")
+            return None
+        
+        return comic_json
         
     except Exception as e:
-        return f"Error converting formatted text to comic format: {str(e)}"
+        print(f"Error converting formatted text to comic format: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def convert_json_to_markdown(comic_json):
+    """Convert comic JSON to markdown format with exact structure."""
+    if not comic_json or 'pages' not in comic_json:
+        return ""
+    
+    markdown_lines = []
+    
+    for page in comic_json['pages']:
+        page_num = page['page_number']
+        markdown_lines.append(f"## Page {page_num}")
+        
+        for panel in page['panels']:
+            panel_num = panel['panel_number']
+            markdown_lines.append(f"### Panel {panel_num}")
+            
+            scene_desc = panel.get('scene_description', '')
+            if scene_desc:
+                markdown_lines.append(f"[{scene_desc}]")
+                markdown_lines.append("")  
+            
+            narrations = panel.get('narrations', [])
+            for narration in narrations:
+                markdown_lines.append(f"**Narration**: {narration}")
+                markdown_lines.append("")  
+            
+            dialogues = panel.get('dialogues', [])
+            for dialogue in dialogues:
+                character = dialogue.get('character', '')
+                text = dialogue.get('text', '')
+                markdown_lines.append(f"**{character}:** \"{text}\"")
+            
+            if dialogues and panel != page['panels'][-1]:
+                markdown_lines.append("")
+        
+        markdown_lines.append("")
+        markdown_lines.append("---")
+        markdown_lines.append("")
+    
+    return "\n".join(markdown_lines)
+
+def extract_page_panel_info_from_json(comic_json):
+    """Extract page and panel information directly from comic JSON structure."""
+    if not comic_json or 'pages' not in comic_json:
+        return {
+            "total_pages": 0,
+            "panels_per_page": []
+        }
+    
+    total_pages = len(comic_json['pages'])
+    panels_per_page = [len(page['panels']) for page in comic_json['pages']]
+    
+    return {
+        "total_pages": total_pages,
+        "panels_per_page": panels_per_page
+    }
 
 def process_formatted_file(file_path, style="american comic (modern)", generate_reference_images=False):
     """
@@ -482,25 +565,37 @@ def process_formatted_file(file_path, style="american comic (modern)", generate_
         print(f"Error reading file: {e}")
         return None
     
-    print("Converting formatted text to comic format...")
-    comic_text = convert_formatted_to_comic(formatted_text)
+    print("Converting formatted text to comic JSON format...")
+    comic_json = convert_formatted_to_comic(formatted_text)
+    
+    if not comic_json:
+        print("Error: Failed to convert formatted text to comic JSON")
+        return None
+    
+    json_output_file = os.path.splitext(file_path)[0] + ".json"
+    os.makedirs('output', exist_ok=True)
+    with open(json_output_file, 'w', encoding='utf-8') as f:
+        json.dump(comic_json, f, indent=2)
+    print(f"Comic JSON saved to: {json_output_file}")
+    
+    print("Converting JSON to markdown format...")
+    comic_text = convert_json_to_markdown(comic_json)
     
     output_file = os.path.splitext(file_path)[0] + "_comic.md"
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(comic_text)
     
-    print(f"Comic format saved to {output_file}")
+    print(f"Comic markdown format saved to {output_file}")
     
     print("\nGenerating character descriptions...")
     character_descriptions = generate_character_descriptions(formatted_text, style)
     
-    print("Extracting page and panel information...")
-    page_panel_info = extract_page_panel_info(comic_text)
+    print("Extracting page and panel information from JSON...")
+    page_panel_info = extract_page_panel_info_from_json(comic_json)
     
     if character_descriptions:
         character_descriptions["comic_structure"] = page_panel_info
         
-        os.makedirs('output', exist_ok=True)
         char_desc_path = os.path.join('output', 'character_descriptions.json')
         with open(char_desc_path, 'w', encoding='utf-8') as f:
             json.dump(character_descriptions, f, indent=2)
