@@ -24,8 +24,9 @@ def generate_character_descriptions(story_text, comic_markdown, style):
         if len(word) > 2: 
             word_counts[word] = word_counts.get(word, 0) + 1
     
+    common_words = ['The', 'And', 'But', 'For']
     for name, count in word_counts.items():
-        if count >= 3 and name not in ['The', 'And', 'But', 'For', 'New', 'York', 'City', 'Chapter', 'Police']:
+        if count >= 3 and name not in common_words:
             character_names.add(name)
     
     print(f"Detected character names: {', '.join(character_names)}")
@@ -174,7 +175,7 @@ def generate_character_descriptions(story_text, comic_markdown, style):
     """
     
     try:
-        model = "gemini-2.5-pro"
+        model = "gemini-flash-latest"
         contents = [
             types.Content(
                 role="user",
@@ -440,6 +441,12 @@ JSON OUTPUT FORMAT:
 }
 
 IMPORTANT: Return ONLY valid JSON, no markdown code blocks or explanations.
+
+CRITICAL FORMATTING RULES:
+- DO NOT use emojis in narrations or dialogues
+- DO NOT use emojis in scene descriptions
+- Use plain text only without any emoji characters
+- Focus on descriptive language instead of visual symbols
 """
     
     try:
@@ -519,12 +526,12 @@ def convert_json_to_markdown(comic_json):
             scene_desc = panel.get('scene_description', '')
             if scene_desc:
                 markdown_lines.append(f"[{scene_desc}]")
-                markdown_lines.append("") 
+                markdown_lines.append("")  
             
             narrations = panel.get('narrations', [])
             for narration in narrations:
                 markdown_lines.append(f"**Narration**: {narration}")
-                markdown_lines.append("") 
+                markdown_lines.append("")  
             
             dialogues = panel.get('dialogues', [])
             for dialogue in dialogues:

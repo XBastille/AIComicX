@@ -31,7 +31,6 @@ def parse_direct_from_json(json_file, page_number, panel_number):
         
         print(f"\nReading JSON file: {json_file}")
         
-        # Find the page
         page_data = None
         for page in comic_data.get('pages', []):
             if page.get('page_number') == page_number:
@@ -59,7 +58,7 @@ def parse_direct_from_json(json_file, page_number, panel_number):
         
         entries = []
         seq = 0
-
+        
         for narration in panel_data.get('narrations', []):
             entries.append({
                 'type': 'narration',
@@ -97,38 +96,82 @@ def parse_direct_from_json(json_file, page_number, panel_number):
         traceback.print_exc()
         return [], ""
 
-def generate_character_detection_prompts_llm(speaking_characters, scene_description, character_descriptions):
+def generate_detection_prompts_mega(page_number, json_file, character_descriptions):
     """
-    Use LLM to intelligently generate detection prompts based on who's speaking and who's in the scene.
+    Generate detection prompts for ALL panels in a page with ONE LLM call (mega prompt approach).
     
     Args:
-        speaking_characters: List of character names who are speaking
-        scene_description: Description of the scene to find all characters present
+        page_number: Page number to process
+        json_file: Path to JSON file with panel data
         character_descriptions: Dictionary of character descriptions
-      Returns:
-        Dictionary mapping character names to detection prompts
+        
+    Returns:
+        Dictionary mapping panel numbers to detection prompt dictionaries
+        Format: {panel_num: {character_name: detection_prompt}}
     """
     try:
+        with open(json_file, 'r', encoding='utf-8') as f:
+            comic_data = json.load(f)
+        
+        page_data = None
+        for page in comic_data.get('pages', []):
+            if page.get('page_number') == page_number:
+                page_data = page
+                break
+        
+        if not page_data:
+            print(f"Page {page_number} not found in JSON")
+            return {}
+        
+        panels_info = []
+        for panel in page_data.get('panels', []):
+            panel_num = panel.get('panel_number')
+            scene_description = panel.get('scene_description', '')
+            
+            speaking_chars = []
+            for dialogue in panel.get('dialogues', []):
+                char = dialogue.get('character', '').strip(':')
+                if char and char.lower() != 'narration':
+                    speaking_chars.append(char)
+            
+            if speaking_chars:
+                panels_info.append({
+                    'panel': panel_num,
+                    'scene': scene_description,
+                    'speaking_characters': speaking_chars
+                })
+        
+        if not panels_info:
+            print("No panels with dialogues found")
+            return {}
+        
         client = genai.Client(
             api_key=os.environ["GEMINI_KEY"],
         )
         
-        char_descriptions = {}
-        for name in speaking_characters:
-            clean_name = name.strip(':')
-            description = character_descriptions.get(clean_name, {}).get('base', '')
-            if not description:
-                description = character_descriptions.get(name, {}).get('base', '')
-            char_descriptions[name] = description
+        all_chars = set()
+        for panel_info in panels_info:
+            all_chars.update(panel_info['speaking_characters'])
         
-        user_prompt = f"""Analyze this comic panel to generate visual detection prompts for ALL speaking characters/entities.
+        char_descriptions_section = "CHARACTER DESCRIPTIONS:\n"
+        for char_name in all_chars:
+            desc = character_descriptions.get(char_name, {}).get('main', '')
+            if not desc:
+                desc = character_descriptions.get(char_name, {}).get('base', '')
+            char_descriptions_section += f"\n{char_name}:\n{desc}\n"
+        
+        panels_section = ""
+        for i, panel_info in enumerate(panels_info, 1):
+            panels_section += f"\nPanel {panel_info['panel']}:\n"
+            panels_section += f"Scene: {panel_info['scene']}\n"
+            panels_section += f"Speaking: {', '.join(panel_info['speaking_characters'])}\n"
+        
+        mega_prompt = f"""Generate visual detection prompts for ALL speaking characters across ALL panels in this page.
 
-SCENE DESCRIPTION: {scene_description}
+{char_descriptions_section}
 
-SPEAKING CHARACTERS: {speaking_characters}
-
-CHARACTER DESCRIPTIONS:
-{json.dumps(char_descriptions, indent=2)}
+PANELS TO PROCESS:
+{panels_section}
 
 TASK: Generate detection prompts for ALL speaking characters/entities that are physically present in the scene.
 
@@ -149,130 +192,60 @@ EXAMPLES:
 - "Narrator" speaking but no narrator visible → "NOT_VISIBLE"
 - "Kara at radio" + Radio speaking → "radio equipment"
 
-RESPONSE FORMAT: Return ONLY JSON with speaking character names as keys:
+OUTPUT FORMAT (JSON):
 {{
-  "Character1": "visual detection prompt" OR "NOT_VISIBLE",
-  "Character2": "another detection prompt" OR "NOT_VISIBLE"
+  "1": {{
+    "Character1": "detection prompt",
+    "Character2": "detection prompt"
+  }},
+  "2": {{
+    "Character3": "detection prompt"
+  }}
 }}
-"""
-        
-        model = "gemini-2.5-flash"
-        contents = [
-            types.Content(
-                role="user",
-                parts=[
-                    types.Part.from_text(text=user_prompt),
-                ],
-            ),
-        ]
-        generate_content_config = types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0.1,
-            max_output_tokens=65536
-        )
+
+Return detection prompts for ALL {len(panels_info)} panels."""
 
         response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
+            model="gemini-2.5-flash",
+            contents=mega_prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.1,
+                max_output_tokens=16384
+            )
         )
         
-        response_text = response.candidates[0].content.parts[0].text
-        print(f"\nLLM Raw Response for detection prompts: {response_text}")
-
-        try:
-            detection_prompts = json.loads(response_text)
-        except Exception:
-            print("Failed to parse detection JSON; using fallback prompts per speaker")
-            detection_prompts = {}
-
-        def fallback_prompt(name):
-            desc = character_descriptions.get(name, {}).get('main') or character_descriptions.get(name, {}).get('base', '')
-            s = desc.lower()
-            if re.search(r"\bwoman|female|girl\b", s):
-                return "woman's head"
-            if re.search(r"\bman|male|boy\b", s):
-                return "man's head"
-            m = re.search(r"\[HAIR\]\s*(.*?)(?=\[[A-Z_]+\]|$)", desc, flags=re.IGNORECASE|re.DOTALL)
-            if m:
-                snippet = " ".join(m.group(1).strip().split()[:3])
-                return f"head with {snippet}"
-            return "person's head"
-
-        final_map = {}
-        for name in speaking_characters:
-            prompt = (detection_prompts or {}).get(name)
-            if not prompt or str(prompt).upper() == "NOT_VISIBLE":
-                final_map[name] = fallback_prompt(name)
-            else:
-                final_map[name] = prompt
-
-        print(f"Final detection prompts (with fallbacks): {final_map}")
-        return final_map
+        response_text = response.text
+        print(f"\n✓ MEGA Detection Prompts Generated ({len(response_text)} chars)")
+        
+        detection_data = json.loads(response_text)
+        
+        result = {}
+        for panel_key, prompts in detection_data.items():
+            panel_num = int(panel_key)
+            result[panel_num] = prompts
+        
+        print(f"✓ Detection prompts ready for {len(result)} panels")
+        return result
         
     except Exception as e:
-        print(f"Error generating detection prompts with LLM: {e}")
+        print(f"Error in mega detection prompt generation: {e}")
         traceback.print_exc()
         return {}
 
-def generate_character_detection_prompts(panel_info, character_descriptions, scene_description=""):
-    """
-    Generate character detection prompts based on panel content and character descriptions.
-    
-    Args:
-        panel_info: Dictionary with panel content
-        character_descriptions: Dictionary with character descriptions
-        scene_description: Scene description from square brackets
-        
-    Returns:
-        Dictionary mapping character names to detection prompts
-    """
-    if not panel_info.get('dialogues'):
-        print("No dialogues found in panel_info")
-        return {}
-        
-    dialogues = panel_info.get('dialogues', [])
-    
-    speaking_characters = []
-    for dialogue in dialogues:
-        if dialogue['character'].lower() != "narration":
-            char_name = dialogue['character']
-            if char_name.endswith(':'):
-                char_name = char_name[:-1]
-            speaking_characters.append(char_name)
-    
-    print(f"\nAnalyzing panel for characters:")
-    print(f"  Speaking characters: {speaking_characters}")
-    
-    characters_in_scene = []
-    for char_name in character_descriptions.keys():
-        if char_name.lower() in scene_description.lower():
-            characters_in_scene.append(char_name)
-    
-    print(f"  Characters in scene description: {characters_in_scene}")
-    
-    all_characters_to_detect = list(set(speaking_characters))
-    print(f"  All characters to detect: {all_characters_to_detect}")
-    print(f"  Scene description: {scene_description[:100]}...")
-    
-    if not speaking_characters:
-        print("No characters found in panel")
-        return {}
-    
-    return generate_character_detection_prompts_llm(speaking_characters, scene_description, character_descriptions)
-
 def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensions, guidance_scale, inference_steps,
                       bubble_color=(255, 255, 255), text_color=(0, 0, 0),
-                      narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255), font_path=None, seed=9):
+                      narration_bg_color=(0, 0, 0), narration_text_color=(255, 255, 255), font_path=None, seed=9, 
+                      poster_format="iconic_hero"):
     """
     Generate comic page and add speech bubbles to each panel.
     
     Args:
         markdown_file: Path to the markdown file with comic content (will also check for JSON)
-        page_number: Page number to process
+        page_number: Page number to process (0 for poster, 1+ for comic pages)
         api_key: API key for character detection
         style: Comic style for image generation
-        panel_dimensions: List of panel dimensions (width, height) for each panel
+        panel_dimensions: List of panel dimensions (width, height) for each panel (ignored for page 0)
         guidance_scale: Guidance scale for image generation
         inference_steps: Number of inference steps
         bubble_color: RGB tuple for speech bubble background color
@@ -281,9 +254,16 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         narration_text_color: RGB tuple for narration text color
         font_path: Path to the font file to use
         seed: Seed for image generation
+        poster_format: Poster format for page 0: 'iconic_hero', 'dynamic_ensemble', 'focal_point', 
+                      'relationship_two_shot', 'tapestry_collage'
     """
     print(f"Processing page {page_number} from {markdown_file}")
-    print(f"Using colors - Bubble: {bubble_color}, Text: {text_color}, Narration BG: {narration_bg_color}, Narration Text: {narration_text_color}")
+    
+    if page_number == 0:
+        print(f"Poster format: {poster_format}")
+        print(f"Poster dimensions: 832x1216 (WxH, 2:3 ratio)")
+    else:
+        print(f"Using colors - Bubble: {bubble_color}, Text: {text_color}, Narration BG: {narration_bg_color}, Narration Text: {narration_text_color}")
     
     json_file = markdown_file.replace('.md', '.json')
     
@@ -305,13 +285,19 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         "height": 1024,
         "panel_dimensions": panel_dimensions,
         "guidance_scale": guidance_scale,
-        "num_inference_steps": inference_steps
+        "num_inference_steps": inference_steps,
+        "poster_format": poster_format  
     }
     
     panel_images = generate_comic_images_for_page(settings)
     
     if not panel_images:
         print(f"No panels generated for page {page_number}")
+        return
+    
+    if page_number == 0:
+        print(f"\\n✓ Poster generation complete!")
+        print(f"Output: {panel_images[0]['image']}")
         return
     
     base_name = os.path.basename(markdown_file).split('.')[0]
@@ -334,6 +320,13 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
     
     output_dir = os.path.join('output', f"{base_name}_page_{page_number}_with_bubbles")
     os.makedirs(output_dir, exist_ok=True)
+    
+    print(f"\n{'='*60}")
+    print(f"GENERATING DETECTION PROMPTS FOR ENTIRE PAGE {page_number}")
+    print(f"{'='*60}")
+    all_detection_prompts = generate_detection_prompts_mega(page_number, json_file, character_descriptions)
+    print(f"✓ Detection prompts generated for {len(all_detection_prompts)} panels in ONE API call")
+    print(f"{'='*60}\n")
     
     for panel in panel_images:
         panel_num = panel['panel']
@@ -386,12 +379,12 @@ def process_comic_page(markdown_file, page_number, api_key, style, panel_dimensi
         for i, narration in enumerate(narrations):
             print(f"  {i+1}. {narration['text'][:30]}...")
         
-        detection_prompts = generate_character_detection_prompts(
-            {"dialogues": panel_dialogues}, 
-            character_descriptions, 
-            scene_description
-        )
-        print(f"Generated detection prompts for panel {panel_num}: {detection_prompts}")
+        detection_prompts = all_detection_prompts.get(panel_num, {})
+        if not detection_prompts:
+            print(f"⚠ No pre-generated detection prompts for panel {panel_num}, generating on-demand...")
+            
+        else:
+            print(f"✓ Using pre-generated detection prompts for panel {panel_num}: {detection_prompts}")
         
         dialogues = []
         
@@ -513,7 +506,9 @@ if __name__ == "__main__":
 
     theme = "default"  # Options: default, sepia, noir, modern
     font_style = "anime"  # Options: anime, manga, comic, handwritten, cute
-    seed = 10234
+    seed = 102904
+    
+    poster_format = "tapestry_collage"  # Options: iconic_hero, dynamic_ensemble, focal_point, relationship_two_shot, tapestry_collage
 
     theme_map = {
         "default": default_colors,
@@ -531,9 +526,10 @@ if __name__ == "__main__":
     
     font_path = font_mapping.get(font_style, "fonts/font1reg.ttf")
     
+    
     process_comic_page(
-        markdown_file="test_2.md", 
-        page_number=18, 
+        markdown_file="test_4.md", 
+        page_number=0,  # 0 = poster, 1+ = comic panels
         api_key=api_key,
         style="anime",
         panel_dimensions=[
@@ -549,5 +545,6 @@ if __name__ == "__main__":
         narration_bg_color=colors["narration_bg_color"],
         narration_text_color=colors["narration_text_color"],
         font_path=font_path,
-        seed=seed
+        seed=seed,
+        poster_format=poster_format
     )

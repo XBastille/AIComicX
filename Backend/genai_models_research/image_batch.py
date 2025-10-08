@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import traceback
 import torch
 from diffusers import DiffusionPipeline, QwenImageTransformer2DModel
 from transformers.modeling_utils import no_init_weights
@@ -309,56 +310,234 @@ def inject_character_features_into_prompt(prompt, character_descriptions, page_n
     
     return prompt
 
-def extract_key_character_features(description):
-    """Extract key visual features from character description for consistency"""
-    import re
-    
-    hair_patterns = [
-        r'([\w\s]*hair[\w\s]*)',
-        r'([\w\s]*hairstyle[\w\s]*)',
-        r'([\w\s]*haircut[\w\s]*)'
-    ]
-    
-    clothing_patterns = [
-        r'wearing ([\w\s,]+)',
-        r'dressed in ([\w\s,]+)',
-        r'(jacket|shirt|dress|pants|boots|shoes|cloak)[\w\s]*'
-    ]
-    
-    physical_patterns = [
-        r'([\w\s]*eyes?[\w\s]*)',
-        r'([\w\s]*build[\w\s]*)',
-        r'(tall|short|young|old|athletic)[\w\s]*'
-    ]
-    
-    key_features = {
-        "hair": [],
-        "clothing": [],
-        "physical": []
-    }
-    
-    desc_lower = description.lower()
-    
-    for pattern in hair_patterns:
-        matches = re.findall(pattern, desc_lower)
-        key_features["hair"].extend(matches)
-    
-    for pattern in clothing_patterns:
-        matches = re.findall(pattern, desc_lower) 
-        key_features["clothing"].extend(matches)
-    
-    for pattern in physical_patterns:
-        matches = re.findall(pattern, desc_lower)
-        key_features["physical"].extend(matches)
-    
-    return key_features
 
-def generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text=""):
-    """Generate detailed prompts for ALL panels using token-based character injection approach"""
+def generate_poster_prompt(character_descriptions, style, full_story_text, poster_format):
+    """Generate a single poster prompt using full story context and base character descriptions.
+    
+    Args:
+        character_descriptions: Dict of character descriptions (uses 'main' descriptions only)
+        style: Artistic style
+        full_story_text: Complete story for context
+        poster_format: One of the 5 poster formats
+        
+    Returns:
+        Tuple of (poster_prompts_dict, poster_prompts_tokenized_dict) - both identical since no token injection
+    """
     client = genai.Client(
-        api_key=os.environ["GEMINI_KEY"],
+        api_key=os.environ["GEMINI_KEY"]
     )
     
+    base_characters = {}
+    for char_name, char_data in character_descriptions.items():
+        if char_name != "comic_structure":
+            main_desc = char_data.get("main", "")
+            if main_desc:
+                base_characters[char_name] = main_desc
+    
+    character_info = "MAIN CHARACTERS:\n"
+    for char_name, desc in base_characters.items():
+        character_info += f"- {char_name}: {desc}\n"
+    
+    poster_formats = {
+        "iconic_hero": {
+            "name": "The Iconic Hero Shot",
+            "description": "A single, dominant character in a powerful, memorable pose that defines the story",
+            "elements": """- DYNAMIC POSE: Character mid-action or heroic stance, never static
+- SIMPLE/STYLIZED BACKGROUND: Minimalist backdrop or symbolic environment
+- DIRECT GAZE: Character looks at viewer, creating connection
+- SPOTLIGHT LIGHTING: Dramatic lighting highlighting physique and costume with strong shadows
+- CHARACTER FOCUS: 80% visual weight on the protagonist"""
+        },
+        "dynamic_ensemble": {
+            "name": "The Dynamic Ensemble",
+            "description": "Multiple key characters in a cohesive, dynamic composition showing team hierarchy",
+            "elements": """- HIERARCHICAL SIZING: Most important characters larger/more central
+- INTERLOCKING POSES: Characters interact through actions and gazes
+- MONTAGE OF ACTION: Different characters in signature actions
+- UNIFIED BACKGROUND: Common setting tying the cast together
+- CLEAR VISUAL HIERARCHY: Eye flows from central hero to surrounding cast"""
+        },
+        "focal_point": {
+            "name": "The Focal Point (Single Object/Symbol)",
+            "description": "A single powerful object or symbol representing the core theme",
+            "elements": """- DOMINANT CENTRAL IMAGE: 70%+ focus on one symbolic object
+- SIGNIFICANT NEGATIVE SPACE: Clean, uncluttered areas forcing eye to focal point
+- THEMATIC TEXTURE AND LIGHTING: Object lit/textured to convey story mood
+- SYMBOLIC MEANING: Object represents central theme or MacGuffin
+- MINIMALIST COMPOSITION: Maximum impact through simplicity"""
+        },
+        "relationship_two_shot": {
+            "name": "The Relationship (Two-Shot)",
+            "description": "Two characters whose interaction tells the story's central dynamic",
+            "elements": """- TWO PROMINENT FIGURES: Poster dominated by two characters
+- GAZE AS NARRATIVE: Where they look tells the story (at each other, away, at viewer, off-screen)
+- BODY LANGUAGE: Back-to-back (uneasy alliance), face-to-face (conflict/intimacy), side-by-side (partnership)
+- MEANINGFUL PROXIMITY: Distance between them packed with relationship meaning
+- EMOTIONAL ATMOSPHERE: Lighting and composition reflect their dynamic"""
+        },
+        "tapestry_collage": {
+            "name": "The Tapestry/Collage of Story",
+            "description": "TRUE COLLAGE STRUCTURE with FRAGMENTED, CUT-OUT, OVERLAPPING PIECES arranged in a dense composition. This should look like a physical collage made from cut paper, photographs, and torn images - NOT a traditional centered illustration. Characters appear as fragmented cut-outs, symbols are layered pieces, everything overlaps in a chaotic but meaningful arrangement.",
+            "elements": """- COLLAGE STRUCTURE (MANDATORY): Fragmented pieces, torn edges, cut-out shapes, overlapping layers like a physical collage
+- MULTIPLE CHARACTER FRAGMENTS: Characters appear as separate cut-out pieces - face in one area, hands in another, full body elsewhere
+- TORN/CUT AESTHETICS: Rough edges, torn paper effects, scissor-cut borders on elements
+- OVERLAPPING LAYERS: Pieces stacked on top of each other with visible edges and depth
+- SCATTERED ARRANGEMENT: Elements distributed across entire frame in organized chaos, not centered composition
+- THEMATIC SYMBOLS AS FRAGMENTS: Story-specific imagery (ancient texts, magical circles, blueprints) as collage pieces
+- TEXT FRAGMENTS: Pieces of documents, spells, codes as torn paper scraps scattered throughout
+- VISUAL METAPHORS: Imagery representing themes (chains, light/shadow, fractured mirrors) as cut-out elements
+- STORY ARTIFACTS: Objects (potions, keys, photos, weapons) as collage fragments
+- CONNECTING ELEMENTS: Swirling energy, vines, chains linking scattered pieces
+- VARIED SCALES: Different sized fragments - some large, some tiny - creating dynamic composition
+- DEPTH THROUGH LAYERS: Clear foreground/midground/background through overlapping pieces
+- NO SINGLE CENTER: Title integrated as torn/cut letters or banner woven through collage
+- PHYSICAL COLLAGE FEEL: Should look like something you could make with scissors, glue, and magazine cutouts"""
+        }
+    }
+    
+    selected_format = poster_formats.get(poster_format, poster_formats["iconic_hero"])
+    
+    poster_prompt = f"""You are an expert comic book poster designer. Create ONE stunning poster for this comic story.
+
+FULL STORY CONTEXT:
+{full_story_text}
+
+{character_info}
+
+ARTISTIC STYLE:
+{style}
+
+STYLE EXPANSION REQUIREMENT (MANDATORY):
+You MUST expand and describe the "{style}" style characteristics in detail within the first 10 words of your prompt to prevent photorealistic outputs.
+
+START YOUR PROMPT LIKE THIS:
+"{style} art style, [add 3-5 style-specific characteristics], [add rendering/technique details], with the title..."
+
+NEVER use terms: photorealistic, realistic, hyper-realistic, photography, 3D render, photo
+
+POSTER FORMAT REQUIRED: {selected_format['name']}
+{selected_format['description']}
+
+KEY ELEMENTS TO INCLUDE:
+{selected_format['elements']}
+
+POSTER SPECIFICATIONS:
+- This is a STANDALONE PROMOTIONAL POSTER IMAGE, not a comic panel
+- Portrait orientation composition
+- Include visual elements that capture the story's essence
+- Make it ICONIC and MEMORABLE
+- Focus on VISUAL DESCRIPTION ONLY - no technical specs, dimensions, or percentages
+
+CHARACTER USAGE GUIDELINES:
+- Use the FULL BASE character descriptions provided above
+- DO NOT use character tokens like [CHARACTER:FEATURE]
+- Write complete descriptions naturally into the prompt
+- Use "a man", "a woman", "an elderly man" instead of character names in the prompt text
+- Character names only appear when referencing their description
+- DO NOT mention dimensions, pixel sizes, percentages, or technical specifications
+- Write as if describing a finished poster image to an artist
+
+STORY INTEGRATION:
+- Capture the central theme, conflict, or mood
+- Reference key story elements (settings, objects, relationships)
+- Create visual metaphors that represent the narrative
+
+COMPOSITION RULES:
+- Portrait orientation composition
+- Strong visual hierarchy guiding the viewer's eye
+- Balanced use of negative space
+- Dramatic lighting appropriate to the story tone
+
+TITLE SPECIFICATIONS (CRITICAL - TEXT RENDERING):
+- MUST include title text in the image composition
+- Specify title position: "at the top" / "at the bottom" / "in the upper portion"
+- Specify title style: "elegant sans-serif lettering" / "bold stylized text" / "decorative script"
+- Extract story title from context or generate appropriate one
+- Format: "with the title text \"Story Name\" displayed at the top in bold lettering"
+- IMPORTANT: AI image models CAN render text but need clear, simple descriptions
+
+TITLE EXAMPLES (IMAGE GENERATION FRIENDLY):
+- "with the title text \"The Silent Compass\" displayed at the top in elegant sans-serif lettering"
+- "with the text \"Ember & Ash\" shown at the bottom in graceful decorative script"
+- "with bold stylized title text \"The Alchemist's Circle\" at the bottom"
+
+CRITICAL RULES FOR OUTPUT:
+1. NO dimensional specifications (no "1344x768", "pixels", "height x width")
+2. NO percentage values (no "80% visual weight", "70% focus")
+3. NO technical jargon - pure visual description
+4. Write as if describing a finished artwork
+5. START with art style, THEN title text specification, THEN scene description
+
+OUTPUT FORMAT STRUCTURE (MANDATORY ORDER):
+1. FIRST: Art style (e.g., "anime,")
+2. SECOND: Title text specification (e.g., "with the title text \"Story Name\" displayed at the top in bold lettering,")
+3. THIRD: Main scene description with characters and composition
+
+This order ensures the title text is prioritized and not ignored by the image model.
+
+EXAMPLE OUTPUT:
+"anime, with the title text \"The Echo Collector\" displayed at the top in elegant sans-serif lettering, a dramatic portrait showing a tall slender man in his early thirties..."
+
+OUTPUT FORMAT:
+Generate ONE comprehensive poster image prompt (200-300 words) that describes the VISUAL RESULT.
+
+IMPORTANT:
+- This is NOT a comic panel - it's a promotional poster
+- Focus on ICONIC, MEMORABLE visual imagery
+- Describe what the FINISHED poster LOOKS LIKE
+- Use FULL character descriptions naturally (no tokens)
+- Title text MUST be in the first half of the prompt (within first 50 words)
+- NO dimensions, percentages, or technical specifications
+- Write for IMAGE GENERATION, not graphic design specs
+
+Generate the poster prompt:"""
+    
+    print("Sending poster generation request to LLM...")
+    response = client.models.generate_content(
+        model="gemini-flash-latest",
+        contents=poster_prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.7,
+            max_output_tokens=65536,
+        )
+    )
+    
+    poster_prompt_text = response.text.strip()
+    print(f"Generated poster prompt ({len(poster_prompt_text.split())} words)")
+    print(f"Format: {selected_format['name']}")
+    
+    poster_data = {
+        "page_0": {
+            "panel_1": poster_prompt_text
+        }
+    }
+    
+    return poster_data, poster_data
+
+def generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text="", poster_format="iconic_hero"):
+    """Generate detailed prompts for ALL panels using token-based character injection approach.
+    
+    For page 0 (poster), generates a single poster prompt based on poster_format.
+    For page 1+, generates panel-by-panel prompts with token-based character injection.
+    
+    Args:
+        comic_structure: List of page/panel data
+        character_descriptions: Dict of character descriptions with base descriptions
+        style: Artistic style (anime, manga, comic, etc.)
+        full_story_text: Complete story text for context
+        poster_format: One of 'iconic_hero', 'dynamic_ensemble', 'focal_point', 'relationship_two_shot', 'tapestry_collage'
+    """
+    client = genai.Client(
+        api_key=os.environ["GEMINI_KEY"]
+    )
+    
+    print(f"\\nSTEP 1: Generating POSTER using format: {poster_format}")
+    print(f"Poster dimensions: 1344x768 (HxW)")
+    print(f"Using base character descriptions (no token injection for poster)")
+    poster_prompts, poster_prompts_tokenized = generate_poster_prompt(character_descriptions, style, full_story_text, poster_format)
+    print(f"✓ Poster prompt generated: {len(poster_prompts.get('page_0', {}).get('panel_1', ''))} characters")
+    
+    print(f"\\nSTEP 2: Generating ALL COMIC PANEL PROMPTS (pages 1-{len(comic_structure)})...")
     total_panels = sum(len(page['panels']) for page in comic_structure)
     print(f"Total panels to process: {total_panels}")
     print(f"Using TOKEN-BASED MEGA-PROMPT approach: 1 API call for all {total_panels} panels")
@@ -563,7 +742,7 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
     try:
         print("Sending mega-prompt to LLM...")
         response = client.models.generate_content(
-            model="gemini-2.5-pro",
+            model="gemini-flash-latest",
             contents=mega_prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",  
@@ -620,25 +799,14 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
                     print(f"Unexpected prompt data format: {type(prompt_data)}")
                     continue
                 
-                prompt_text_with_tokens = prompt_text
-
-                replacements = {
-                    r"\beye of the storm\b": "calm central region of the storm",
-                    r"\bcircuits of the city\b": "maze-like network of streets, pipes, and conduits",
-                    r"\belectric circuit city\b": "labyrinthine industrial city",
-                }
-                import re as _re
-                for _pat, _rep in replacements.items():
-                    prompt_text_with_tokens = _re.sub(_pat, _rep, prompt_text_with_tokens, flags=_re.IGNORECASE)
-
                 print(f"Injecting character features for Page {page_num}, Panel {panel_num}...")
                 safe_text = inject_character_features_into_prompt(
-                    prompt_text_with_tokens, 
+                    prompt_text, 
                     character_descriptions, 
                     page_num, 
                     panel_num
                 )
-                
+
                 page_key = f"page_{page_num}"
                 panel_key = f"panel_{panel_num}"
                 if page_key not in all_prompts:
@@ -661,15 +829,16 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
                 else:
                     continue
                 
-                prompt_text_clean = prompt_text
-                for _pat, _rep in replacements.items():
-                    prompt_text_clean = _re.sub(_pat, _rep, prompt_text_clean, flags=_re.IGNORECASE)
-                
                 page_key = f"page_{page_num}"
                 panel_key = f"panel_{panel_num}"
                 if page_key not in all_prompts_tokenized:
                     all_prompts_tokenized[page_key] = {}
-                all_prompts_tokenized[page_key][panel_key] = prompt_text_clean
+                all_prompts_tokenized[page_key][panel_key] = prompt_text
+            
+            if poster_prompts:
+                all_prompts.update(poster_prompts)
+                all_prompts_tokenized.update(poster_prompts_tokenized)
+                print(f"✓ Merged poster prompt with {len(all_prompts) - 1} pages of comic prompts")
             
             print(f"Successfully generated prompts for all panels using 1 mega-prompt API call with JSON mode!")
             return all_prompts, all_prompts_tokenized
@@ -703,6 +872,11 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
                         prompt_text, character_descriptions, page_num, panel_num
                     )
                 
+                if poster_prompts:
+                    all_prompts.update(poster_prompts)
+                    all_prompts_tokenized.update(poster_prompts_tokenized)
+                    print(f"✓ Merged poster prompt with {len(all_prompts) - 1} pages of comic prompts")
+                
                 print(f"Successfully generated prompts using fallback JSON extraction!")
                 return all_prompts, all_prompts_tokenized
                 
@@ -714,8 +888,18 @@ Generate prompts with PERFECT character consistency using panel-specific descrip
         print(f"Error in mega-prompt generation: {e}")
         return {}, {}
 
-def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file):
-    """Generate detailed image prompts for ALL panels with full story context and character consistency"""
+def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file, poster_format="iconic_hero"):
+    """Generate detailed image prompts for ALL panels with full story context and character consistency.
+    
+    Args:
+        comic_structure: List of page/panel data
+        style: Artistic style
+        markdown_file: Path to markdown file for story context
+        poster_format: Poster format if page 0 is present
+        
+    Returns:
+        Tuple of (prompts_data, prompts_data_tokenized)
+    """
     
     try:
         with open(markdown_file, 'r', encoding='utf-8') as f:
@@ -739,7 +923,9 @@ def generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
     print(f"Character descriptions loaded from {character_desc_path}")
     
     print("Generating panel prompts with full story context and character descriptions...")
-    panel_prompts, panel_prompts_tokenized = generate_panel_prompts_mega(comic_structure, character_descriptions, style, full_story_text)
+    panel_prompts, panel_prompts_tokenized = generate_panel_prompts_mega(
+        comic_structure, character_descriptions, style, full_story_text, poster_format
+    )
     
     comic_structure_info = {
         "total_pages": len(comic_structure),
@@ -850,11 +1036,16 @@ def generate_image(prompt, negative_prompt, seed, randomize_seed, width, height,
         raise e
 
 def generate_comic_images_for_page(settings=None):
-    """Generate images for a single page in the comic using provided settings or defaults"""
+    """Generate images for a single page in the comic using provided settings or defaults.
+    
+    Page 0 generates poster with fixed 1344x768 dimensions.
+    Page 1+ generates comic panels with specified dimensions.
+    """
     
     markdown_file = settings['markdown_file']
     page_number = settings['page_number']
     style = settings['style']
+    poster_format = settings.get('poster_format', 'iconic_hero')
     
     panel_dimensions = settings.get('panel_dimensions', [])
     default_width = settings['width']
@@ -862,17 +1053,59 @@ def generate_comic_images_for_page(settings=None):
     
     prompts_data = None
     
-    if page_number == 1:
-        print("Processing page 1: Generating character descriptions and prompts for the entire story...")
-        comic_structure = extract_full_comic_structure(markdown_file)
-        if comic_structure:
-            prompts_data, prompts_data_tokenized = generate_prompt_with_llm_full_context(comic_structure, style, markdown_file)
-            save_prompts_to_json(prompts_data, prompts_data_tokenized, markdown_file)
-    else:
-        prompts_data = load_prompts_from_json(markdown_file)
-        if not prompts_data:
-            print(f"Warning: No pre-generated prompts found for {markdown_file}.")
-            print("To maintain consistency, please process page 1 first.")
+    if page_number == 0:
+        print("Processing page 0: Generating POSTER + ALL COMIC PROMPTS...")
+        full_comic_structure = extract_full_comic_structure(markdown_file)
+        prompts_data, prompts_data_tokenized = generate_prompt_with_llm_full_context(
+            full_comic_structure, style, markdown_file, poster_format
+        )
+        save_prompts_to_json(prompts_data, prompts_data_tokenized, markdown_file)
+        
+        output_dir = os.path.join('output', f"{os.path.basename(markdown_file).split('.')[0]}_page_0")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        poster_prompt = prompts_data.get('panel_prompts', {}).get('page_0', {}).get('panel_1', '')
+        if not poster_prompt:
+            print("ERROR: No poster prompt generated")
+            print(f"DEBUG - prompts_data keys: {prompts_data.keys()}")
+            print(f"DEBUG - panel_prompts keys: {prompts_data.get('panel_prompts', {}).keys()}")
+            return None
+        
+        print(f"\\nGenerating poster image (832x1216)...")
+        print(f"Format: {poster_format}")
+        print(f"Prompt: {poster_prompt[:150]}...")
+        
+        negative_prompt = settings.get('negative_prompt', "low quality, bad anatomy, worst quality, low resolution")
+        
+        image_path = generate_image(
+            prompt=poster_prompt,
+            negative_prompt=negative_prompt,
+            seed=settings.get('seed', 42),
+            randomize_seed=settings.get('randomize_seed', False),
+            width=832,  
+            height=1216,  
+            guidance_scale=settings.get('guidance_scale', 7.5),
+            num_inference_steps=settings.get('num_inference_steps', 40)
+        )
+        
+        final_path = os.path.join(output_dir, "panel_1.png")
+        shutil.copy(image_path, final_path)
+        
+        print(f"✓ Poster saved: {final_path}")
+        
+        return [{
+            'panel': 1,
+            'image': final_path,
+            'prompt': poster_prompt,
+            'type': 'poster'
+        }]
+    
+    print(f"Processing page {page_number}: Loading pre-generated prompts...")
+    prompts_data = load_prompts_from_json(markdown_file)
+    if not prompts_data:
+        print(f"ERROR: No prompts found! Generate page 0 first to create all prompts.")
+        print(f"Run with page_number=0 to generate poster + all comic prompts for entire story.")
+        return []
     
     comic_structure = extract_panel_content(markdown_file, page_number)
     

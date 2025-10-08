@@ -108,14 +108,13 @@ class SpeechBubbleGenerator:
         """Calculate the dimensions needed for narration text with adaptive width."""
         font = ImageFont.truetype(self.font_path, font_size)
         
-        # Adaptive width calculation based on text length
         text_length = len(text)
         if text_length < 50:
-            width_scale = 0.95  # Shorter text uses less width
+            width_scale = 0.95  
         elif text_length < 100:
-            width_scale = 0.97  # Medium text uses more width
+            width_scale = 0.97  
         else:
-            width_scale = 0.99  # Longer text uses maximum width
+            width_scale = 0.99  
             
         max_line_width = int(self.width * width_scale)
         
@@ -730,4 +729,3 @@ class SpeechBubbleGenerator:
     def save(self, output_path):
         """Save the image with speech bubbles."""
         self.image.save(output_path)
-
