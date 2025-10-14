@@ -1,6 +1,6 @@
 import React from "react";
 import { color, motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { windowlistner } from "../WindowListener/WindowListener"
 import "../Register/Register.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -12,8 +12,23 @@ import { useSignUp } from '@clerk/clerk-react';
 import { useClerk, useAuth } from "@clerk/clerk-react";
 import { useUser } from "@clerk/clerk-react";
 import LoadingAnimation from "../LoadingAnimation/LoadingAnimation2";
+import { useSignIn } from "@clerk/clerk-react";
 
 function Register() {
+    const { openSignIn } = useClerk();
+    const { signIn } = useSignIn();
+
+    const signInWithGoogle = () =>
+        signIn.authenticateWithRedirect({
+            strategy: "oauth_google",
+            redirectUrl: "/",
+        });
+
+    const signInWithGitHub = () =>
+        signIn.authenticateWithRedirect({
+            strategy: "oauth_github",
+            redirectUrl: "/",
+        });
 
     const [position, setposition] = useState({ x: 0, y: 0 });
     const navigate = useNavigate();
@@ -93,15 +108,15 @@ function Register() {
         }
     }
 
-    const google = () => {
-        try {
-            window.location.href = "http://localhost:3000/user/auth/google";
-            //const res=await axios.get('http://localhost:3000/user/auth/google')
-            console.log(res)
-        } catch (error) {
-            console.log(error);
-        }
-    }
+    // const google = () => {
+    //     try {
+    //         window.location.href = "http://localhost:3000/user/auth/google";
+    //         //const res=await axios.get('http://localhost:3000/user/auth/google')
+    //         console.log(res)
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // }
 
     windowlistner('pointermove', (e) => {
         setposition({ x: e.clientX, y: e.clientY })
@@ -117,14 +132,14 @@ function Register() {
         }, 4000);
     }
 
-    useEffect(() => {
-        if (isLoaded && isSignedIn) {
-            navigate("/");
-        }
-    }, [isLoaded, isSignedIn, navigate]);
+    // useEffect(() => {
+    //     if (isLoaded && isSignedIn) {
+    //         navigate("/");
+    //     }
+    // }, [isLoaded, isSignedIn, navigate]);
 
-    if (!isLoaded) return <LoadingAnimation />;
-    if (isSignedIn) return null;
+    // if (!isLoaded) return <LoadingAnimation />;
+    // if (isSignedIn) return null;
 
     return (
         <motion.div style={styles.login}>
@@ -190,8 +205,8 @@ function Register() {
                                 </motion.button>
                             </motion.div>
                             <motion.div className="iconss">
-                                <motion.button className="btn" onClick={google}><FontAwesomeIcon icon={faGoogle} className="icons" /><span>Google</span></motion.button>
-                                <motion.button className="btn"><FontAwesomeIcon icon={faGithub} className="icons"
+                                <motion.button className="btn" onClick={signInWithGoogle}><FontAwesomeIcon icon={faGoogle} className="icons" /><span>Google</span></motion.button>
+                                <motion.button className="btn" onClick={signInWithGitHub}><FontAwesomeIcon icon={faGithub} className="icons"
                                 /><span>Github</span></motion.button>
                             </motion.div>
                         </motion.div>

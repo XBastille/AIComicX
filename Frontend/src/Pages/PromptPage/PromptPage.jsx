@@ -105,14 +105,14 @@ function PromptPage() {
         setIsScrolling(true);
     }
 
-    //     useEffect(() => {
-    //     if (isLoaded && !isSignedIn) {
-    //         navigate("/");
-    //     }
-    // }, [isLoaded, isSignedIn, navigate]);
+    useEffect(() => {
+        if (isLoaded && !isSignedIn) {
+            navigate("/");
+        }
+    }, [isLoaded, isSignedIn, navigate]);
 
-    // if (!isLoaded) return <LoadingAnimation />;
-    // if (!isSignedIn) return null;
+    if (!isLoaded) return <LoadingAnimation />;
+    if (!isSignedIn) return null;
 
     return (
         <div className="container">

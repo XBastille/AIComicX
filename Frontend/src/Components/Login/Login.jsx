@@ -1,6 +1,6 @@
 import React from "react";
 import { color, motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { windowlistner } from "../WindowListener/WindowListener"
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
@@ -9,8 +9,28 @@ import Carousel from '../Carousel/Carousel';
 import { useSignIn } from "@clerk/clerk-react";
 import { useUser } from "@clerk/clerk-react";
 import LoadingAnimation from "../LoadingAnimation/LoadingAnimation2";
+import { useClerk, useAuth } from "@clerk/clerk-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faGithub, faGoogle } from '@fortawesome/free-brands-svg-icons';
 
 function Login() {
+    const { openSignIn } = useClerk();
+    const { authenticateWithRedirect } = useClerk();
+    const { signIn, setActive } = useSignIn();
+
+    const handleGoogleLogin = () => {
+        signIn.authenticateWithRedirect({
+            strategy: "oauth_google",
+            redirectUrl: "/", // 👈 where to send user after login
+        });
+    };
+
+    const handleGitHubLogin = () => {
+        signIn.authenticateWithRedirect({
+            strategy: "oauth_github",
+            redirectUrl: "/", // 👈 you can change to '/dashboard' etc.
+        });
+    };
 
     const [position, setposition] = useState({ x: 0, y: 0 });
 
@@ -23,7 +43,7 @@ function Login() {
 
 
     const { isSignedIn, user, isLoaded } = useUser();
-    const { signIn, setActive } = useSignIn();
+
 
     windowlistner('pointermove', (e) => {
         setposition({ x: e.clientX, y: e.clientY })
@@ -86,14 +106,14 @@ function Login() {
         }, 4000);
     }
 
-    useEffect(() => {
-        if (isLoaded && isSignedIn) {
-            navigate("/");
-        }
-    }, [isLoaded, isSignedIn, navigate]);
+    // useEffect(() => {
+    //     if (isLoaded && isSignedIn) {
+    //         navigate("/");
+    //     }
+    // }, [isLoaded, isSignedIn, navigate]);
 
-    if (!isLoaded) return <LoadingAnimation />;
-    if (isSignedIn) return null;
+    // if (!isLoaded) return <LoadingAnimation />;
+    // if (isSignedIn) return null;
     return (
         <motion.div style={styles.login}>
             <div className="cursor" style={{
@@ -140,6 +160,11 @@ function Login() {
                                 <motion.button title="No account" style={styles.links_button} onClick={no_account}>
                                     Create your account now
                                 </motion.button>
+                            </motion.div>
+                            <motion.div className="iconss">
+                                <motion.button className="btn" onClick={handleGoogleLogin}><FontAwesomeIcon icon={faGoogle} className="icons" /><span>Google</span></motion.button>
+                                <motion.button className="btn" onClick={handleGitHubLogin}><FontAwesomeIcon icon={faGithub} className="icons"
+                                /><span>Github</span></motion.button>
                             </motion.div>
                         </motion.div>
                     </motion.div>

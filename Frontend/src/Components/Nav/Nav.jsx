@@ -100,13 +100,13 @@ function Nav() {
               </span>
             </button>
           )}
-          {/* <button 
+          {/* <button
             className="login-button"
             onMouseEnter={() => setLoginHovered(true)}
             onMouseLeave={() => setLoginHovered(false)}
             onClick={() => navigate('/user/Login')}
           >
-            <span 
+            <span
               ref={loginRef}
               className="login-text"
             >
