@@ -21,14 +21,14 @@ function Login() {
     const handleGoogleLogin = () => {
         signIn.authenticateWithRedirect({
             strategy: "oauth_google",
-            redirectUrl: "/", // 👈 where to send user after login
+            redirectUrl: "/SelectPage",
         });
     };
 
     const handleGitHubLogin = () => {
         signIn.authenticateWithRedirect({
             strategy: "oauth_github",
-            redirectUrl: "/", // 👈 you can change to '/dashboard' etc.
+            redirectUrl: "/SelectPage",
         });
     };
 
@@ -84,7 +84,7 @@ function Login() {
             });
             if (response.status === "complete") {
                 await setActive({ session: response.createdSessionId });
-                navigate('/');
+                navigate('/SelectPage');
             } else {
                 setErrors('Login failed, please check your credentials.');
             }

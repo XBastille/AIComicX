@@ -21,13 +21,13 @@ function Register() {
     const signInWithGoogle = () =>
         signIn.authenticateWithRedirect({
             strategy: "oauth_google",
-            redirectUrl: "/",
+            redirectUrl: "/SelectPage",
         });
 
     const signInWithGitHub = () =>
         signIn.authenticateWithRedirect({
             strategy: "oauth_github",
-            redirectUrl: "/",
+            redirectUrl: "/SelectPage",
         });
 
     const [position, setposition] = useState({ x: 0, y: 0 });
@@ -88,7 +88,7 @@ function Register() {
             // console.log(response.status);
             if (response.status === 'complete') {
                 await setActive({ session: response.createdSessionId });
-                navigate('/');
+                navigate('/SelectPage');
             }
         } catch (error) {
             console.log(error);
