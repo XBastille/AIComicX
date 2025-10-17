@@ -17,17 +17,20 @@ import { useSignIn } from "@clerk/clerk-react";
 function Register() {
     const { openSignIn } = useClerk();
     const { signIn } = useSignIn();
+    const { signUp, setActive } = useSignUp();
 
-    const signInWithGoogle = () =>
-        signIn.authenticateWithRedirect({
+    const signInWithGoogle = async () =>
+        await signUp.authenticateWithRedirect({
             strategy: "oauth_google",
-            redirectUrl: "/SelectPage",
+            redirectUrl: "/sso-callback",
+            redirectUrlComplete: "/SelectPage"
         });
 
-    const signInWithGitHub = () =>
-        signIn.authenticateWithRedirect({
+    const signInWithGitHub = async () =>
+        await signUp.authenticateWithRedirect({
             strategy: "oauth_github",
-            redirectUrl: "/SelectPage",
+            redirectUrl: "/sso-callback",
+            redirectUrlComplete: "/SelectPage"
         });
 
     const [position, setposition] = useState({ x: 0, y: 0 });
@@ -40,7 +43,7 @@ function Register() {
 
     const [errors, setErrors] = useState('');
 
-    const { signUp, setActive } = useSignUp();
+
 
     const { signOut } = useClerk();
 

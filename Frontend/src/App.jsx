@@ -11,6 +11,7 @@ import ConssoleNav from './Components/Nav/ConssoleNav'
 import PromptPage from './Pages/PromptPage/PromptPage'
 import './App.css'
 import { ClerkProvider } from '@clerk/clerk-react';
+import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
 
 const clerkFrontendApi = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -31,6 +32,8 @@ function App() {
                <Route path="/SelectPage" element={<ChoosePage />} />
                <Route path="/Generate_Story" element={<Conssole />} />
                <Route path="/PromptPage" element={<PromptPage />} />
+               <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
+
             </Routes>
          </Router>
          {/* <div>
