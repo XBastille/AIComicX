@@ -281,7 +281,8 @@ function Body() {
                 right: 'auto',
                 bottom: 'auto',
                 width: rect.width,
-                transform: 'none'
+                transform: 'none',
+                visibility: 'visible' 
             });
         };
 
@@ -296,17 +297,19 @@ function Body() {
                     left: 'auto',
                     top: 'auto',
                     width: '',
-                    transform: 'none'
+                    transform: 'none',
+                    visibility: 'visible'
                 });
             } else if (selector === '.creative-text') {
                 gsap.set(el, {
                     position: 'fixed',
                     left: '30px',
-                    top: '70%',
+                    top: '65%', 
                     right: 'auto',
                     bottom: 'auto',
                     width: '',
-                    transform: 'translateY(-50%)'
+                    transform: 'translateY(-50%)',
+                    visibility: 'visible'
                 });
             } else if (selector === '.motto-text') {
                 gsap.set(el, {
@@ -316,7 +319,8 @@ function Body() {
                     left: 'auto',
                     bottom: 'auto',
                     width: '',
-                    transform: 'translateY(-50%)'
+                    transform: 'translateY(-50%)',
+                    visibility: 'visible'
                 });
             } else {
                 gsap.set(el, {
@@ -326,13 +330,21 @@ function Body() {
                     right: '',
                     bottom: '',
                     width: '',
-                    transform: getTransformFor(selector)
+                    transform: getTransformFor(selector),
+                    visibility: 'visible'
                 });
             }
         };
 
+        const hide = (selector) => {
+            const el = document.querySelector(selector);
+            if (!el) return;
+            gsap.set(el, { visibility: 'hidden' }); 
+        };
+
         const freezeAll = () => selectors.forEach(freeze);
         const stickAll = () => selectors.forEach(stick);
+        const hideAll = () => selectors.forEach(hide);
 
         stickAll();
 
@@ -340,9 +352,9 @@ function Body() {
             trigger: '.purple-section',
             start: 'top bottom',
             end: 'bottom top',
-            onEnter: freezeAll,
-            onEnterBack: freezeAll,
-            onLeaveBack: stickAll
+            onEnter: hideAll, 
+            onEnterBack: hideAll, 
+            onLeaveBack: stickAll 
         });
 
     }, [pageLoadComplete]);
@@ -1094,7 +1106,7 @@ const styles = {
         width: '1344px',
         height: '768px',
         position: 'absolute',
-        top: '67%',
+        top: '60%', 
         left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 2
@@ -1157,7 +1169,7 @@ const styles = {
     creativeContainer: {
         position: 'absolute',
         left: '30px',
-        top: '70%',
+        top: '65%', 
         transform: 'translateY(-50%)',
         zIndex: 1000
     },

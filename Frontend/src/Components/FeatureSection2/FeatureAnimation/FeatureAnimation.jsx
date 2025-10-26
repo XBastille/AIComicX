@@ -115,16 +115,24 @@ export const FeatureAnimation = ({
     useEffect(() => {
         gsap.registerPlugin(ScrollTrigger);
 
-        gsap.to(".epochHeading", {
-            x: "-1000px", // how far it should move left
+        const tween = gsap.to(".epochHeading", {
+            x: "-1200px", 
             ease: "none",
             scrollTrigger: {
                 trigger: ".epochHeading",
-                start: "top bottom", // when heading enters
-                end: "bottom top",   // when heading leaves
-                scrub: true,         // smooth scroll-linked
+                start: "top bottom",
+                end: "bottom top",   
+                scrub: 0.6,          
+                fastScrollEnd: true,
+                invalidateOnRefresh: true,
+                anticipatePin: 0,
             },
         });
+
+        return () => {
+            if (tween.scrollTrigger) tween.scrollTrigger.kill();
+            tween.kill();
+        };
     }, []);
 
     const styles = {
@@ -237,7 +245,7 @@ export const FeatureAnimation = ({
         },
         epochHeading: {
             fontSize: "220px",
-            transform: `translateX(100px)`,
+            transform: `translateX(120px)`,
             fontWeight: "800",
             // transform: "translateX(-30px)",
             willChange: "transform",
@@ -257,7 +265,7 @@ export const FeatureAnimation = ({
 
     return (
         <>
-            <div style={{ width: "100vw" }}>
+            <div style={{ width: "100vw", overflow: "hidden" }}>
                 <p className="epochHeading" style={styles.epochHeading}>...EPOCH PRESENTS EPOCH</p>
             </div>
             <div style={styles.container}>

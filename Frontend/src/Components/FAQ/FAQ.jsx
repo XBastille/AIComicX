@@ -11,10 +11,10 @@ const FAQ = () => {
     const [openItems, setOpenItems] = useState({});
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const faqRef = useRef(null);
-    const headingRef = useRef(null);
+    const headingLine1Ref = useRef(null);
+    const headingLine2Ref = useRef(null);
     const containerRef = useRef(null);
 
-    // FAQ Data
     const faqData = [
         {
             id: 1,
@@ -48,7 +48,6 @@ const FAQ = () => {
         }
     ];
 
-    // Mouse movement tracking
     useEffect(() => {
         const handleMouseMove = (e) => {
             setPosition({ x: e.clientX, y: e.clientY });
@@ -57,7 +56,6 @@ const FAQ = () => {
         return () => window.removeEventListener('pointermove', handleMouseMove);
     }, []);
 
-    // Toggle FAQ item
     const toggleItem = (id) => {
         setOpenItems(prev => ({
             ...prev,
@@ -65,7 +63,6 @@ const FAQ = () => {
         }));
     };
 
-    // Scramble text animation
     const scrambleText = (element, finalText, duration = 2) => {
         if (!element) return;
         
@@ -94,71 +91,68 @@ const FAQ = () => {
         requestAnimationFrame(animate);
     };
 
-    // GSAP Animations
     useGSAP(() => {
         const tl = gsap.timeline({
             scrollTrigger: {
                 trigger: containerRef.current,
-                start: "top 80%",
+                start: "top 60%",
                 toggleActions: "play none none reverse"
             }
         });
 
-        // Animate heading
-        tl.fromTo(headingRef.current, 
-            { 
-                y: 50, 
+        tl.fromTo([headingLine1Ref.current, headingLine2Ref.current],
+            {
+                y: 50,
                 opacity: 0,
                 scale: 0.9
             },
-            { 
-                y: 0, 
+            {
+                y: 0,
                 opacity: 1,
                 scale: 1,
-                duration: 1,
-                ease: "back.out(1.7)"
+                duration: 0.8,
+                ease: "back.out(1.7)",
+                stagger: 0.05
             }
         );
 
-        // Animate FAQ items with stagger
-        tl.fromTo(".faq-item", 
-            { 
-                y: 30, 
+        tl.fromTo(".faq-item",
+            {
+                y: 30,
                 opacity: 0,
                 x: -20
             },
-            { 
-                y: 0, 
+            {
+                y: 0,
                 opacity: 1,
                 x: 0,
                 duration: 0.8,
                 stagger: 0.1,
                 ease: "power2.out"
-            }, 
-            "-=0.5"
+            },
+            "-=0.3"
         );
 
     }, []);
 
-    // Scramble animation for heading
     useGSAP(() => {
-        const trigger = ScrollTrigger.create({
-            trigger: headingRef.current,
-            start: "top 80%",
-            onEnter: () => {
-                setTimeout(() => {
-                    scrambleText(headingRef.current, "FREQUENTLY ASKED QUESTIONS", 2.5);
-                }, 500);
-            },
-            once: true
-        });
+        const triggers = [
+            ScrollTrigger.create({
+                trigger: containerRef.current,
+                start: "top 60%",
+                onEnter: () => {
+                    scrambleText(headingLine1Ref.current, "FREQUENTLY ASKED", 2.0);
+                    setTimeout(() => scrambleText(headingLine2Ref.current, "QUESTIONS", 1.8), 150);
+                },
+                once: true
+            })
+        ];
 
-        return () => trigger.kill();
+        return () => triggers.forEach(t => t.kill());
     }, []);
 
     return (
         <div style={styles.container} ref={containerRef}>
-            {/* Custom Cursor */}
             <div
                 className="cursor"
                 style={{
@@ -168,12 +162,12 @@ const FAQ = () => {
             />
 
             <div style={styles.faqWrapper} ref={faqRef}>
-                {/* Main Heading */}
-                <h1 ref={headingRef} style={styles.mainHeading}>
-                    FREQUENTLY ASKED QUESTIONS
+                <h1 style={styles.mainHeading}>
+                    <span ref={headingLine1Ref} style={styles.headingLine}>FREQUENTLY ASKED</span>
+                    <br />
+                    <span ref={headingLine2Ref} style={styles.headingLine}>QUESTIONS</span>
                 </h1>
 
-                {/* FAQ Items */}
                 <div style={styles.faqList}>
                     {faqData.map((item, index) => (
                         <div 
@@ -185,7 +179,6 @@ const FAQ = () => {
                             }}
                             onClick={() => toggleItem(item.id)}
                         >
-                            {/* Question */}
                             <div style={styles.questionWrapper}>
                                 <div style={styles.questionNumber}>
                                     {String(index + 1).padStart(2, '0')}
@@ -204,7 +197,6 @@ const FAQ = () => {
                                 </div>
                             </div>
 
-                            {/* Answer */}
                             <div 
                                 style={{
                                     ...styles.answerWrapper,
@@ -218,7 +210,6 @@ const FAQ = () => {
                                 </p>
                             </div>
 
-                            {/* Decorative line */}
                             <div 
                                 style={{
                                     ...styles.decorativeLine,
@@ -271,13 +262,19 @@ const styles = {
         textAlign: 'left',
         marginBottom: '80px',
         fontFamily: "'Orbitron', sans-serif",
-        background: "linear-gradient(135deg, rgb(223, 30, 114) 0%, rgb(230, 110, 41) 50%, rgb(255, 191, 0) 100%)",
-        color: "transparent",
-        backgroundClip: "text",
-        WebkitBackgroundClip: "text",
+        color: 'inherit',
         letterSpacing: '2px',
         textTransform: 'uppercase',
         position: 'relative',
+    },
+    headingLine: {
+        display: 'inline-block',
+        whiteSpace: 'nowrap',
+        lineHeight: 1.05,
+        background: "linear-gradient(135deg, rgb(223, 30, 114) 0%, rgb(230, 110, 41) 50%, rgb(255, 191, 0) 100%)",
+        color: 'transparent',
+        backgroundClip: 'text',
+        WebkitBackgroundClip: 'text'
     },
     faqList: {
         display: 'flex',
@@ -395,7 +392,6 @@ const styles = {
     }
 };
 
-// Add keyframe animation
 const styleSheet = document.createElement("style");
 styleSheet.innerText = `
     @keyframes pulse {
