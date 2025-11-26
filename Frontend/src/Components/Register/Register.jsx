@@ -19,12 +19,26 @@ function Register() {
     const { signIn } = useSignIn();
     const { signUp, setActive } = useSignUp();
 
-    const signInWithGoogle = async () =>
-        await signUp.authenticateWithRedirect({
-            strategy: "oauth_google",
-            redirectUrl: "/sso-callback",
-            redirectUrlComplete: "/SelectPage"
-        });
+    const signInWithGoogle = async () => {
+        try {
+            await signIn.authenticateWithRedirect({
+                strategy: "oauth_google",
+                redirectUrl: "/SelectPage",
+                redirectUrlComplete: "/SelectPage",
+            });
+        } catch (err) {
+            if (err?.errors?.[0]?.code === "identifier_not_found") {
+                await signUp.authenticateWithRedirect({
+                    strategy: "oauth_google",
+                    redirectUrl: "/SelectPage",
+                    redirectUrlComplete: "/SelectPage",
+                });
+            } else {
+                console.error(err);
+            }
+        }
+    };
+
 
     const signInWithGitHub = async () =>
         await signUp.authenticateWithRedirect({
@@ -135,14 +149,14 @@ function Register() {
         }, 4000);
     }
 
-    // useEffect(() => {
-    //     if (isLoaded && isSignedIn) {
-    //         navigate("/");
-    //     }
-    // }, [isLoaded, isSignedIn, navigate]);
+    useEffect(() => {
+        if (isLoaded && isSignedIn) {
+            navigate("/SelectPage");
+        }
+    }, [isLoaded, isSignedIn, navigate]);
 
-    // if (!isLoaded) return <LoadingAnimation />;
-    // if (isSignedIn) return null;
+    if (!isLoaded) return <LoadingAnimation />;
+    if (isSignedIn) return null;
 
     return (
         <motion.div style={styles.login}>

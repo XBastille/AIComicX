@@ -12,18 +12,63 @@ import LoadingAnimation from "../LoadingAnimation/LoadingAnimation2";
 import { useClerk, useAuth } from "@clerk/clerk-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGithub, faGoogle } from '@fortawesome/free-brands-svg-icons';
+import { useSignUp } from '@clerk/clerk-react';
 
 function Login() {
     const { openSignIn } = useClerk();
-    const { authenticateWithRedirect } = useClerk();
+    // const { authenticateWithRedirect } = useClerk();
     const { signIn, setActive } = useSignIn();
+    const { signUp } = useSignUp();
 
-    const handleGoogleLogin = () => {
-        signIn.authenticateWithRedirect({
-            strategy: "oauth_google",
-            redirectUrl: "/SelectPage",
-        });
+    const handleGoogleLogin = async () => {
+        try {
+
+            await signUp.authenticateWithRedirect({
+                strategy: "oauth_google",
+                redirectUrl: "/SelectPage",
+                redirectUrlComplete: "/SelectPage",
+            });
+        } catch (err) {
+            console.log(err);
+            if (err) {
+                await signIn.authenticateWithRedirect({
+                    strategy: "oauth_google",
+                    redirectUrl: "/SelectPage",
+                    redirectUrlComplete: "/SelectPage",
+                });
+            } else {
+                console.error(err);
+            }
+        }
     };
+    // const handleGoogleLogin = async () => {
+    //     console.log("handle google login");
+    //     try {
+    //         console.log("handle google login");
+    //         await signIn.authenticateWithRedirect({
+    //             strategy: "oauth_google",
+    //             redirectUrl: "/SelectPage",
+    //             redirectUrlComplete: "/SelectPage",
+    //         });
+
+    //     } catch (err) {
+    //         console.log(err);
+    //         const code = err?.errors?.[0]?.code;
+    //         console.log(code);
+    //         if (code === "identifier_not_found") {
+    //             await signUp.authenticateWithRedirect({
+    //                 strategy: "oauth_google",
+    //                 redirectUrl: "/SelectPage",
+    //                 redirectUrlComplete: "/SelectPage",
+    //             });
+    //             // console.log("error me hai google wala");
+    //             // navigate('/user/register');
+    //         } else {
+    //             console.error(err);
+    //         }
+    //     }
+    // };
+
 
     const handleGitHubLogin = () => {
         signIn.authenticateWithRedirect({
@@ -74,25 +119,40 @@ function Login() {
 
     const submitss = async (event) => {
         event.preventDefault();
-        setemail('');
-        setpassword('');
-        setconfirm('');
+        setErrors(""); // clear old errors
+
         try {
-            const response = await signIn.create({
+            const attempt = await signIn.create({
                 identifier: email,
                 password: password,
             });
-            if (response.status === "complete") {
-                await setActive({ session: response.createdSessionId });
-                navigate('/SelectPage');
-            } else {
-                setErrors('Login failed, please check your credentials.');
+
+            if (attempt.status === "complete") {
+                await setActive({ session: attempt.createdSessionId });
+                navigate("/SelectPage");
+                return;
             }
         } catch (error) {
-            console.error(error);
-            setErrors('An error occurred during login. Please try again.');
+            console.log("LOGIN ERROR:", error);
+
+            // const code = error?.errors?.[0]?.code;
+            // console.log("ERROR CODE:", code);
+
+            // if (code === "identifier_not_found" || code === "user_not_found") {
+            //     setErrors("User not found. Redirecting to Sign Up...");
+            //     setTimeout(() => navigate("/user/Register"), 1500);
+            //     return;
+            // }
+
+            // if (code === "invalid_credentials") {
+            //     setErrors("Incorrect password. Try again.");
+            //     return;
+            // }
+
+            // setErrors("Something went wrong. Please try again.");
         }
-    }
+    };
+
 
     const no_account = () => {
         console.log("click ho rha h")
@@ -106,14 +166,14 @@ function Login() {
         }, 4000);
     }
 
-    // useEffect(() => {
-    //     if (isLoaded && isSignedIn) {
-    //         navigate("/");
-    //     }
-    // }, [isLoaded, isSignedIn, navigate]);
+    useEffect(() => {
+        if (isLoaded && isSignedIn) {
+            navigate("/SelectPage");
+        }
+    }, [isLoaded, isSignedIn, navigate]);
 
-    // if (!isLoaded) return <LoadingAnimation />;
-    // if (isSignedIn) return null;
+    if (!isLoaded) return <LoadingAnimation />;
+    if (isSignedIn) return null;
     return (
         <motion.div style={styles.login}>
             <div className="cursor" style={{
