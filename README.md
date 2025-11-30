@@ -37,4 +37,4 @@ AIComicX is currently under active development. 🚧 New features are continuous
 📧 For inquiries or feedback, reach out at [eziopuhan825@gmail.com](mailto:eziopuhan825@gmail.com).
 
 Thank you for your interest in AIComicX! Stay tuned for exciting updates. 🚀📚
-
+**Xbastille HBD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!**
