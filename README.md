@@ -16,8 +16,9 @@
     </a>
 </p>
 
-# 🚀 PROJECT IN PROGRESS! 
+# ⚠️ THIS REPOSITORY IS ARCHIVED
 
+**This project is now archived and is being used for personal work/reference. It is no longer being actively maintained or updated publicly.**
 AIComicX is an AI-powered platform that allows users to upload their stories and automatically turn them into comics. Users can either submit their own stories or generate new ones using AI. With multiple comic styles to choose from, AIComicX aims to revolutionize comic creation. 📚✨
 
 ## 🌟 Features (Work in Progress)
@@ -37,4 +38,5 @@ AIComicX is currently under active development. 🚧 New features are continuous
 📧 For inquiries or feedback, reach out at [eziopuhan825@gmail.com](mailto:eziopuhan825@gmail.com).
 
 Thank you for your interest in AIComicX! Stay tuned for exciting updates. 🚀📚
+
 
