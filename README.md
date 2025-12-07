@@ -16,12 +16,15 @@
     </a>
 </p>
 
-# ⚠️ THIS REPOSITORY IS ARCHIVED
+# ⚠️ PROJECT ARCHIVED (UNFINISHED)
 
-**This project is now archived and is being used for personal work/reference. It is no longer being actively maintained or updated publicly.**
-AIComicX is an AI-powered platform that allows users to upload their stories and automatically turn them into comics. Users can either submit their own stories or generate new ones using AI. With multiple comic styles to choose from, AIComicX aims to revolutionize comic creation. 📚✨
+**Development on this repository has permanently ceased. This project was a Work in Progress (WIP), but due to personal work commitments and time constraints, it has been discontinued in an incomplete state.**
 
-## 🌟 Features (Work in Progress)
+AIComicX was designed as an AI-powered platform to allow users to upload their stories and automatically turn them into comics. The goal was to let users submit their own stories or generate new ones using AI. 📚✨
+
+## 🌟 Intended Features (Incomplete)
+
+*These were the features in active development before the project was discontinued:*
 
 - 📜 **Story Upload & Comic Generation**: Upload a story and let AI turn it into a beautiful comic.
 - ✍ **AI Story Generation**: Generate engaging storylines with AI-powered assistance.
@@ -31,12 +34,10 @@ AIComicX is an AI-powered platform that allows users to upload their stories and
 
 ## 📌 Status
 
-AIComicX is currently under active development. 🚧 New features are continuously being integrated, and improvements are ongoing. Stay tuned for updates! 🔧✨
+**Discontinued.** 🛑 The project was in the middle of active development but is now abandoned. No further updates, features, or fixes will be implemented. The code is provided as-is for reference only.
 
 ## 📞 Contact
 
-📧 For inquiries or feedback, reach out at [eziopuhan825@gmail.com](mailto:eziopuhan825@gmail.com).
+📧 If you have specific questions about the existing codebase, you can reach out at [eziopuhan825@gmail.com](mailto:eziopuhan825@gmail.com).
 
-Thank you for your interest in AIComicX! Stay tuned for exciting updates. 🚀📚
-
-
+Thank you for your interest in what we were building with AIComicX! 🚀
